@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#211518">
+<meta name="description" content="نكسورا — مساحة عربية لتنظيم يومك ومهامك وملاحظاتك وأهدافك، مع دعم العمل دون اتصال.">
+<meta name="color-scheme" content="light dark">
+<title>NEXORA | نكسورا</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F8F8; --surface:#FFFFFF; --surface-2:#F2F8F8; --line:#D9E7E8;
+  --ink:#17313A; --muted:#657D83; --accent:#087E8B; --accent-ink:#FFFFFF; --accent-soft:#DDF3F2;
+  --amber:#B96519; --amber-soft:#FFF0E1; --rose:#C44562; --rose-soft:#FCE7ED;
+  --ok:#25856B; --ok-soft:#DDF6ED;
+  --ov1:rgba(255,255,255,.4); --ov2:rgba(255,255,255,.25); --ov3:rgba(255,255,255,.2); --ov4:rgba(255,255,255,.13);
+  --radius:14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101F25; --surface:#172B32; --surface-2:#203840; --line:#34515A;
+    --ink:#EDF8F8; --muted:#A4BEC2; --accent:#43C2C0; --accent-ink:#10282D; --accent-soft:#234C51;
+    --amber:#F1B56E; --amber-soft:#493321; --rose:#F08A82; --rose-soft:#3C1D1B;
+    --ok:#6FCB92; --ok-soft:#183626;
+    color-scheme: dark;
+    --ov1:rgba(0,0,0,.35); --ov2:rgba(0,0,0,.25); --ov3:rgba(0,0,0,.2); --ov4:rgba(0,0,0,.14);
+  }
+}
+:root[data-theme="dark"]{
+    --bg:#101F25; --surface:#172B32; --surface-2:#203840; --line:#34515A;
+    --ink:#EDF8F8; --muted:#A4BEC2; --accent:#43C2C0; --accent-ink:#10282D; --accent-soft:#234C51;
+    --amber:#F1B56E; --amber-soft:#493321; --rose:#F08A82; --rose-soft:#3C1D1B;
+    --ok:#6FCB92; --ok-soft:#183626;
+    color-scheme: dark;
+    --ov1:rgba(0,0,0,.35); --ov2:rgba(0,0,0,.25); --ov3:rgba(0,0,0,.2); --ov4:rgba(0,0,0,.14);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"IBM Plex Sans Arabic","Segoe UI",Tahoma,"Noto Sans Arabic",system-ui,sans-serif;
+  line-height:1.65; font-size:16px;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 56px}
+/* شريط تنقل جانبي زجاجي */
+.side-nav{position:fixed;z-index:30;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid rgba(255,255,255,.42);border-radius:22px;background:rgba(255,255,255,.58);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);box-shadow:0 12px 35px rgba(15,55,65,.13)}
+.side-nav button{width:46px;height:46px;border:0;border-radius:14px;background:transparent;color:var(--ink);display:grid;place-items:center;font-size:1.25rem;transition:background .16s,transform .16s}
+.side-nav button:hover,.side-nav button:focus-visible{background:var(--accent-soft);transform:translateY(-1px)}
+.side-nav .side-settings{border-top:1px solid var(--line);border-radius:0 0 12px 12px;margin-top:3px;padding-top:5px}
+@media(max-width:700px){.side-nav{right:50%;top:auto;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(50%);flex-direction:row;gap:5px;padding:7px 9px;border-radius:19px;background:rgba(245,251,251,.78)}.side-nav button{width:43px;height:43px}.side-nav .side-settings{border-top:0;border-right:1px solid var(--line);margin:0;padding:0 5px 0 0}.wrap{padding-bottom:100px}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* الساعة والتاريخ */
+.hero{background:linear-gradient(135deg,#087E8B,#15999A);color:#FFFFFF;border-radius:24px;padding:22px;display:grid;gap:18px;grid-template-columns:1fr}
+@media(min-width:720px){.hero{grid-template-columns:1.5fr 1fr;padding:28px;gap:22px 28px}}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.greet{font-size:1.05rem;font-weight:500;opacity:.92;margin:0}
+.gear{width:44px;height:44px;border-radius:50%;border:1px solid var(--ov1);background:transparent;color:inherit;display:grid;place-items:center;padding:0}
+.gear:hover{background:var(--ov3)}
+.gear svg{width:22px;height:22px}
+.clock{direction:ltr;display:flex;align-items:flex-end;gap:12px;margin-top:8px;font-variant-numeric:tabular-nums;line-height:1}
+.clock .hm{font-size:clamp(3.8rem,17vw,7rem);font-weight:600;letter-spacing:-.04em;line-height:.95;display:flex;align-items:baseline}
+.clock .colon{opacity:.55;margin:0 .04em;font-weight:500}
+.clock .side{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding-bottom:.5rem}
+.clock .sec{font-size:clamp(1.4rem,5vw,2.1rem);font-weight:500;opacity:.8}
+.clock .ap{font-size:.95rem;font-weight:600;padding:2px 10px;border-radius:99px;background:var(--ov3)}
+.clock .ap:empty{display:none}
+.datepanel{background:var(--ov4);border:1px solid var(--ov3);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.datepanel .wk{font-size:1.6rem;font-weight:700;line-height:1.3}
+.datepanel .gr{font-size:1.1rem;font-weight:500}
+.datepanel .hij{font-size:.95rem;opacity:.85;margin-top:10px;padding-top:10px;border-top:1px solid var(--ov3)}
+.dayprog{grid-column:1/-1}
+.day-label{display:flex;justify-content:space-between;font-size:.85rem;opacity:.92;margin-bottom:8px}
+.day-label b{font-weight:600}
+.day-track{position:relative;height:8px;border-radius:99px;background:var(--ov2);overflow:hidden}
+.day-fill{height:100%;background:currentColor;border-radius:99px;width:0;transition:width .6s}
+.ticks{display:flex;justify-content:space-between;font-size:.75rem;opacity:.75;margin-top:6px}
+
+/* الإعدادات */
+.overlay{position:fixed;inset:0;z-index:999;background:rgba(8,24,29,.48);display:flex;align-items:flex-end;justify-content:center;animation:veilIn .07s ease-out;touch-action:manipulation}
+.overlay[hidden]{display:none}
+.overlay .sheet{animation:sheetIn .08s ease-out;background:var(--surface);color:var(--ink);width:100%;max-width:520px;max-height:90vh;max-height:90dvh;overflow:auto;border-radius:20px 20px 0 0;box-shadow:0 -10px 50px rgba(0,0,0,.3)}
+@media(min-width:601px){.overlay{align-items:center}.overlay .sheet{border-radius:20px;max-width:520px}}
+.sheet{padding:18px 18px 24px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sheet h3{margin:20px 0 4px;font-size:.95rem;color:var(--muted);font-weight:600}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.srow:last-of-type{border-bottom:0}
+.srow b{font-weight:600}
+.srow .sub{margin:0}
+.sw{width:50px;height:30px;border-radius:99px;border:1px solid var(--line);background:var(--surface-2);position:relative;padding:0;flex:none}
+.sw::after{content:"";position:absolute;top:4px;inset-inline-start:4px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:inset-inline-start .15s}
+.sw[aria-checked="true"]{background:var(--accent);border-color:var(--accent)}
+.sw[aria-checked="true"]::after{inset-inline-start:24px;background:var(--accent-ink)}
+.abtn{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:8px 14px;min-height:40px;font-weight:600}
+.abtn:hover{background:var(--accent-soft)}
+.abtn.danger{color:var(--rose);border-color:var(--rose)}
+.abtn.danger:hover{background:var(--rose-soft)}
+.setmsg{min-height:1.4em;color:var(--ok);font-size:.88rem;margin:10px 0 0}
+.about{color:var(--muted);font-size:.82rem;margin:14px 0 0}
+
+/* التخطيط */
+.grid{display:grid;gap:16px;margin-top:16px}
+@media(min-width:820px){.grid.two{grid-template-columns:1fr 1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.card h2{margin:0;font-size:1.2rem;font-weight:700}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.sub{color:var(--muted);font-size:.9rem;margin:2px 0 0}
+
+/* مدخلات */
+.field,.select{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+.field::placeholder{color:var(--muted)}
+textarea.field{resize:vertical;min-height:110px;line-height:1.7}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:10px 16px;min-height:44px;font-weight:600;white-space:nowrap}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--surface-2);filter:none}
+.add{display:flex;gap:8px;margin-bottom:14px}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:8px;min-height:36px;color:var(--muted);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+
+/* التقويم */
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-nav .title{font-weight:700;font-size:1.1rem;min-width:9rem;text-align:center}
+.nav-btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);font-size:1.3rem;line-height:1;display:grid;place-items:center;padding:0}
+.nav-btn:hover{background:var(--accent-soft)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-grid.compact .cell{min-height:56px;background:var(--surface-2);border-color:var(--line)}
+.cal-grid.compact .cell.sel{background:var(--accent);border-color:var(--accent)}
+.brand{font-size:.78rem;letter-spacing:.14em;font-weight:700;opacity:.82;margin-inline-start:8px}
+.main-task-tools{display:grid;gap:8px;grid-template-columns:1fr auto;margin-top:10px}
+.main-task-list{display:grid;gap:6px;margin-top:10px}
+.main-task{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface-2)}
+.wd{text-align:center;color:var(--muted);font-size:.8rem;font-weight:600;padding:4px 0}
+.cell{min-height:50px;border:1px solid transparent;background:transparent;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:2px 0;font-variant-numeric:tabular-nums;font-weight:500}
+.cell:hover{background:var(--surface-2)}
+.cell.today{border-color:var(--accent);color:var(--accent);font-weight:700}
+.cell.sel{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.cell.blank{visibility:hidden;pointer-events:none}
+.dots{display:flex;gap:3px;height:6px}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.dots i.ok{background:var(--ok)}
+.dots i.n{background:var(--amber)}
+.cell.sel .dots i{background:var(--accent-ink)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:.85rem;margin-top:10px}
+.legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-end:6px;background:var(--accent)}
+.legend .l2::before{background:var(--amber)}
+.legend .l3::before{background:var(--ok)}
+
+/* المهام */
+.prog{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:.9rem;color:var(--muted)}
+.prog-track{flex:1;height:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);width:0;transition:width .35s}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.task{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.task.done .t-text{text-decoration:line-through;color:var(--muted)}
+.check{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);background:var(--surface-2);flex:none;display:grid;place-items:center;padding:0;color:transparent}
+.check[aria-checked="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.t-text{flex:1;min-width:0;overflow-wrap:anywhere}
+.chip{border:0;border-radius:99px;padding:3px 10px;font-size:.8rem;font-weight:600;min-height:28px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.chip.p1{background:var(--amber-soft);color:var(--amber)}
+.chip.p2{background:var(--rose-soft);color:var(--rose)}
+.chip.s0{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.chip.s1{background:var(--amber-soft);color:var(--amber)}
+.chip.s2{background:var(--ok-soft);color:var(--ok)}
+.icon-btn{border:0;background:transparent;color:var(--muted);width:36px;height:36px;border-radius:8px;font-size:1.1rem;flex:none}
+.icon-btn:hover{background:var(--rose-soft);color:var(--rose)}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;border:1px dashed var(--line);border-radius:10px;font-size:.95rem}
+
+/* الملاحظات */
+.editor{display:grid;gap:8px;margin-bottom:14px}
+.editor-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.editor-actions .msg{color:var(--ok);font-size:.88rem}
+.editor .where{color:var(--muted);font-size:.85rem}
+.ncard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface)}
+.ncard.editing{border-color:var(--accent);background:var(--accent-soft)}
+.nhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ntitle{font-weight:700;overflow-wrap:anywhere}
+.nbody{margin:6px 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.nfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:.85rem}
+.link{border:0;background:none;color:var(--muted);text-decoration:underline;padding:6px;min-height:36px}
+.link:hover{color:var(--ink)}
+.link.danger{color:var(--rose)}
+
+/* القاعدة الرئيسية */
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tools .field{width:auto;min-width:150px;flex:1}
+.base-add{display:grid;gap:8px;grid-template-columns:1fr;margin:12px 0 16px}
+@media(min-width:720px){.base-add{grid-template-columns:2fr 1.2fr 1fr auto}}
+.rows{display:grid;gap:6px}
+.base-table-wrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin-top:8px}
+.base-day-table{width:100%;border-collapse:separate;border-spacing:0;min-width:640px;background:var(--surface);text-align:right}
+.base-day-table th{background:var(--surface-2);color:var(--muted);font-size:.88rem;font-weight:700;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.base-day-table td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+.base-day-table tbody tr:last-child td{border-bottom:0}
+.base-day-table tbody tr:hover{background:var(--accent-soft)}
+.base-day-table .date-cell{font-weight:700;white-space:nowrap;min-width:145px}
+.base-day-table .content-cell{min-width:190px;white-space:normal;overflow-wrap:anywhere}
+.base-day-table .task-line,.base-day-table .note-line{display:block;margin:0 0 5px}
+.base-day-table .task-line:last-child,.base-day-table .note-line:last-child{margin-bottom:0}
+.base-day-table .muted-cell{color:var(--muted);font-size:.9rem}
+.base-day-table .open-cell{white-space:nowrap;text-align:center}
+.row{display:grid;gap:8px 12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);grid-template-columns:1fr auto}
+.row .r-name{font-weight:600;grid-column:1/-1;overflow-wrap:anywhere}
+.row .r-meta{color:var(--muted);font-size:.88rem}
+@media(min-width:720px){.row{grid-template-columns:2fr 1.2fr 1fr 1fr auto}.row .r-name{grid-column:auto}}
+.rows-head{display:none}
+@media(min-width:720px){.rows-head{display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr auto;gap:12px;padding:0 12px 4px;color:var(--muted);font-size:.85rem;font-weight:600}.rows-head span:last-child{width:36px}}
+.board{display:grid;gap:12px}
+@media(min-width:720px){.board{grid-template-columns:repeat(3,1fr)}}
+.col{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px;min-height:120px}
+.col h3{margin:2px 4px 10px;font-size:.95rem;display:flex;justify-content:space-between}
+.col h3 span{color:var(--muted);font-weight:500}
+.kcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;display:grid;gap:6px}
+.kcard b{overflow-wrap:anywhere}
+.kcard .r-meta{color:var(--muted);font-size:.85rem}
+.kfoot{display:flex;justify-content:space-between;align-items:center;gap:6px}
+
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.stat .num{font-size:1.7rem;font-weight:700;line-height:1.25;color:var(--accent);font-variant-numeric:tabular-nums}
+.stat .label{font-size:.85rem;color:var(--muted)}
+@media(min-width:600px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+footer{margin-top:28px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;color:var(--muted);font-size:.85rem}
+footer .grow{flex:1}
+@keyframes veilIn{from{opacity:0}to{opacity:1}}@keyframes sheetIn{from{transform:translateY(12px);opacity:.8}to{transform:translateY(0);opacity:1}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* NEXORA Studio — refined glass navigation and clock dashboard */
+:root{--bg:#F4F7F5;--surface:#FFFFFF;--surface-2:#F1F5F3;--line:#DFE8E4;--ink:#172F35;--muted:#71838A;--accent:#087E8B;--accent-ink:#FFFFFF;--accent-soft:#DDF3F0;--amber:#C77832;--amber-soft:#FFF0E1;--radius:20px}
+body{background:radial-gradient(ellipse at 10% 0%,rgba(8,126,139,.07),transparent 35%),radial-gradient(ellipse at 100% 20%,rgba(224,151,65,.08),transparent 30%),var(--bg);letter-spacing:-.01em}
+.wrap{max-width:1120px;padding:28px 28px 64px;margin-inline:auto}
+@media(min-width:1100px){.wrap{margin-right:112px;margin-left:auto;max-width:calc(1120px + 112px)}}
+.side-nav{position:fixed;z-index:30;right:18px;top:50%;transform:translateY(-50%);width:82px;display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:13px 9px;border:1px solid rgba(255,255,255,.72);border-radius:26px;background:linear-gradient(155deg,rgba(255,255,255,.76),rgba(237,247,246,.48));backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);box-shadow:0 18px 55px rgba(24,64,70,.14),inset 0 1px 0 rgba(255,255,255,.8)}
+.nav-brand{display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 0 12px;margin-bottom:4px;border:0;border-bottom:1px solid rgba(110,145,148,.22);background:transparent;cursor:pointer;color:inherit;width:100%;border-radius:13px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.nav-brand:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.nav-brand:active{transform:scale(.97)}
+.nav-brand-mark{width:35px;height:35px;display:grid;place-items:center;border-radius:12px;color:white;font-weight:800;font-size:1.15rem;background:linear-gradient(135deg,#087E8B,#25A5A0);box-shadow:0 5px 12px rgba(8,126,139,.23)}
+.nav-brand-name{font-size:.52rem;letter-spacing:.12em;font-weight:800;color:var(--muted)}
+.side-nav button{width:100%;min-height:61px;height:auto;padding:8px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:1px solid transparent;border-radius:16px;background:transparent;color:#557078;font-size:.72rem;font-weight:600;line-height:1.2;transition:background .2s ease,color .2s ease,border-color .2s ease,transform .2s ease}
+.side-nav button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease}
+.side-nav button span{display:block;white-space:nowrap}
+.side-nav button:hover{background:rgba(255,255,255,.68);color:var(--accent);border-color:rgba(8,126,139,.12);transform:translateY(-1px)}
+.side-nav button:hover svg{transform:scale(1.06)}
+.side-nav button:active{transform:scale(.97)}
+.side-nav .side-settings{border:1px solid transparent;margin-top:0;padding-top:8px;color:#557078;background:transparent}
+.side-nav .side-settings:hover,.side-nav .side-settings:focus-visible{border-color:rgba(8,126,139,.12);background:rgba(255,255,255,.68);color:var(--accent)}
+.nav-divider{height:1px;background:rgba(110,145,148,.25);margin:5px 4px}
+.hero{position:relative;isolation:isolate;overflow:hidden;grid-template-columns:minmax(0,1.35fr) minmax(250px,.8fr);gap:22px 28px;padding:30px;border:1px solid rgba(255,255,255,.35);border-radius:30px;background:linear-gradient(122deg,#086B78 0%,#087E8B 48%,#15999A 100%);box-shadow:0 18px 44px rgba(17,92,97,.16)}
+.hero:before{content:"";position:absolute;z-index:-1;width:330px;height:330px;border-radius:50%;inset-inline-end:-110px;top:-170px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.13)}
+.hero:after{content:"";position:absolute;z-index:-1;width:210px;height:210px;border-radius:50%;inset-inline-start:35%;bottom:-160px;background:rgba(255,255,255,.08)}
+.hero-top{margin-bottom:20px}.greet{font-size:1rem;letter-spacing:0}.brand{font-size:.72rem;letter-spacing:.17em;border:1px solid rgba(255,255,255,.27);background:rgba(255,255,255,.1);padding:5px 9px;border-radius:9px;margin-inline-start:0;margin-inline-end:8px}
+.clock{gap:14px;margin-top:0;align-items:center;min-height:104px}.clock .hm{font-size:clamp(4rem,9vw,6.5rem);font-weight:600;letter-spacing:-.065em;text-shadow:0 3px 18px rgba(0,0,0,.08)}.clock .colon{opacity:.7}.clock .side{gap:8px;padding-bottom:0;align-items:flex-start}.clock .sec{font-size:1.55rem;font-weight:600;opacity:.9}.clock .ap{font-size:.78rem;letter-spacing:.03em;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.2);padding:4px 10px}
+.datepanel{min-height:150px;align-self:stretch;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.23);border-radius:22px;padding:22px 24px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.datepanel .wk{font-size:1.85rem;letter-spacing:-.035em}.datepanel .gr{font-size:1.08rem;opacity:.95}.datepanel .hij{font-size:.9rem;margin-top:13px;padding-top:12px;border-color:rgba(255,255,255,.2)}
+.dayprog{padding-top:4px}.day-label{font-size:.83rem}.day-track{height:7px;background:rgba(255,255,255,.22)}.day-fill{background:rgba(255,255,255,.92)}.ticks{font-size:.72rem;opacity:.72}
+.stats{gap:12px;margin-top:18px}.stat{border:1px solid rgba(219,232,226,.9);border-radius:18px;box-shadow:0 6px 20px rgba(28,67,69,.035);padding:15px 17px;background:rgba(255,255,255,.82)}.stat .num{font-size:1.65rem;font-weight:700;letter-spacing:-.04em}
+.card{border-radius:22px;border-color:rgba(219,232,226,.95);box-shadow:0 8px 28px rgba(28,67,69,.035);padding:22px}.card h2{letter-spacing:-.025em}.btn,.abtn,.nav-btn,.field,.select{border-radius:12px}.task,.main-task{border-radius:13px;padding:10px 12px}.field:focus,.select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(8,126,139,.1);outline:none}
+@media(max-width:700px){.wrap{padding:15px 13px 115px}.side-nav{right:50%;top:auto;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(50%);width:auto;min-width:min(94vw,390px);flex-direction:row;justify-content:space-around;gap:3px;padding:7px 9px;border-radius:22px;background:linear-gradient(145deg,rgba(255,255,255,.84),rgba(238,248,246,.72));box-shadow:0 12px 38px rgba(24,64,70,.19),inset 0 1px 0 rgba(255,255,255,.9)}.nav-brand{display:none}.side-nav button{width:auto;min-width:52px;min-height:53px;padding:5px 6px;gap:4px;font-size:.66rem;border-radius:14px}.side-nav button svg{width:20px;height:20px}.side-nav .side-settings{border:1px solid transparent;margin:0;padding:5px 6px}.nav-divider{height:30px;width:1px;margin:0 2px;align-self:center}.hero{grid-template-columns:1fr;padding:21px;gap:17px;border-radius:25px}.hero-top{margin-bottom:15px}.clock{min-height:90px;gap:10px}.clock .hm{font-size:clamp(3.6rem,17vw,5.4rem)}.clock .sec{font-size:1.25rem}.datepanel{min-height:unset;padding:17px 19px}.datepanel .wk{font-size:1.55rem}.dayprog{margin-top:1px}.stats{gap:9px}.stat{padding:12px 13px;border-radius:15px}.stat .num{font-size:1.4rem}.card{padding:16px;border-radius:18px}}
+@media(min-width:701px) and (max-width:1099px){.wrap{padding-inline:20px}.hero{grid-template-columns:1fr 1fr}.side-nav{right:10px;width:72px}.side-nav button{font-size:.65rem}}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101E23;--surface:#172B31;--surface-2:#20363B;--line:#314A50;--ink:#EDF7F5;--muted:#A4B8B8}.side-nav{background:linear-gradient(155deg,rgba(31,55,60,.83),rgba(24,43,48,.72));border-color:rgba(255,255,255,.12)}.side-nav button{color:#D0E3E0}.nav-brand-name{color:#B3C9C8}.stat{background:rgba(23,43,49,.9);border-color:rgba(255,255,255,.07)}.hero{box-shadow:0 18px 44px rgba(0,0,0,.2)}}
+:root[data-theme="dark"] .side-nav{background:linear-gradient(155deg,rgba(31,55,60,.83),rgba(24,43,48,.72));border-color:rgba(255,255,255,.12)}:root[data-theme="dark"] .side-nav button{color:#D0E3E0}:root[data-theme="dark"] .nav-brand-name{color:#B3C9C8}:root[data-theme="dark"] .stat{background:rgba(23,43,49,.9);border-color:rgba(255,255,255,.07)}
+
+
+/* حالة الاتصال والتثبيت */
+.app-tools{position:fixed;left:14px;top:14px;z-index:40;display:flex;gap:8px;align-items:center}
+.net-status,.install-app{border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);box-shadow:0 5px 18px rgba(15,55,65,.10);padding:7px 11px;font-size:.78rem;font-weight:600}
+.net-status{display:flex;align-items:center;gap:6px}
+.net-dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.net-status.offline .net-dot{background:var(--rose)}
+.install-app{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.install-app[hidden]{display:none}
+@media(max-width:700px){.app-tools{top:8px;left:8px;gap:5px}.net-status,.install-app{padding:6px 9px;font-size:.72rem}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+  .central-day-open{outline:3px solid rgba(13,126,135,.28);outline-offset:3px;transition:outline-color .3s;border-radius:18px}
+
+/* ===== v26: التنقل بين الأيام، المهام الرئيسية، الحوارات ===== */
+#dayZone{scroll-margin-top:8px}
+.daybox{position:sticky;top:54px;z-index:25;margin-top:16px;max-height:calc(100vh - 70px);overflow:auto;border-radius:20px;box-shadow:0 8px 24px rgba(28,67,69,.09)}
+.month-panel{margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:20px;background:var(--surface)}
+.month-panel[hidden]{display:none}
+.month-panel .cal-nav{justify-content:space-between;margin-bottom:12px;padding:8px;border-radius:14px;background:var(--surface-2)}
+.month-panel{padding:14px;box-shadow:0 10px 28px rgba(20,60,65,.06)}
+.month-panel .cal-grid{gap:5px}
+.month-panel .wd{padding:8px 0;border-bottom:1px solid var(--line);margin-bottom:3px}
+.month-panel .cell{min-height:58px;border:1px solid var(--line);background:var(--surface-2);transition:transform .15s,background .15s,border-color .15s}
+.month-panel .cell:hover{transform:translateY(-1px);border-color:var(--accent)}
+.month-panel .cell.today{box-shadow:inset 0 0 0 1px var(--accent)}
+.month-panel .cell.sel{box-shadow:0 5px 14px rgba(8,126,139,.2)}
+.month-summary{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.month-summary span{font-size:.8rem;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:5px 10px}
+.month-summary b{color:var(--ink)}
+@media(max-width:520px){.month-panel{padding:8px}.month-panel .cell{min-height:45px;border-radius:9px}.month-panel .cal-grid{gap:3px}.month-panel .wd{font-size:.7rem}.month-panel .cal-nav .title{min-width:0;flex:1;font-size:.95rem}.month-panel .cal-nav{gap:5px}.month-panel #monthToday{padding:3px 7px;font-size:.75rem}}
+.daybar{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:20px;background:var(--surface)}
+.daybar .nav-btn{flex:none}
+.day-pick{position:relative;flex:1;min-width:0}
+.day-pick>button{width:100%;min-height:46px;border:0;background:transparent;border-radius:12px;display:grid;text-align:center;font-weight:700;line-height:1.35;padding:2px 6px}
+.day-pick>button:hover{background:var(--surface-2)}
+.day-pick small{color:var(--muted);font-weight:500;font-size:.78rem}
+.day-pick input{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none}
+.daybar .btn{flex:none;padding:8px 12px;min-height:44px;font-size:.88rem}
+.day-pick>button{font-size:.95rem}
+@media(max-width:520px){.daybar{gap:6px;padding:6px}.daybar .btn{padding:6px 9px;font-size:.82rem}.daybar .nav-btn{width:40px}.daybar .lg{display:none}.day-pick>button{font-size:.84rem;padding:2px 0}.day-pick small{font-size:.72rem}.daybar .btn{padding:6px 7px}}
+.central-day-open .daybar{border-color:var(--accent);box-shadow:0 0 0 4px rgba(8,126,139,.18),0 8px 24px rgba(28,67,69,.09)}
+.btn.danger{background:var(--rose);color:#fff}
+.tabs{display:flex;width:100%;margin-bottom:12px}
+.tabs button{flex:1;min-height:42px;padding:6px 4px;font-size:.9rem;white-space:nowrap}
+.item-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item-tools[hidden],.main-add[hidden],.base-add[hidden]{display:none}
+.main-add{display:grid;gap:8px;grid-template-columns:1fr;margin:12px 0 16px}
+@media(min-width:720px){.main-add{grid-template-columns:2fr 1fr auto}}
+.task{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 10px;border-inline-start:4px solid transparent}
+.task.p1{border-inline-start-color:var(--amber)}
+.task.p2{border-inline-start-color:var(--rose)}
+.t-body{min-width:0;display:grid}
+.t-meta{font-size:.78rem;color:var(--accent);font-weight:600}
+.t-actions{display:flex;align-items:center;gap:2px}
+.icon-btn{display:grid;place-items:center;width:40px;height:40px}
+.icon-btn svg{width:19px;height:19px;pointer-events:none}
+.icon-btn[data-a="edit"]:hover{background:var(--accent-soft);color:var(--accent)}
+.t-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px}
+.t-sub .chip{min-height:26px;padding:1px 10px;font-size:.76rem}
+.mlist{display:grid;gap:10px}
+.mcard{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--surface);display:grid;gap:10px}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mname{font-weight:700;overflow-wrap:anywhere}
+.madd{display:grid;grid-template-columns:1fr auto;gap:8px}
+.madd .select{min-height:44px}
+.mfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.mdays summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-height:38px;display:flex;align-items:center}
+.daychips{display:flex;flex-wrap:wrap;gap:6px;padding-top:4px}
+.daychips .chip{border:1px solid var(--line);min-height:32px}
+.daychips .chip.done{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.datebtn{border:0;background:none;padding:0;min-height:32px;font-weight:700;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.base-day-table tr.is-sel{background:var(--accent-soft)}
+.mini-tag{display:inline-block;font-size:.72rem;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:0 8px;margin-inline-start:6px}
+.toast{position:fixed;z-index:1100;inset-inline:12px;bottom:calc(92px + env(safe-area-inset-bottom));margin-inline:auto;max-width:440px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);font-size:.92rem}
+.toast[hidden]{display:none}
+.toast button{border:0;background:transparent;color:inherit;font-weight:700;text-decoration:underline;min-height:36px;padding:0 6px}
+@media(min-width:701px){.toast{bottom:24px}}
+#dlg{z-index:1050;align-items:flex-end}
+@media(min-width:601px){#dlg{align-items:center}}
+#dlg .sheet{padding:20px 18px 22px}
+#dlg h2{margin:0 0 6px;font-size:1.15rem}
+.dlg-actions{display:grid;gap:8px;margin-top:16px}
+.dlg-actions .btn{white-space:normal;line-height:1.4}
+@media(max-width:700px){
+  .base-table-wrap{border:0;overflow:visible;margin-top:4px}
+  .base-day-table{min-width:0;display:block;background:transparent}
+  .base-day-table thead{display:none}
+  .base-day-table tbody{display:grid;gap:10px}
+  .base-day-table tr{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+  .base-day-table td{display:block;padding:0;border:0;min-width:0!important}
+  .base-day-table td[data-label]::before{content:attr(data-label);display:block;font-size:.74rem;color:var(--muted);font-weight:700;margin-bottom:2px}
+  .base-day-table .date-cell{white-space:normal}
+  .base-day-table .date-cell br,.base-day-table .date-cell .muted-cell{display:none}
+  .base-day-table .open-cell{text-align:start}
+  .base-day-table .open-cell .chip{width:100%;min-height:42px;background:var(--accent);color:var(--accent-ink)}
+  .base-day-table tbody tr:hover{background:var(--surface)}
+  .base-day-table tbody tr.is-sel{background:var(--accent-soft)}
+}
+
+/* القاعدة الرئيسية المطوّرة */
+.central-add{margin:14px 0;padding:18px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,var(--surface),var(--surface-2));box-shadow:0 10px 28px rgba(15,55,65,.07)}
+.central-add-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.central-add-head strong{font-size:1.08rem}.central-add-head p{margin:2px 0 0}.central-add-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.central-add-grid label{display:grid;gap:6px;font-size:.9rem;font-weight:600}.central-add-grid .field,.central-add-grid .select{width:100%;min-width:0}.central-wide{grid-column:1/-1}.central-add-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.base-tools-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.base-add-btn{white-space:nowrap}.search-results{margin:14px 0}.search-results h3{font-size:1rem;margin:12px 0 8px}.search-hit{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 13px;margin:7px 0;border:1px solid var(--line);border-radius:13px;background:var(--surface)}.search-hit .hit-main{min-width:0}.search-hit .hit-title{font-weight:600;overflow-wrap:anywhere}.search-hit .hit-meta{font-size:.83rem;color:var(--muted)}.priority-tag{display:inline-flex;padding:2px 9px;border-radius:999px;font-size:.78rem;background:var(--surface-2);border:1px solid var(--line);white-space:nowrap}.priority-tag.p1{background:var(--amber-soft);color:var(--amber)}.priority-tag.p2{background:var(--rose-soft);color:var(--rose)}
+@media(max-width:650px){.central-add-grid{grid-template-columns:1fr 1fr}.central-add-grid .central-wide{grid-column:1/-1}.search-hit{align-items:flex-start}.central-add{padding:13px}}
+@media(max-width:420px){.central-add-grid{grid-template-columns:1fr}.central-add-grid .central-wide{grid-column:auto}}
+
+
+/* NEXORA v29 — واجهة زجاجية مستوحاة من التقويم المرجعي */
+:root{--radius:18px}
+body{background:radial-gradient(ellipse at 12% 8%,rgba(8,126,139,.16),transparent 38%),radial-gradient(ellipse at 88% 78%,rgba(164,74,91,.13),transparent 35%),var(--bg)}
+.card,.hero,.month-panel,.central-add,.mcard,.daybox,.stat{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.card,.daybox{border-radius:22px;border:1px solid color-mix(in srgb,var(--line) 72%,transparent);box-shadow:0 16px 42px rgba(7,25,33,.08)}
+.hero{border-radius:26px;box-shadow:0 18px 48px rgba(7,25,33,.12)}
+.month-panel{background:linear-gradient(135deg,var(--ov1),var(--ov4)),var(--surface);border-radius:24px;padding:16px;box-shadow:0 16px 42px rgba(7,25,33,.12)}
+.month-panel .cal-nav{border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.month-panel .cell{min-height:66px;border-radius:10px;background:linear-gradient(145deg,var(--ov1),var(--ov4));border:1px solid color-mix(in srgb,var(--line) 75%,transparent)}
+.month-panel .cell.today{outline:1px solid var(--accent);outline-offset:-2px}
+.month-panel .cell.sel{background:var(--accent-soft);border-color:var(--accent);box-shadow:0 5px 18px rgba(8,126,139,.15)}
+.month-panel .wd{font-weight:600}
+#base{overflow:hidden;background:linear-gradient(145deg,var(--ov1),var(--ov4)),var(--surface)}
+#baseTabs{display:flex;gap:7px;flex-wrap:wrap;padding:5px;border:1px solid var(--line);border-radius:16px;background:var(--ov4);width:fit-content;max-width:100%}
+#baseTabs button{border-radius:12px;padding:9px 15px}
+#baseTabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:0 5px 16px rgba(8,126,139,.18)}
+.tools{gap:9px;margin:14px 0 16px}
+#search{min-height:46px;border-radius:15px;background:var(--ov4)}
+.base-add-btn{min-height:46px;border-radius:15px;padding-inline:20px}
+.central-add{border-radius:22px;background:linear-gradient(145deg,var(--ov1),var(--ov4)),var(--surface);box-shadow:0 15px 38px rgba(7,25,33,.10)}
+.mcard{border-radius:19px;border:1px solid var(--line);background:linear-gradient(145deg,var(--ov1),var(--ov4)),var(--surface);box-shadow:0 10px 26px rgba(7,25,33,.06);padding:16px}
+.search-hit{border-radius:16px;background:linear-gradient(145deg,var(--ov1),var(--ov4)),var(--surface)}
+.btn,.chip,.icon-btn,.nav-btn,.select,.field{border-radius:13px}
+/* إزالة شريط الاقتراحات السريع؛ الإضافة والإدارة تبقيان داخل القاعدة الرئيسية */
+@media(max-width:600px){.month-panel{padding:9px}.month-panel .cell{min-height:48px;border-radius:8px}.month-panel .cal-grid{gap:3px}#baseTabs{width:100%}#baseTabs button{flex:1;padding-inline:8px}.base-tools-row,.tools{align-items:stretch}}
+
+/* NEXORA v30 — warm glass calendar redesign */
+:root{--bg:#100b0d;--surface:rgba(42,29,32,.76);--surface-2:rgba(53,36,40,.62);--line:rgba(255,245,240,.19);--ink:#fff8f4;--muted:#c7b5b5;--accent:#e4a16e;--accent-ink:#211411;--accent-soft:rgba(228,161,110,.2);--amber:#ed9a49;--amber-soft:rgba(237,154,73,.16);--rose:#e86e63;--rose-soft:rgba(232,110,99,.18);--ok:#75c9a0;--ok-soft:rgba(117,201,160,.15);--ov1:rgba(255,255,255,.13);--ov2:rgba(255,255,255,.09);--ov3:rgba(255,255,255,.07);--ov4:rgba(10,5,7,.28);color-scheme:dark}
+html{background:#10090b}body{min-height:100vh;background:radial-gradient(ellipse at 8% 35%,rgba(153,75,50,.32),transparent 32%),radial-gradient(ellipse at 85% 15%,rgba(85,42,53,.34),transparent 34%),linear-gradient(115deg,#10090b 0%,#261518 45%,#100a0c 100%);background-attachment:fixed;color:var(--ink)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.35;background:repeating-linear-gradient(90deg,transparent 0 85px,rgba(180,110,80,.06) 87px,transparent 91px),linear-gradient(180deg,rgba(0,0,0,.18),transparent 35%,rgba(0,0,0,.42))}
+.wrap{max-width:1450px;padding:22px 190px 55px 24px;margin:0 auto}
+.side-nav{right:22px;top:50%;padding:12px 10px;gap:8px;width:154px;border:1px solid rgba(255,245,240,.2);border-radius:24px;background:rgba(37,24,28,.65);backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);box-shadow:0 18px 60px rgba(0,0,0,.38)}
+.side-nav button{width:100%;min-height:54px;height:auto;padding:9px 10px;display:flex;align-items:center;justify-content:flex-start;gap:12px;border-radius:14px;color:#f9eeeb;font-size:.95rem;text-align:right}.side-nav button svg{width:22px;height:22px;flex:0 0 22px;stroke:currentColor;fill:none;stroke-width:1.6}.side-nav button span{font-size:.9rem}.side-nav .nav-brand{display:flex;flex-direction:column;justify-content:center;gap:1px;height:76px;margin-bottom:8px;border-bottom:1px solid var(--line);border-radius:12px}.nav-brand-mark{font-size:1.5rem;font-weight:700}.nav-brand-name{font-size:.78rem!important;letter-spacing:.12em}.side-nav button:hover,.side-nav button:focus-visible{background:rgba(255,255,255,.1);transform:translateX(-2px)}.side-nav button[aria-current="page"],.side-nav button.active{background:linear-gradient(120deg,rgba(228,161,110,.28),rgba(255,255,255,.06));border:1px solid rgba(228,161,110,.36)}.side-nav .nav-divider{display:none}.side-nav .side-settings{border-top:1px solid var(--line);margin-top:4px;padding-top:10px;border-radius:12px}
+.hero{position:relative;overflow:hidden;grid-template-columns:1.35fr .8fr;background:linear-gradient(135deg,rgba(88,53,57,.78),rgba(35,24,29,.76));border:1px solid rgba(255,245,240,.25);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);box-shadow:0 22px 65px rgba(0,0,0,.28);border-radius:25px;padding:26px 30px;color:#fff8f4}.hero:after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 80% 100%,rgba(180,91,82,.18),transparent 48%)}.hero>*{position:relative;z-index:1}.greet{color:#f3d6c7}.clock .ap{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15)}.datepanel{background:rgba(10,6,8,.18);border-color:rgba(255,255,255,.16)}.day-track,.prog-track{background:rgba(255,255,255,.13)}.day-fill,.prog-fill{background:linear-gradient(90deg,#b96e51,#e8b48a)}
+.stats{gap:12px}.stat,.card,.daybox,.month-panel,.mcard,.settings-panel,.modal-card,.sheet,.base-card{background:linear-gradient(145deg,rgba(83,57,62,.68),rgba(30,21,25,.78));border:1px solid rgba(255,245,240,.2);box-shadow:0 16px 45px rgba(0,0,0,.2);backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%);color:var(--ink)}.stat{border-radius:17px}.card{border-radius:22px;padding:20px}.card h2,.month-panel .title{color:#fff6f0}.sub,.muted,.label{color:var(--muted)}
+.daybox{padding:18px;border-radius:24px}.daybar{gap:10px}.day-pick button{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:14px;padding:8px 16px}.nav-btn,.chip,.btn,.abtn,.icon-btn{border:1px solid rgba(255,245,240,.2);background:rgba(255,255,255,.07);color:var(--ink);border-radius:13px}.btn.primary,.btn:not(.ghost),#baseAdd,.add-btn{background:linear-gradient(120deg,#f0c19a,#c88760);color:#271713;border-color:rgba(255,224,198,.65);font-weight:700}.btn:hover,.nav-btn:hover,.chip:hover{background:rgba(255,255,255,.15)}
+.month-panel{margin-top:12px;padding:18px;border-radius:20px}.cal-nav{gap:10px}.cal-nav .title{font-size:1.35rem;font-weight:700}.cal-grid{gap:0!important;border:1px solid rgba(255,245,240,.18);border-radius:12px;overflow:hidden}.cal-grid .cell,.cal-grid button{min-height:76px;border-radius:0!important;border:0!important;border-inline-end:1px solid rgba(255,245,240,.16)!important;border-bottom:1px solid rgba(255,245,240,.16)!important;background:rgba(255,255,255,.025);color:#f9efeb}.cal-grid .cell:nth-child(7n),.cal-grid button:nth-child(7n){border-inline-end:0!important}.cal-grid .cell:hover,.cal-grid button:hover{background:rgba(255,255,255,.09)}.cal-grid .selected,.cal-grid [aria-pressed="true"]{background:rgba(228,161,110,.19)!important;box-shadow:inset 0 0 0 1px rgba(228,161,110,.45)}.cal-grid .today,.cal-grid .is-today{color:#ffc49c!important}.month-summary{color:var(--muted)}.legend{color:var(--muted)}
+.task,.main-task,.note,.note-card,.base-item{background:rgba(10,6,8,.18);border-color:rgba(255,245,240,.15);border-radius:13px}.field,.select,textarea{background:rgba(8,5,7,.25);border:1px solid rgba(255,245,240,.2);color:var(--ink)}.field::placeholder,textarea::placeholder{color:#b9a8a8}.seg{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:13px;padding:4px}.seg button{color:var(--muted);border-radius:10px}.seg button[aria-pressed="true"]{background:rgba(228,161,110,.2);color:#ffe0c7}.empty{color:var(--muted)}
+#baseTabs{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:14px;padding:4px}#baseTabs button[aria-pressed="true"]{background:rgba(228,161,110,.2);color:#ffe0c7}.app-tools{color:var(--muted)}
+@media(max-width:900px){.wrap{padding:14px 14px 100px}.side-nav{right:50%;top:auto;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(50%);width:auto;max-width:calc(100vw - 18px);flex-direction:row;gap:3px;padding:6px;border-radius:19px;background:rgba(30,20,24,.86)}.side-nav button{width:auto;min-width:43px;min-height:43px;padding:7px;justify-content:center}.side-nav button span:not(.nav-brand-mark):not(.nav-brand-name){display:none}.side-nav .nav-brand{height:43px;width:43px;margin:0;border:0}.side-nav .nav-brand-name{display:none}.side-nav .nav-brand-mark{font-size:1.1rem}.side-nav .side-settings{border-top:0;border-right:1px solid var(--line);margin:0;padding:7px}.hero{grid-template-columns:1fr;padding:20px}.cal-grid .cell,.cal-grid button{min-height:55px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.clock .hm{font-size:clamp(3.2rem,16vw,5rem)}.cal-grid .cell,.cal-grid button{min-height:43px;padding:3px;font-size:.82rem}.month-panel{padding:10px}.daybox{padding:10px}.card{padding:14px}.daybar{flex-wrap:wrap}.day-pick{flex:1}.day-pick button{width:100%}}
+@media(prefers-reduced-motion:no-preference){.card,.stat,.month-panel,.daybox,.side-nav button{transition:background .2s ease,border-color .2s ease,transform .2s ease,box-shadow .2s ease}}
+
+
+/* NEXORA v31: theme controlled from Settings + glass UI light/dark palettes */
+:root[data-theme="dark"]{color-scheme:dark;--bg:#130e12;--surface:rgba(47,31,36,.82);--surface-2:rgba(73,48,54,.72);--line:rgba(255,239,233,.18);--ink:#fff7f2;--muted:#c6b2b1;--accent:#d99a70;--accent-2:#f0b78e;--ov1:rgba(255,230,220,.10);--ov4:rgba(255,255,255,.055)}
+:root[data-theme="light"]{color-scheme:light;--bg:#eee8e5;--surface:rgba(255,250,248,.88);--surface-2:rgba(239,226,221,.88);--line:rgba(85,57,55,.2);--ink:#302226;--muted:#756368;--accent:#a85f3d;--accent-2:#c27b54;--ov1:rgba(255,255,255,.62);--ov4:rgba(90,52,47,.045)}
+:root[data-theme="light"] body{background:radial-gradient(ellipse at 15% 10%,#ead0c2 0,transparent 42%),linear-gradient(135deg,#f4eeeb,#ded1ce);color:var(--ink)}
+:root[data-theme="light"] .stats .stat,:root[data-theme="light"] .card,:root[data-theme="light"] .daybox,:root[data-theme="light"] .month-panel,:root[data-theme="light"] .mcard,:root[data-theme="light"] .settings-panel,:root[data-theme="light"] .modal-card,:root[data-theme="light"] .sheet,:root[data-theme="light"] .base-card,:root[data-theme="light"] .central-add{background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(245,235,231,.88));border-color:rgba(87,55,52,.19);box-shadow:0 16px 42px rgba(69,42,39,.10);color:var(--ink)}
+:root[data-theme="light"] .card h2,:root[data-theme="light"] .month-panel .title{color:#38272a}
+:root[data-theme="light"] .side-nav{background:linear-gradient(145deg,rgba(255,250,248,.88),rgba(236,220,216,.84));border-color:rgba(87,55,52,.2);box-shadow:0 16px 40px rgba(58,35,34,.13)}
+:root[data-theme="light"] .side-nav button{color:#493337}
+:root[data-theme="light"] .side-nav button[aria-current="page"],:root[data-theme="light"] .side-nav button.active{background:linear-gradient(120deg,rgba(217,154,112,.28),rgba(255,255,255,.5));border-color:rgba(168,95,61,.35)}
+:root[data-theme="light"] .field,:root[data-theme="light"] .select,:root[data-theme="light"] input,:root[data-theme="light"] textarea{background:rgba(255,255,255,.78);color:var(--ink);border-color:var(--line)}
+:root[data-theme="light"] .base-day-table th,:root[data-theme="light"] .base-day-table td,:root[data-theme="light"] .search-hit{border-color:var(--line);background:rgba(255,255,255,.35);color:var(--ink)}
+:root[data-theme="light"] .btn{background:linear-gradient(135deg,#b87551,#d99a70);color:#fffaf7;border-color:rgba(139,75,48,.3)}
+#base .tools{display:flex;align-items:center;gap:10px}
+#base .tools #search{flex:1;min-width:0}
+#base .tools .base-add-btn{flex:0 0 auto}
+#mainAddForm[hidden],#centralAddForm[hidden]{display:none!important}
+@media(max-width:520px){#base .tools{gap:7px}#base .tools #search{width:1%;font-size:.9rem}#base .base-add-btn{padding-inline:12px}}
+
+
+/* NEXORA v32 — reliable light palette + refined premium month calendar */
+:root[data-theme="light"] body{background:radial-gradient(ellipse at 12% 0%,rgba(217,154,112,.16),transparent 38%),radial-gradient(ellipse at 90% 90%,rgba(109,154,164,.13),transparent 38%),linear-gradient(135deg,#f6f2ef,#e9e2df)!important;color:var(--ink)}
+:root[data-theme="light"] .hero,:root[data-theme="light"] .datepanel,:root[data-theme="light"] .daybox,:root[data-theme="light"] .month-panel,:root[data-theme="light"] .card,:root[data-theme="light"] .stat,:root[data-theme="light"] .base-card,:root[data-theme="light"] .mcard,:root[data-theme="light"] .settings-panel,:root[data-theme="light"] .modal-card,:root[data-theme="light"] .sheet,:root[data-theme="light"] .central-add{color:var(--ink)!important;background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(246,238,234,.82))!important;border-color:rgba(93,66,61,.18)!important;box-shadow:0 14px 38px rgba(74,48,44,.09),inset 0 1px 0 rgba(255,255,255,.9)!important}
+:root[data-theme="light"] .hero *,:root[data-theme="light"] .datepanel *,:root[data-theme="light"] .month-panel *,:root[data-theme="light"] .daybox *,:root[data-theme="light"] .card *,:root[data-theme="light"] .base-card *{text-shadow:none}
+:root[data-theme="light"] .cal-grid .cell,:root[data-theme="light"] .cal-grid button{color:#3b2c2d!important;background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(244,235,231,.68))!important;border-color:rgba(91,65,62,.14)!important}
+:root[data-theme="light"] .cal-grid .cell:hover,:root[data-theme="light"] .cal-grid button:hover{background:#fff!important;border-color:var(--accent)!important}
+:root[data-theme="light"] .cal-grid .selected,:root[data-theme="light"] .cal-grid [aria-pressed="true"],:root[data-theme="light"] .cal-grid .sel{background:linear-gradient(145deg,rgba(196,126,91,.22),rgba(255,255,255,.92))!important;border-color:rgba(168,95,61,.52)!important;color:#4a2923!important}
+:root[data-theme="light"] .cal-grid .today,:root[data-theme="light"] .cal-grid .is-today{color:#9a4c2e!important;font-weight:800}
+:root[data-theme="light"] .month-panel .title,:root[data-theme="light"] .card h2,:root[data-theme="light"] .daybar,:root[data-theme="light"] .day-pick button{color:var(--ink)!important}
+:root[data-theme="light"] .month-summary span{background:rgba(255,255,255,.7);color:#665255;border-color:rgba(91,65,62,.14)}
+:root[data-theme="light"] .field,:root[data-theme="light"] .select,:root[data-theme="light"] input,:root[data-theme="light"] textarea{background:rgba(255,255,255,.92)!important;color:#342628!important;border-color:rgba(91,65,62,.22)!important}
+:root[data-theme="light"] .btn.ghost,:root[data-theme="light"] .chip,:root[data-theme="light"] .nav-btn{color:#493337!important;background:rgba(255,255,255,.68)!important;border-color:rgba(91,65,62,.2)!important}
+:root[data-theme="light"] .legend,:root[data-theme="light"] .sub,:root[data-theme="light"] .muted,:root[data-theme="light"] .label{color:#78686a!important}
+/* Month view: structured, information-rich cells while preserving existing navigation and data behavior */
+.month-panel{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(135deg,var(--ov1),var(--ov4)),var(--surface);box-shadow:0 20px 56px rgba(10,20,25,.15),inset 0 1px 0 rgba(255,255,255,.12)}
+.month-panel:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(ellipse at 0 0,rgba(217,154,112,.13),transparent 42%),radial-gradient(ellipse at 100% 100%,rgba(86,156,165,.12),transparent 40%)}
+.month-panel .cal-nav{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:14px;border-radius:17px;background:rgba(255,255,255,.055);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.month-panel .cal-nav .title{flex:1;text-align:center;letter-spacing:.01em;font-size:clamp(1rem,2.2vw,1.45rem)}
+.month-panel .cal-nav .nav-btn{width:40px;height:40px;border-radius:13px;flex:0 0 40px}
+.month-panel #monthToday{white-space:nowrap;border-radius:12px;padding:8px 12px}
+.month-panel .month-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.month-panel .month-summary span{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 9px;border-radius:13px;background:rgba(255,255,255,.055);border:1px solid var(--line);font-size:.8rem}
+.month-panel .month-summary b{font-size:1rem}
+.month-panel .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:16px;overflow:hidden;gap:0!important}
+.month-panel .cal-grid .wd{display:flex;justify-content:center;align-items:center;min-height:39px;margin:0;padding:7px 2px;background:rgba(255,255,255,.075);border:0;border-inline-end:1px solid var(--line);font-size:.82rem;font-weight:700;color:var(--muted)}
+.month-panel .cal-grid .cell,.month-panel .cal-grid button{position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;min-width:0;min-height:clamp(66px,8.5vw,100px);padding:9px 9px 7px;border:0!important;border-radius:0!important;border-inline-end:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important;background:rgba(255,255,255,.025);color:var(--ink);text-align:start;transition:background .18s ease,box-shadow .18s ease;overflow:hidden}
+.month-panel .cal-grid .cell:nth-child(7n),.month-panel .cal-grid button:nth-child(7n){border-inline-end:0!important}
+.month-panel .cal-grid .cell>span:first-child,.month-panel .cal-grid button>span:first-child{align-self:flex-start;display:grid;place-items:center;min-width:28px;height:28px;padding:0 5px;border-radius:9px;font-size:.88rem;font-weight:600}
+.month-panel .cal-grid button:hover{transform:none!important;background:rgba(255,255,255,.09)!important;box-shadow:inset 0 0 0 1px var(--accent)}
+.month-panel .cal-grid .blank{background:rgba(0,0,0,.025)}
+.month-panel .cal-grid .today>span:first-child{background:var(--accent);color:#fff!important;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.month-panel .cal-grid .sel{box-shadow:inset 0 0 0 2px var(--accent)!important;background:rgba(217,154,112,.13)!important}
+.month-panel .cal-grid .dots{display:flex;gap:5px;align-items:center;min-height:9px;padding-inline:3px}
+.month-panel .cal-grid .dots i{width:7px;height:7px;border-radius:50%;display:inline-block;background:#ed8b58;box-shadow:0 0 0 3px rgba(237,139,88,.13)}
+.month-panel .cal-grid .dots i.ok{background:#5fc69b;box-shadow:0 0 0 3px rgba(95,198,155,.13)}
+.month-panel .cal-grid .dots i.n{background:#78a9ff;box-shadow:0 0 0 3px rgba(120,169,255,.13)}
+.month-panel .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.78rem}
+.month-panel .legend span{display:inline-flex;align-items:center;gap:7px}
+.month-panel .legend span:before{content:"";width:8px;height:8px;border-radius:50%;background:#ed8b58}.month-panel .legend .l3:before{background:#5fc69b}.month-panel .legend .l2:before{background:#78a9ff}
+:root[data-theme="light"] .month-panel .cal-grid .wd{background:rgba(104,69,61,.055);color:#776467}
+:root[data-theme="light"] .month-panel .cal-grid .cell,:root[data-theme="light"] .month-panel .cal-grid button{background:rgba(255,255,255,.45)!important;color:#3b2c2d!important}
+:root[data-theme="light"] .month-panel .cal-grid button:hover{background:#fff!important}
+:root[data-theme="light"] .month-panel .cal-grid .blank{background:rgba(92,62,58,.04)!important}
+@media(max-width:650px){.month-panel .month-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.month-panel .cal-grid .wd{min-height:32px;font-size:.7rem}.month-panel .cal-grid .cell,.month-panel .cal-grid button{min-height:52px;padding:5px 4px}.month-panel .cal-grid .cell>span:first-child,.month-panel .cal-grid button>span:first-child{min-width:24px;height:24px;font-size:.78rem}.month-panel .cal-nav{gap:5px;padding:7px}.month-panel .cal-nav .nav-btn{width:34px;height:34px;flex-basis:34px}.month-panel #monthToday{padding:6px 8px;font-size:.76rem}}
+@media(max-width:380px){.month-panel .cal-grid .cell,.month-panel .cal-grid button{min-height:44px;padding:3px 2px}.month-panel .cal-grid .dots{gap:3px}.month-panel .cal-grid .dots i{width:5px;height:5px}.month-panel .cal-grid .wd{font-size:.64rem}}
+
+
+/* NEXORA v33 — unified palettes and truly glass light theme */
+:root[data-theme="dark"]{
+ --bg:#171316;--surface:rgba(40,31,35,.66);--surface-2:rgba(54,42,47,.58);
+ --line:rgba(255,244,239,.18);--ink:#fff8f4;--muted:#c9b9b7;
+ --accent:#d58f68;--accent-2:#edb18d;--ov1:rgba(255,255,255,.075);--ov4:rgba(255,255,255,.045);
+ color-scheme:dark
+}
+:root[data-theme="light"]{
+ --bg:#e9e8e4;--surface:rgba(255,255,255,.34);--surface-2:rgba(255,255,255,.23);
+ --line:rgba(255,255,255,.62);--ink:#292b2c;--muted:#62676a;
+ --accent:#477e82;--accent-2:#60999c;--ov1:rgba(255,255,255,.34);--ov4:rgba(255,255,255,.18);
+ color-scheme:light
+}
+:root[data-theme="light"] body{
+ background:radial-gradient(ellipse at 12% 8%,rgba(255,255,255,.72),transparent 40%),radial-gradient(ellipse at 88% 88%,rgba(155,190,190,.25),transparent 42%),linear-gradient(135deg,#e8e8e5,#d8dedc)!important;color:var(--ink)
+}
+:root[data-theme="light"] .hero,:root[data-theme="light"] .datepanel,:root[data-theme="light"] .daybox,:root[data-theme="light"] .month-panel,:root[data-theme="light"] .card,:root[data-theme="light"] .stat,:root[data-theme="light"] .base-card,:root[data-theme="light"] .mcard,:root[data-theme="light"] .settings-panel,:root[data-theme="light"] .modal-card,:root[data-theme="light"] .sheet,:root[data-theme="light"] .central-add{
+ color:var(--ink)!important;background:linear-gradient(135deg,rgba(255,255,255,.48),rgba(255,255,255,.22))!important;border:1px solid rgba(255,255,255,.65)!important;box-shadow:0 16px 42px rgba(45,61,62,.10),inset 0 1px 0 rgba(255,255,255,.72)!important;backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%)
+}
+:root[data-theme="light"] .side-nav{background:linear-gradient(145deg,rgba(255,255,255,.48),rgba(255,255,255,.24))!important;border:1px solid rgba(255,255,255,.65)!important;box-shadow:0 16px 40px rgba(45,61,62,.12)!important;backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%)}
+:root[data-theme="light"] .side-nav button,:root[data-theme="light"] .card h2,:root[data-theme="light"] .month-panel .title,:root[data-theme="light"] .daybar,:root[data-theme="light"] .day-pick button{color:#292b2c!important}
+:root[data-theme="light"] .field,:root[data-theme="light"] .select,:root[data-theme="light"] input,:root[data-theme="light"] textarea{background:rgba(255,255,255,.42)!important;color:#292b2c!important;border-color:rgba(255,255,255,.72)!important}
+:root[data-theme="light"] .cal-grid .cell,:root[data-theme="light"] .cal-grid button{background:rgba(255,255,255,.22)!important;color:#292b2c!important;border-color:rgba(255,255,255,.42)!important}
+:root[data-theme="light"] .cal-grid .wd{background:rgba(255,255,255,.22)!important;color:#555c5d!important}
+:root[data-theme="light"] .cal-grid .selected,:root[data-theme="light"] .cal-grid [aria-pressed="true"],:root[data-theme="light"] .cal-grid .sel{background:rgba(71,126,130,.22)!important;border-color:rgba(71,126,130,.58)!important;color:#214f52!important}
+:root[data-theme="light"] .btn{background:linear-gradient(135deg,#477e82,#60999c)!important;color:#fff!important;border-color:rgba(71,126,130,.35)!important}
+:root[data-theme="light"] .btn.ghost,:root[data-theme="light"] .chip,:root[data-theme="light"] .nav-btn{background:rgba(255,255,255,.3)!important;color:#303637!important;border-color:rgba(255,255,255,.65)!important}
+:root[data-theme="light"] .sub,:root[data-theme="light"] .muted,:root[data-theme="light"] .label,:root[data-theme="light"] .legend{color:#62676a!important}
+:root[data-theme="light"] .side-nav button[aria-current="page"],:root[data-theme="light"] .side-nav button.active{background:rgba(71,126,130,.17)!important;border-color:rgba(71,126,130,.34)!important}
+
+
+/* NEXORA v34 — one source of truth for every theme surface */
+:root[data-theme="light"]{
+  --bg:#e9efed;--surface:rgba(255,255,255,.56);--surface-2:rgba(255,255,255,.34);
+  --line:rgba(55,91,91,.18);--ink:#203638;--muted:#607779;
+  --accent:#167f82;--accent-ink:#fff;--accent-soft:rgba(22,127,130,.13);
+  --amber:#a95e22;--amber-soft:rgba(211,137,65,.16);--rose:#b74457;--rose-soft:rgba(183,68,87,.13);
+  --ok:#24775e;--ok-soft:rgba(36,119,94,.13);color-scheme:light
+}
+:root[data-theme="dark"]{
+  --bg:#171316;--surface:rgba(40,31,35,.76);--surface-2:rgba(54,42,47,.68);
+  --line:rgba(255,244,239,.17);--ink:#fff8f4;--muted:#c9b9b7;
+  --accent:#d58f68;--accent-ink:#211815;--accent-soft:rgba(213,143,104,.17);
+  --amber:#edb18d;--amber-soft:rgba(237,177,141,.15);--rose:#f08b96;--rose-soft:rgba(240,139,150,.14);
+  --ok:#8bd2ac;--ok-soft:rgba(139,210,172,.14);color-scheme:dark
+}
+:root[data-theme="light"] body{background:radial-gradient(ellipse at 12% 5%,rgba(255,255,255,.78),transparent 39%),radial-gradient(ellipse at 90% 90%,rgba(89,151,151,.17),transparent 42%),var(--bg)!important;color:var(--ink)}
+:root[data-theme="dark"] body{background:radial-gradient(ellipse at 12% 0%,rgba(213,143,104,.10),transparent 38%),radial-gradient(ellipse at 92% 90%,rgba(92,131,132,.09),transparent 40%),var(--bg)!important;color:var(--ink)}
+/* Same glass treatment for navigation, cards, dialogs, forms, calendar and database */
+:root[data-theme="light"] .side-nav,:root[data-theme="light"] .card,:root[data-theme="light"] .stat,:root[data-theme="light"] .month-panel,:root[data-theme="light"] .daybox,:root[data-theme="light"] .daybar,:root[data-theme="light"] .base-card,:root[data-theme="light"] .mcard,:root[data-theme="light"] .settings-panel,:root[data-theme="light"] .modal-card,:root[data-theme="light"] .sheet,:root[data-theme="light"] .central-add,:root[data-theme="light"] .ncard,:root[data-theme="light"] .row,:root[data-theme="light"] .col,:root[data-theme="light"] .kcard,:root[data-theme="light"] .task,:root[data-theme="light"] .main-task{
+ color:var(--ink)!important;background:linear-gradient(145deg,rgba(255,255,255,.67),rgba(255,255,255,.31))!important;border-color:var(--line)!important;box-shadow:0 12px 32px rgba(32,61,61,.07),inset 0 1px 0 rgba(255,255,255,.72)!important;backdrop-filter:blur(22px) saturate(145%);-webkit-backdrop-filter:blur(22px) saturate(145%)}
+:root[data-theme="dark"] .side-nav,:root[data-theme="dark"] .card,:root[data-theme="dark"] .stat,:root[data-theme="dark"] .month-panel,:root[data-theme="dark"] .daybox,:root[data-theme="dark"] .daybar,:root[data-theme="dark"] .base-card,:root[data-theme="dark"] .mcard,:root[data-theme="dark"] .settings-panel,:root[data-theme="dark"] .modal-card,:root[data-theme="dark"] .sheet,:root[data-theme="dark"] .central-add,:root[data-theme="dark"] .ncard,:root[data-theme="dark"] .row,:root[data-theme="dark"] .col,:root[data-theme="dark"] .kcard,:root[data-theme="dark"] .task,:root[data-theme="dark"] .main-task{
+ color:var(--ink)!important;background:linear-gradient(145deg,rgba(54,42,47,.82),rgba(35,28,32,.72))!important;border-color:var(--line)!important;box-shadow:0 12px 32px rgba(0,0,0,.17),inset 0 1px 0 rgba(255,255,255,.035)!important;backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%)}
+:root[data-theme="light"] .hero{color:#fff!important;background:linear-gradient(125deg,#176e72,#16878a 56%,#2c9b96)!important;border-color:rgba(255,255,255,.36)!important}
+:root[data-theme="dark"] .hero{color:#fff8f4!important;background:linear-gradient(125deg,#352522,#49302a 56%,#365354)!important;border-color:rgba(255,244,239,.14)!important}
+:root[data-theme="light"] .hero .datepanel,:root[data-theme="dark"] .hero .datepanel{color:inherit!important;background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.24)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)!important}
+:root[data-theme="light"] .side-nav button,:root[data-theme="light"] .side-nav .side-settings,:root[data-theme="light"] .card h2,:root[data-theme="light"] .month-panel .title,:root[data-theme="light"] .daybar,:root[data-theme="light"] .day-pick button{color:var(--ink)!important}
+:root[data-theme="dark"] .side-nav button,:root[data-theme="dark"] .side-nav .side-settings,:root[data-theme="dark"] .card h2,:root[data-theme="dark"] .month-panel .title,:root[data-theme="dark"] .daybar,:root[data-theme="dark"] .day-pick button{color:var(--ink)!important}
+:root[data-theme="light"] .field,:root[data-theme="light"] .select,:root[data-theme="light"] input,:root[data-theme="light"] textarea,:root[data-theme="light"] select,:root[data-theme="light"] .search-hit,:root[data-theme="light"] .base-day-table{background:rgba(255,255,255,.52)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="dark"] .field,:root[data-theme="dark"] .select,:root[data-theme="dark"] input,:root[data-theme="dark"] textarea,:root[data-theme="dark"] select,:root[data-theme="dark"] .search-hit,:root[data-theme="dark"] .base-day-table{background:rgba(20,16,19,.32)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="light"] .cal-grid .cell,:root[data-theme="light"] .cal-grid button,:root[data-theme="light"] .month-panel .cal-grid .cell,:root[data-theme="light"] .month-panel .cal-grid button,:root[data-theme="light"] .month-panel .cal-grid .wd{background:rgba(255,255,255,.35)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="dark"] .cal-grid .cell,:root[data-theme="dark"] .cal-grid button,:root[data-theme="dark"] .month-panel .cal-grid .cell,:root[data-theme="dark"] .month-panel .cal-grid button,:root[data-theme="dark"] .month-panel .cal-grid .wd{background:rgba(255,255,255,.035)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="light"] .cal-grid .cell.sel,:root[data-theme="light"] .cal-grid .sel,:root[data-theme="light"] .cal-grid [aria-pressed="true"]{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+:root[data-theme="dark"] .cal-grid .cell.sel,:root[data-theme="dark"] .cal-grid .sel,:root[data-theme="dark"] .cal-grid [aria-pressed="true"]{background:var(--accent)!important;color:var(--accent-ink)!important;border-color:var(--accent)!important}
+:root[data-theme="light"] .btn,:root[data-theme="dark"] .btn,:root[data-theme="light"] .install-app,:root[data-theme="dark"] .install-app{background:var(--accent)!important;color:var(--accent-ink)!important;border-color:var(--accent)!important}
+:root[data-theme="light"] .btn.ghost,:root[data-theme="light"] .abtn,:root[data-theme="light"] .nav-btn,:root[data-theme="light"] .chip,:root[data-theme="dark"] .btn.ghost,:root[data-theme="dark"] .abtn,:root[data-theme="dark"] .nav-btn,:root[data-theme="dark"] .chip{background:var(--surface-2)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="light"] .sub,:root[data-theme="light"] .muted,:root[data-theme="light"] .label,:root[data-theme="light"] .legend,:root[data-theme="light"] footer,:root[data-theme="dark"] .sub,:root[data-theme="dark"] .muted,:root[data-theme="dark"] .label,:root[data-theme="dark"] .legend,:root[data-theme="dark"] footer{color:var(--muted)!important}
+:root[data-theme="light"] .side-nav button[aria-current="page"],:root[data-theme="light"] .side-nav button.active,:root[data-theme="dark"] .side-nav button[aria-current="page"],:root[data-theme="dark"] .side-nav button.active{background:var(--accent-soft)!important;border-color:var(--line)!important;color:var(--accent)!important}
+:root[data-theme="light"] .base-day-table th,:root[data-theme="dark"] .base-day-table th{background:var(--surface-2)!important;color:var(--muted)!important}
+:root[data-theme="light"] .base-day-table td,:root[data-theme="dark"] .base-day-table td{background:transparent!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="light"] .overlay .sheet,:root[data-theme="dark"] .overlay .sheet{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="light"] .net-status,:root[data-theme="light"] .install-app:not([hidden]),:root[data-theme="dark"] .net-status{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+
+
+/* NEXORA v35 — requested clean-white light theme + neutral monochrome dark theme */
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#FFFFFF;--surface:rgba(255,255,255,.94);--surface-2:#F5F7F9;
+  --line:#E2E8F0;--ink:#17212B;--muted:#64748B;
+  --accent:#087E8B;--accent-ink:#FFFFFF;--accent-soft:rgba(8,126,139,.10);
+  --amber:#087E8B;--amber-soft:rgba(8,126,139,.10);
+  --rose:#087E8B;--rose-soft:rgba(8,126,139,.10);
+  --ok:#087E8B;--ok-soft:rgba(8,126,139,.10);
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121212;--surface:#1C1C1E;--surface-2:#262629;
+  --line:#3A3A3C;--ink:#F5F5F7;--muted:#B7B7BD;
+  --accent:#E5E5E7;--accent-ink:#171719;--accent-soft:rgba(229,229,231,.12);
+  --amber:#D1D1D6;--amber-soft:rgba(209,209,214,.12);
+  --rose:#D1D1D6;--rose-soft:rgba(209,209,214,.12);
+  --ok:#D1D1D6;--ok-soft:rgba(209,209,214,.12);
+}
+:root[data-theme="light"] body{background:#FFFFFF!important;color:var(--ink)!important}
+:root[data-theme="dark"] body{background:#121212!important;color:var(--ink)!important}
+:root[data-theme="light"] .side-nav,:root[data-theme="light"] .card,:root[data-theme="light"] .stat,:root[data-theme="light"] .month-panel,:root[data-theme="light"] .daybox,:root[data-theme="light"] .daybar,:root[data-theme="light"] .base-card,:root[data-theme="light"] .mcard,:root[data-theme="light"] .settings-panel,:root[data-theme="light"] .modal-card,:root[data-theme="light"] .sheet,:root[data-theme="light"] .central-add,:root[data-theme="light"] .ncard,:root[data-theme="light"] .row,:root[data-theme="light"] .col,:root[data-theme="light"] .kcard,:root[data-theme="light"] .task,:root[data-theme="light"] .main-task{background:rgba(255,255,255,.96)!important;border-color:var(--line)!important;color:var(--ink)!important;box-shadow:0 8px 28px rgba(15,23,42,.055),inset 0 1px 0 #fff!important}
+:root[data-theme="dark"] .side-nav,:root[data-theme="dark"] .card,:root[data-theme="dark"] .stat,:root[data-theme="dark"] .month-panel,:root[data-theme="dark"] .daybox,:root[data-theme="dark"] .daybar,:root[data-theme="dark"] .base-card,:root[data-theme="dark"] .mcard,:root[data-theme="dark"] .settings-panel,:root[data-theme="dark"] .modal-card,:root[data-theme="dark"] .sheet,:root[data-theme="dark"] .central-add,:root[data-theme="dark"] .ncard,:root[data-theme="dark"] .row,:root[data-theme="dark"] .col,:root[data-theme="dark"] .kcard,:root[data-theme="dark"] .task,:root[data-theme="dark"] .main-task{background:#1C1C1E!important;border-color:var(--line)!important;color:var(--ink)!important;box-shadow:0 8px 24px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.025)!important}
+:root[data-theme="light"] .hero{background:linear-gradient(135deg,#087E8B,#15999A)!important;color:#fff!important;border-color:rgba(8,126,139,.2)!important}
+:root[data-theme="dark"] .hero{background:linear-gradient(135deg,#1C1C1E,#262629)!important;color:#F5F5F7!important;border-color:#3A3A3C!important}
+:root[data-theme="light"] .field,:root[data-theme="light"] .select,:root[data-theme="light"] input,:root[data-theme="light"] textarea,:root[data-theme="light"] select,:root[data-theme="light"] .search-hit,:root[data-theme="light"] .base-day-table{background:#FFFFFF!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="dark"] .field,:root[data-theme="dark"] .select,:root[data-theme="dark"] input,:root[data-theme="dark"] textarea,:root[data-theme="dark"] select,:root[data-theme="dark"] .search-hit,:root[data-theme="dark"] .base-day-table{background:#171719!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="light"] .cal-grid .cell,:root[data-theme="light"] .cal-grid button,:root[data-theme="light"] .month-panel .cal-grid .cell,:root[data-theme="light"] .month-panel .cal-grid button,:root[data-theme="light"] .month-panel .cal-grid .wd{background:#F8FAFC!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="dark"] .cal-grid .cell,:root[data-theme="dark"] .cal-grid button,:root[data-theme="dark"] .month-panel .cal-grid .cell,:root[data-theme="dark"] .month-panel .cal-grid button,:root[data-theme="dark"] .month-panel .cal-grid .wd{background:#222225!important;color:var(--ink)!important;border-color:#3A3A3C!important}
+:root[data-theme="light"] .cal-grid .cell.sel,:root[data-theme="light"] .cal-grid .sel,:root[data-theme="light"] .cal-grid [aria-pressed="true"]{background:#087E8B!important;color:#fff!important;border-color:#087E8B!important}
+:root[data-theme="dark"] .cal-grid .cell.sel,:root[data-theme="dark"] .cal-grid .sel,:root[data-theme="dark"] .cal-grid [aria-pressed="true"]{background:#D1D1D6!important;color:#171719!important;border-color:#D1D1D6!important}
+:root[data-theme="light"] .btn,:root[data-theme="light"] .install-app{background:#087E8B!important;color:#fff!important;border-color:#087E8B!important}
+:root[data-theme="dark"] .btn,:root[data-theme="dark"] .install-app{background:#D1D1D6!important;color:#171719!important;border-color:#D1D1D6!important}
+:root[data-theme="light"] .btn.ghost,:root[data-theme="light"] .abtn,:root[data-theme="light"] .nav-btn,:root[data-theme="light"] .chip{background:#F5F7F9!important;color:#17212B!important;border-color:#E2E8F0!important}
+:root[data-theme="dark"] .btn.ghost,:root[data-theme="dark"] .abtn,:root[data-theme="dark"] .nav-btn,:root[data-theme="dark"] .chip{background:#262629!important;color:#F5F5F7!important;border-color:#3A3A3C!important}
+:root[data-theme="light"] .chip.p1,:root[data-theme="light"] .chip.s1,:root[data-theme="light"] .priority-tag.p1,:root[data-theme="light"] .priority-tag.p2{background:rgba(8,126,139,.10)!important;color:#087E8B!important;border-color:rgba(8,126,139,.22)!important}
+:root[data-theme="dark"] .chip.p1,:root[data-theme="dark"] .chip.s1,:root[data-theme="dark"] .priority-tag.p1,:root[data-theme="dark"] .priority-tag.p2{background:#2A2A2D!important;color:#D1D1D6!important;border-color:#454549!important}
+:root[data-theme="dark"] .dots i.n,:root[data-theme="dark"] .legend .l2::before{background:#D1D1D6!important}
+:root[data-theme="light"] .dots i.n,:root[data-theme="light"] .legend .l2::before{background:#087E8B!important}
+:root[data-theme="light"] .task.p1{border-inline-start-color:#087E8B!important}
+:root[data-theme="dark"] .task.p1{border-inline-start-color:#D1D1D6!important}
+:root[data-theme="dark"] .side-nav button[aria-current="page"],:root[data-theme="dark"] .side-nav button.active{background:#2A2A2D!important;color:#F5F5F7!important;border-color:#454549!important}
+:root[data-theme="light"] .side-nav button[aria-current="page"],:root[data-theme="light"] .side-nav button.active{background:rgba(8,126,139,.10)!important;color:#087E8B!important;border-color:rgba(8,126,139,.22)!important}
+
+
+/* NEXORA v36 — restore original teal accent in Light Mode; neutral monochrome Dark Mode */
+:root[data-theme="light"]{
+ color-scheme:light;
+ --bg:#FFFFFF; --surface:rgba(255,255,255,.96); --surface-2:#F5F7F9;
+ --line:#E2E8F0; --ink:#17212B; --muted:#64748B;
+ --accent:#087E8B; --accent-ink:#FFFFFF; --accent-soft:rgba(8,126,139,.11);
+ --amber:#087E8B; --amber-soft:rgba(8,126,139,.10);
+ --rose:#087E8B; --rose-soft:rgba(8,126,139,.10);
+ --ok:#087E8B; --ok-soft:rgba(8,126,139,.10);
+}
+:root[data-theme="light"] .hero{background:linear-gradient(135deg,#087E8B,#15999A)!important;color:#FFFFFF!important;border-color:rgba(8,126,139,.20)!important}
+:root[data-theme="light"] .btn,:root[data-theme="light"] .install-app{background:#087E8B!important;color:#FFFFFF!important;border-color:#087E8B!important}
+:root[data-theme="light"] .cal-grid .cell.sel,:root[data-theme="light"] .cal-grid .sel,:root[data-theme="light"] .cal-grid [aria-pressed="true"]{background:#087E8B!important;color:#FFFFFF!important;border-color:#087E8B!important}
+:root[data-theme="light"] .field:focus,:root[data-theme="light"] input:focus,:root[data-theme="light"] textarea:focus,:root[data-theme="light"] select:focus{border-color:#087E8B!important;box-shadow:0 0 0 3px rgba(8,126,139,.13)!important}
+:root[data-theme="light"] .side-nav button.active,:root[data-theme="light"] .side-nav button[aria-current="page"]{background:rgba(8,126,139,.11)!important;color:#087E8B!important}
+:root[data-theme="dark"]{
+ color-scheme:dark;
+ --bg:#121212; --surface:#1C1C1E; --surface-2:#262629;
+ --line:#3A3A3C; --ink:#F5F5F7; --muted:#B7B7BD;
+ --accent:#D1D1D6; --accent-ink:#171719; --accent-soft:rgba(209,209,214,.12);
+ --amber:#D1D1D6; --amber-soft:rgba(209,209,214,.12);
+ --rose:#D1D1D6; --rose-soft:rgba(209,209,214,.12);
+ --ok:#D1D1D6; --ok-soft:rgba(209,209,214,.12);
+}
+:root[data-theme="dark"] .hero{background:linear-gradient(135deg,#1C1C1E,#262629)!important;color:#F5F5F7!important;border-color:#3A3A3C!important}
+:root[data-theme="dark"] .btn,:root[data-theme="dark"] .install-app{background:#D1D1D6!important;color:#171719!important;border-color:#D1D1D6!important}
+:root[data-theme="dark"] .cal-grid .cell.sel,:root[data-theme="dark"] .cal-grid .sel,:root[data-theme="dark"] .cal-grid [aria-pressed="true"]{background:#D1D1D6!important;color:#171719!important;border-color:#D1D1D6!important}
+
+
+
+/* NEXORA v37 — final theme consistency + theme-aware sidebar brand */
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F5F7F9;
+  --line:#E2E8F0; --ink:#17212B; --muted:#64748B;
+  --accent:#087E8B; --accent-ink:#FFFFFF; --accent-soft:rgba(8,126,139,.11);
+  --amber:#087E8B; --amber-soft:rgba(8,126,139,.10);
+  --rose:#087E8B; --rose-soft:rgba(8,126,139,.10);
+  --ok:#087E8B; --ok-soft:rgba(8,126,139,.10);
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121212; --surface:#1C1C1E; --surface-2:#262629;
+  --line:#3A3A3C; --ink:#F5F5F7; --muted:#B7B7BD;
+  --accent:#D1D1D6; --accent-ink:#171719; --accent-soft:rgba(209,209,214,.12);
+  --amber:#D1D1D6; --amber-soft:rgba(209,209,214,.12);
+  --rose:#D1D1D6; --rose-soft:rgba(209,209,214,.12);
+  --ok:#D1D1D6; --ok-soft:rgba(209,209,214,.12);
+}
+:root[data-theme="light"] body{background:#FFFFFF!important;color:#17212B!important}
+:root[data-theme="dark"] body{background:#121212!important;color:#F5F5F7!important}
+:root[data-theme="light"] .side-nav,:root[data-theme="light"] .card,:root[data-theme="light"] .stat,:root[data-theme="light"] .month-panel,:root[data-theme="light"] .daybox,:root[data-theme="light"] .daybar,:root[data-theme="light"] .base-card,:root[data-theme="light"] .mcard,:root[data-theme="light"] .settings-panel,:root[data-theme="light"] .modal-card,:root[data-theme="light"] .sheet,:root[data-theme="light"] .central-add,:root[data-theme="light"] .ncard,:root[data-theme="light"] .row,:root[data-theme="light"] .col,:root[data-theme="light"] .kcard,:root[data-theme="light"] .task,:root[data-theme="light"] .main-task{background:#FFFFFF!important;color:var(--ink)!important;border-color:var(--line)!important;box-shadow:0 8px 28px rgba(15,23,42,.055)!important}
+:root[data-theme="dark"] .side-nav,:root[data-theme="dark"] .card,:root[data-theme="dark"] .stat,:root[data-theme="dark"] .month-panel,:root[data-theme="dark"] .daybox,:root[data-theme="dark"] .daybar,:root[data-theme="dark"] .base-card,:root[data-theme="dark"] .mcard,:root[data-theme="dark"] .settings-panel,:root[data-theme="dark"] .modal-card,:root[data-theme="dark"] .sheet,:root[data-theme="dark"] .central-add,:root[data-theme="dark"] .ncard,:root[data-theme="dark"] .row,:root[data-theme="dark"] .col,:root[data-theme="dark"] .kcard,:root[data-theme="dark"] .task,:root[data-theme="dark"] .main-task{background:#1C1C1E!important;color:var(--ink)!important;border-color:var(--line)!important;box-shadow:0 8px 24px rgba(0,0,0,.24)!important}
+:root[data-theme="light"] .hero{background:linear-gradient(135deg,#087E8B,#15999A)!important;color:#FFFFFF!important;border-color:rgba(8,126,139,.2)!important}
+:root[data-theme="dark"] .hero{background:linear-gradient(135deg,#1C1C1E,#262629)!important;color:#F5F5F7!important;border-color:#3A3A3C!important}
+:root[data-theme="light"] .btn,:root[data-theme="light"] .install-app{background:#087E8B!important;color:#FFFFFF!important;border-color:#087E8B!important}
+:root[data-theme="dark"] .btn,:root[data-theme="dark"] .install-app{background:#D1D1D6!important;color:#171719!important;border-color:#D1D1D6!important}
+:root[data-theme="light"] .btn.ghost,:root[data-theme="light"] .abtn,:root[data-theme="light"] .nav-btn,:root[data-theme="light"] .chip{background:#F5F7F9!important;color:#17212B!important;border-color:#E2E8F0!important}
+:root[data-theme="dark"] .btn.ghost,:root[data-theme="dark"] .abtn,:root[data-theme="dark"] .nav-btn,:root[data-theme="dark"] .chip{background:#262629!important;color:#F5F5F7!important;border-color:#3A3A3C!important}
+:root[data-theme="light"] .field,:root[data-theme="light"] .select,:root[data-theme="light"] input,:root[data-theme="light"] textarea,:root[data-theme="light"] select,:root[data-theme="light"] .search-hit,:root[data-theme="light"] .base-day-table{background:#FFFFFF!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="dark"] .field,:root[data-theme="dark"] .select,:root[data-theme="dark"] input,:root[data-theme="dark"] textarea,:root[data-theme="dark"] select,:root[data-theme="dark"] .search-hit,:root[data-theme="dark"] .base-day-table{background:#171719!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="light"] .cal-grid .cell,:root[data-theme="light"] .cal-grid button,:root[data-theme="light"] .month-panel .cal-grid .cell,:root[data-theme="light"] .month-panel .cal-grid button,:root[data-theme="light"] .month-panel .cal-grid .wd{background:#F8FAFC!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="dark"] .cal-grid .cell,:root[data-theme="dark"] .cal-grid button,:root[data-theme="dark"] .month-panel .cal-grid .cell,:root[data-theme="dark"] .month-panel .cal-grid button,:root[data-theme="dark"] .month-panel .cal-grid .wd{background:#222225!important;color:var(--ink)!important;border-color:#3A3A3C!important}
+:root[data-theme="light"] .cal-grid .cell.sel,:root[data-theme="light"] .cal-grid .sel,:root[data-theme="light"] .cal-grid [aria-pressed="true"],:root[data-theme="light"] .side-nav button.active,:root[data-theme="light"] .side-nav button[aria-current="page"]{background:rgba(8,126,139,.11)!important;color:#087E8B!important;border-color:rgba(8,126,139,.28)!important}
+:root[data-theme="dark"] .cal-grid .cell.sel,:root[data-theme="dark"] .cal-grid .sel,:root[data-theme="dark"] .cal-grid [aria-pressed="true"],:root[data-theme="dark"] .side-nav button.active,:root[data-theme="dark"] .side-nav button[aria-current="page"]{background:#2A2A2D!important;color:#F5F5F7!important;border-color:#454549!important}
+:root[data-theme="light"] .nav-brand-mark{background:linear-gradient(135deg,#087E8B,#15999A)!important;color:#FFFFFF!important;box-shadow:0 5px 12px rgba(8,126,139,.20)!important;border:1px solid rgba(8,126,139,.20)!important}
+:root[data-theme="light"] .nav-brand-name{color:#087E8B!important}
+:root[data-theme="dark"] .nav-brand-mark{background:linear-gradient(135deg,#2A2A2D,#3A3A3C)!important;color:#F5F5F7!important;box-shadow:0 5px 12px rgba(0,0,0,.25)!important;border:1px solid #454549!important}
+:root[data-theme="dark"] .nav-brand-name{color:#D1D1D6!important}
+:root[data-theme="dark"] .side-nav button{color:#D1D1D6!important}
+
+
+/* NEXORA v38 — remove all warm/brown tones from Light Mode */
+:root[data-theme="light"]{
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F5F7F9;
+  --line:#E2E8F0; --ink:#17212B; --muted:#64748B;
+  --accent:#087E8B; --accent-ink:#FFFFFF; --accent-soft:rgba(8,126,139,.11);
+  /* Semantic colors intentionally use the original teal in Light Mode. */
+  --amber:#087E8B; --amber-soft:rgba(8,126,139,.10);
+  --rose:#087E8B; --rose-soft:rgba(8,126,139,.10);
+  --ok:#087E8B; --ok-soft:rgba(8,126,139,.10);
+  color-scheme:light;
+}
+:root[data-theme="light"] body,
+:root[data-theme="light"] .app,
+:root[data-theme="light"] main{background:#FFFFFF!important;color:#17212B!important}
+:root[data-theme="light"] .side-nav,
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .stat,
+:root[data-theme="light"] .month-panel,
+:root[data-theme="light"] .daybox,
+:root[data-theme="light"] .daybar,
+:root[data-theme="light"] .base-card,
+:root[data-theme="light"] .mcard,
+:root[data-theme="light"] .settings-panel,
+:root[data-theme="light"] .modal-card,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .central-add,
+:root[data-theme="light"] .ncard,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .col,
+:root[data-theme="light"] .kcard,
+:root[data-theme="light"] .task,
+:root[data-theme="light"] .main-task{
+  background:#FFFFFF!important;color:#17212B!important;border-color:#E2E8F0!important;
+  box-shadow:0 8px 28px rgba(15,23,42,.055)!important;
+}
+:root[data-theme="light"] .hero{background:linear-gradient(135deg,#087E8B,#15999A)!important;color:#FFFFFF!important;border-color:rgba(8,126,139,.2)!important}
+:root[data-theme="light"] .btn,
+:root[data-theme="light"] .install-app{background:#087E8B!important;color:#FFFFFF!important;border-color:#087E8B!important}
+:root[data-theme="light"] .btn.ghost,
+:root[data-theme="light"] .abtn,
+:root[data-theme="light"] .nav-btn,
+:root[data-theme="light"] .chip{background:#F5F7F9!important;color:#17212B!important;border-color:#E2E8F0!important}
+:root[data-theme="light"] .field,
+:root[data-theme="light"] .select,
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select,
+:root[data-theme="light"] .search-hit,
+:root[data-theme="light"] .base-day-table{background:#FFFFFF!important;color:#17212B!important;border-color:#E2E8F0!important}
+:root[data-theme="light"] .cal-grid .cell,
+:root[data-theme="light"] .cal-grid button,
+:root[data-theme="light"] .month-panel .cal-grid .cell,
+:root[data-theme="light"] .month-panel .cal-grid button,
+:root[data-theme="light"] .month-panel .cal-grid .wd{background:#F8FAFC!important;color:#17212B!important;border-color:#E2E8F0!important}
+:root[data-theme="light"] .cal-grid .cell.sel,
+:root[data-theme="light"] .cal-grid .sel,
+:root[data-theme="light"] .cal-grid [aria-pressed="true"],
+:root[data-theme="light"] .side-nav button.active,
+:root[data-theme="light"] .side-nav button[aria-current="page"]{background:rgba(8,126,139,.11)!important;color:#087E8B!important;border-color:rgba(8,126,139,.28)!important}
+:root[data-theme="light"] .chip.p1,
+:root[data-theme="light"] .chip.s1,
+:root[data-theme="light"] .priority-tag,
+:root[data-theme="light"] .priority-tag.p1,
+:root[data-theme="light"] .priority-tag.p2,
+:root[data-theme="light"] .dots i.n,
+:root[data-theme="light"] .legend .l2::before,
+:root[data-theme="light"] .task.p1{background-color:rgba(8,126,139,.10)!important;color:#087E8B!important;border-color:rgba(8,126,139,.22)!important}
+:root[data-theme="light"] .task.p1{border-inline-start-color:#087E8B!important}
+:root[data-theme="light"] .nav-brand-mark{background:linear-gradient(135deg,#087E8B,#15999A)!important;color:#FFFFFF!important;border-color:rgba(8,126,139,.20)!important}
+:root[data-theme="light"] .nav-brand-name{color:#087E8B!important}
+:root[data-theme="light"] .field:focus,
+:root[data-theme="light"] input:focus,
+:root[data-theme="light"] textarea:focus,
+:root[data-theme="light"] select:focus{border-color:#087E8B!important;box-shadow:0 0 0 3px rgba(8,126,139,.13)!important}
+
+
+/* NEXORA v39 — Light mode: pure white + original teal only; no gray/brown */
+:root[data-theme="light"]{
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#FFFFFF; --line:rgba(8,126,139,.22);
+  --ink:#064B52; --muted:#087E8B; --accent:#087E8B; --accent-ink:#FFFFFF; --accent-soft:rgba(8,126,139,.10);
+  --amber:#087E8B; --amber-soft:rgba(8,126,139,.10); --rose:#087E8B; --rose-soft:rgba(8,126,139,.10);
+  --ok:#087E8B; --ok-soft:rgba(8,126,139,.10);
+  --ov1:rgba(255,255,255,.96); --ov2:rgba(255,255,255,.92); --ov3:rgba(8,126,139,.16); --ov4:rgba(255,255,255,.98);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#FFFFFF; --line:rgba(8,126,139,.22);
+    --ink:#064B52; --muted:#087E8B; --accent:#087E8B; --accent-ink:#FFFFFF; --accent-soft:rgba(8,126,139,.10);
+    --amber:#087E8B; --amber-soft:rgba(8,126,139,.10); --rose:#087E8B; --rose-soft:rgba(8,126,139,.10);
+    --ok:#087E8B; --ok-soft:rgba(8,126,139,.10);
+    --ov1:rgba(255,255,255,.96); --ov2:rgba(255,255,255,.92); --ov3:rgba(8,126,139,.16); --ov4:rgba(255,255,255,.98);
+    color-scheme:light;
+  }
+}
+:root:not([data-theme="dark"]) body{background:#FFFFFF!important;color:var(--ink)}
+:root[data-theme="light"] body{background:#FFFFFF!important;color:var(--ink)}
+:root:not([data-theme="dark"]) .card,
+:root:not([data-theme="dark"]) .task,
+:root:not([data-theme="dark"]) .ncard,
+:root:not([data-theme="dark"]) .stat,
+:root:not([data-theme="dark"]) .row,
+:root:not([data-theme="dark"]) .kcard,
+:root:not([data-theme="dark"]) .base-day-table,
+:root:not([data-theme="dark"]) .overlay .sheet,
+:root:not([data-theme="dark"]) .field,
+:root:not([data-theme="dark"]) .select,
+:root:not([data-theme="dark"]) .abtn,
+:root:not([data-theme="dark"]) .nav-btn,
+:root:not([data-theme="dark"]) .chip,
+:root:not([data-theme="dark"]) .col,
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .task,
+:root[data-theme="light"] .ncard,
+:root[data-theme="light"] .stat,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .kcard,
+:root[data-theme="light"] .base-day-table,
+:root[data-theme="light"] .overlay .sheet,
+:root[data-theme="light"] .field,
+:root[data-theme="light"] .select,
+:root[data-theme="light"] .abtn,
+:root[data-theme="light"] .nav-btn,
+:root[data-theme="light"] .chip,
+:root[data-theme="light"] .col{background:#FFFFFF!important;border-color:rgba(8,126,139,.22)!important;color:var(--ink)}
+:root:not([data-theme="dark"]) .side-nav button:hover,
+:root[data-theme="light"] .side-nav button:hover{background:rgba(8,126,139,.08)!important;color:#087E8B;border-color:rgba(8,126,139,.22)}
+:root:not([data-theme="dark"]) .base-day-table th,
+:root[data-theme="light"] .base-day-table th{background:#FFFFFF!important;color:#087E8B}
+
+
+/* v40: remove teal-gray secondary text in light mode only */
+:root[data-theme="light"]{--muted:#17212B!important}
+:root[data-theme="light"] .sub,:root[data-theme="light"] .about,:root[data-theme="light"] .field::placeholder,:root[data-theme="light"] .wd,:root[data-theme="light"] .legend,:root[data-theme="light"] .seg button,:root[data-theme="light"] .sheet h3{color:#17212B!important}
+
+/* NEXORA v40 patch: remove the four specified colors from LIGHT mode only */
+:root[data-theme="light"]{
+  --bg:#FFFFFF!important;
+  --surface:#FFFFFF!important;
+  --surface-2:#FFFFFF!important;
+  --line:rgba(28,140,141,.24)!important;
+  --ink:#263536!important;
+  --muted:#263536!important;
+  --accent:#1C8C8D!important;
+  --accent-2:#1C8C8D!important;
+  --accent-ink:#FFFFFF!important;
+  --accent-soft:rgba(28,140,141,.12)!important;
+  --amber:#1C8C8D!important; --amber-soft:rgba(28,140,141,.12)!important;
+  --rose:#1C8C8D!important; --rose-soft:rgba(28,140,141,.12)!important;
+  --ok:#1C8C8D!important; --ok-soft:rgba(28,140,141,.12)!important;
+}
+:root[data-theme="light"] body{background:#FFFFFF!important;color:#263536!important}
+:root[data-theme="light"] .hero{background:#1C8C8D!important;color:#FFFFFF!important;border-color:rgba(28,140,141,.3)!important}
+:root[data-theme="light"] .hero .datepanel{background:rgba(255,255,255,.14)!important;color:#FFFFFF!important}
+:root[data-theme="light"] .side-nav,
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .stat,
+:root[data-theme="light"] .month-panel,
+:root[data-theme="light"] .daybox,
+:root[data-theme="light"] .daybar,
+:root[data-theme="light"] .base-card,
+:root[data-theme="light"] .mcard,
+:root[data-theme="light"] .settings-panel,
+:root[data-theme="light"] .modal-card,
+:root[data-theme="light"] .sheet,
+:root[data-theme="light"] .central-add,
+:root[data-theme="light"] .ncard,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .col,
+:root[data-theme="light"] .kcard,
+:root[data-theme="light"] .task,
+:root[data-theme="light"] .main-task,
+:root[data-theme="light"] .datepanel{
+  background:#FFFFFF!important;color:#263536!important;border-color:rgba(28,140,141,.24)!important;box-shadow:none!important
+}
+:root[data-theme="light"] .field,
+:root[data-theme="light"] .select,
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] .cal-grid .cell,
+:root[data-theme="light"] .cal-grid button,
+:root[data-theme="light"] .cal-grid .wd{
+  background:#FFFFFF!important;color:#263536!important;border-color:rgba(28,140,141,.24)!important
+}
+:root[data-theme="light"] .btn,
+:root[data-theme="light"] .side-nav button[aria-current="page"],
+:root[data-theme="light"] .side-nav button.active,
+:root[data-theme="light"] .cal-grid .selected,
+:root[data-theme="light"] .cal-grid [aria-pressed="true"],
+:root[data-theme="light"] .cal-grid .sel{
+  background:#1C8C8D!important;color:#FFFFFF!important;border-color:#1C8C8D!important
+}
+:root[data-theme="light"] .btn.ghost,
+:root[data-theme="light"] .chip,
+:root[data-theme="light"] .nav-btn{
+  background:#FFFFFF!important;color:#1C8C8D!important;border-color:rgba(28,140,141,.35)!important
+}
+:root[data-theme="light"] .sub,
+:root[data-theme="light"] .muted,
+:root[data-theme="light"] .label,
+:root[data-theme="light"] .legend{color:#263536!important}
+
+
+/* v40 light-theme color cleanup: clock, tasks, notes and main database */
+:root[data-theme="light"] {
+  --bg:#FFFFFF;
+  --surface:#FFFFFF;
+  --surface-2:#FFFFFF;
+  --line:#C6C8C7;
+  --ink:#263536;
+  --muted:#263536;
+  --accent:#1C8C8D;
+  --accent-ink:#FFFFFF;
+  --accent-soft:#FFFFFF;
+  --amber:#1C8C8D;
+  --amber-soft:#FFFFFF;
+  --rose:#1C8C8D;
+  --rose-soft:#FFFFFF;
+  --ok:#1C8C8D;
+  --ok-soft:#FFFFFF;
+}
+
+
+/* Color-only correction: preserve the original layout and component styling. */
+:root[data-theme="light"] {
+  --line: #1C8C8D;
+  --ink: #1C8C8D;
+  --muted: #1C8C8D;
+}
+:root[data-theme="light"] .hero {
+  background: linear-gradient(135deg, #1C8C8D, #1C8C8D) !important;
+  border-color: #1C8C8D !important;
+  color: #FFFFFF !important;
+}
+:root[data-theme="light"] .hero:after { background: none !important; }
+:root[data-theme="light"] .hero .greet,
+:root[data-theme="light"] .hero .clock,
+:root[data-theme="light"] .hero .clock .hm,
+:root[data-theme="light"] .hero .clock .colon,
+:root[data-theme="light"] .hero .clock .sec,
+:root[data-theme="light"] .hero .datepanel,
+:root[data-theme="light"] .hero .datepanel * {
+  color: #FFFFFF !important;
+}
+:root[data-theme="light"] .hero .clock .ap {
+  background: #FFFFFF !important;
+  color: #1C8C8D !important;
+  border-color: #FFFFFF !important;
+}
+:root[data-theme="light"] .hero .datepanel {
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.45) !important;
+}
+:root[data-theme="light"] .hero .day-track,
+:root[data-theme="light"] .hero .prog-track { background: rgba(255,255,255,.25) !important; }
+:root[data-theme="light"] .hero .day-fill,
+:root[data-theme="light"] .hero .prog-fill { background: #FFFFFF !important; }
+:root[data-theme="light"] .sub,
+:root[data-theme="light"] .muted,
+:root[data-theme="light"] .label,
+:root[data-theme="light"] .legend { color: #1C8C8D !important; }
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select,
+:root[data-theme="light"] .btn.ghost,
+:root[data-theme="light"] .chip,
+:root[data-theme="light"] .nav-btn { border-color: #1C8C8D !important; }
+
+
+/* FINAL LIGHT THEME FIX: remove gray from text, borders, and secondary buttons only. Keep layout and dark theme unchanged. */
+:root[data-theme="light"] {
+  --line: #1C8C8D !important;
+  --ink: #1C8C8D !important;
+  --muted: #1C8C8D !important;
+}
+:root[data-theme="light"] body,
+:root[data-theme="light"] body :not(.hero):not(.hero *) {
+  scrollbar-color: #1C8C8D #FFFFFF;
+}
+:root[data-theme="light"] .sub,
+:root[data-theme="light"] .muted,
+:root[data-theme="light"] .label,
+:root[data-theme="light"] .legend,
+:root[data-theme="light"] footer,
+:root[data-theme="light"] .about,
+:root[data-theme="light"] .nfoot,
+:root[data-theme="light"] .r-meta,
+:root[data-theme="light"] .wd,
+:root[data-theme="light"] .prog,
+:root[data-theme="light"] .nav-brand-name,
+:root[data-theme="light"] .icon-btn,
+:root[data-theme="light"] .link,
+:root[data-theme="light"] .seg button,
+:root[data-theme="light"] .chip,
+:root[data-theme="light"] .base-day-table th,
+:root[data-theme="light"] .base-day-table .muted-cell {
+  color: #1C8C8D !important;
+}
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .task,
+:root[data-theme="light"] .ncard,
+:root[data-theme="light"] .stat,
+:root[data-theme="light"] .row,
+:root[data-theme="light"] .kcard,
+:root[data-theme="light"] .base-table-wrap,
+:root[data-theme="light"] .base-day-table td,
+:root[data-theme="light"] .base-day-table th,
+:root[data-theme="light"] .field,
+:root[data-theme="light"] .select,
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] .abtn,
+:root[data-theme="light"] .nav-btn,
+:root[data-theme="light"] .btn.ghost,
+:root[data-theme="light"] .chip.s0,
+:root[data-theme="light"] .check,
+:root[data-theme="light"] .empty,
+:root[data-theme="light"] .col,
+:root[data-theme="light"] .prog-track,
+:root[data-theme="light"] .srow,
+:root[data-theme="light"] .sw,
+:root[data-theme="light"] .seg,
+:root[data-theme="light"] .seg button[aria-pressed="true"],
+:root[data-theme="light"] .side-nav .side-settings {
+  border-color: #1C8C8D !important;
+}
+:root[data-theme="light"] .abtn,
+:root[data-theme="light"] .nav-btn,
+:root[data-theme="light"] .btn.ghost,
+:root[data-theme="light"] .chip,
+:root[data-theme="light"] .chip.s0,
+:root[data-theme="light"] .icon-btn,
+:root[data-theme="light"] .link,
+:root[data-theme="light"] .seg button,
+:root[data-theme="light"] .side-nav button:not(.active):not([aria-current="page"]) {
+  color: #1C8C8D !important;
+}
+:root[data-theme="light"] .abtn,
+:root[data-theme="light"] .nav-btn,
+:root[data-theme="light"] .btn.ghost,
+:root[data-theme="light"] .chip,
+:root[data-theme="light"] .chip.s0,
+:root[data-theme="light"] .field,
+:root[data-theme="light"] .select,
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] .seg,
+:root[data-theme="light"] .seg button[aria-pressed="true"] {
+  background-color: #FFFFFF !important;
+}
+:root[data-theme="light"] .btn:not(.ghost),
+:root[data-theme="light"] .side-nav button.active,
+:root[data-theme="light"] .side-nav button[aria-current="page"],
+:root[data-theme="light"] .seg button[aria-pressed="true"] {
+  background-color: #1C8C8D !important;
+  color: #FFFFFF !important;
+  border-color: #1C8C8D !important;
+}
+:root[data-theme="light"] .field::placeholder,
+:root[data-theme="light"] input::placeholder,
+:root[data-theme="light"] textarea::placeholder {
+  color: #1C8C8D !important;
+  opacity: .8;
+}
+
+</style>
+</head>
+<body>
+<div class="app-tools" aria-label="حالة التطبيق">
+  <span class="net-status" id="netStatus" role="status" aria-live="polite"><span class="net-dot" aria-hidden="true"></span><span id="netStatusText">متصل</span></span>
+  <button class="install-app" id="installApp" type="button" hidden>تثبيت التطبيق</button>
+</div>
+<nav class="side-nav" aria-label="التنقل السريع">
+  <button type="button" class="nav-brand" id="homeBrand" aria-label="العودة إلى الواجهة الرئيسية" title="الواجهة الرئيسية"><span class="nav-brand-mark">N</span><span class="nav-brand-name">NEXORA</span></button>
+  <button type="button" data-jump="dayZone" aria-label="التاريخ" title="التاريخ"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3.5v4M16 3.5v4M4 9.5h16M8 13h2m4 0h2M8 16.5h2"/></svg><span>التاريخ</span></button>
+  <button type="button" data-jump="tasks" aria-label="المهام" title="المهام"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="m7.5 9 1.7 1.7L12 8m2 1h2.5m-9 5 1.7 1.7L12 13m2 1h2.5"/></svg><span>المهام</span></button>
+  <button type="button" data-jump="notes" aria-label="الملاحظات" title="الملاحظات"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1-1.5Z"/><path d="M14.5 3.5V8H19M8 12h8M8 15.5h8"/></svg><span>الملاحظات</span></button>
+  <button type="button" data-jump="base" aria-label="القاعدة الرئيسية" title="القاعدة الرئيسية"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="7.5" ry="3"/><path d="M4.5 5.5v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6M4.5 11.5v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6"/></svg><span>القاعدة</span></button>
+  <div class="nav-divider"></div>
+  <button type="button" class="side-settings" id="openSettings" aria-label="الإعدادات" aria-controls="settings" title="الإعدادات"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.2 13.5 1.1.9-1.4 2.4-1.4-.5a7.7 7.7 0 0 1-1.6.9l-.3 1.5h-2.8l-.3-1.5a7.7 7.7 0 0 1-1.6-.9l-1.4.5-1.4-2.4 1.1-.9a7 7 0 0 1 0-1.8l-1.1-.9 1.4-2.4 1.4.5a7.7 7.7 0 0 1 1.6-.9l.3-1.5h2.8l.3 1.5a7.7 7.7 0 0 1 1.6.9l1.4-.5 1.4 2.4-1.1.9a7 7 0 0 1 0 1.8Z"/></svg><span>الإعدادات</span></button>
+</nav>
+<div class="wrap">
+
+  <!-- الساعة والتاريخ -->
+  <header class="hero" aria-label="الوقت والتاريخ">
+    <div class="hero-main">
+      <div class="hero-top">
+        <p class="greet" id="greet"><span class="brand">NEXORA</span> <span id="greetText"></span></p>
+
+      </div>
+      <div class="clock" role="timer" aria-live="off" aria-label="الوقت الآن">
+        <span class="hm"><span id="hh">--</span><span class="colon">:</span><span id="mm">--</span></span>
+        <span class="side"><span class="sec" id="sec">00</span><span class="ap" id="ap"></span></span>
+      </div>
+    </div>
+    <div class="datepanel" aria-label="التاريخ">
+      <div class="wk" id="wk"></div>
+      <div class="gr" id="gr"></div>
+      <div class="hij" id="hij"></div>
+    </div>
+    <div class="dayprog">
+      <div class="day-label"><span>مضى <b id="dayPct">0%</b></span><span>تبقّى <b id="left"></b></span></div>
+      <div class="day-track" aria-hidden="true"><div class="day-fill" id="dayFill"></div></div>
+      <div class="ticks" aria-hidden="true"><span>12 ص</span><span>6 ص</span><span>12 م</span><span>6 م</span><span>12 ص</span></div>
+    </div>
+  </header>
+
+  <section class="stats" aria-label="ملخص الإنجاز">
+    <div class="stat"><div class="num" id="statTasks">0</div><div class="label">مهام اليوم</div></div>
+    <div class="stat"><div class="num" id="statDone">0%</div><div class="label">إنجاز اليوم</div></div>
+    <div class="stat"><div class="num" id="statNotes">0</div><div class="label">ملاحظات اليوم</div></div>
+    <div class="stat"><div class="num" id="statBase">0</div><div class="label">عناصر أخرى</div></div>
+  </section>
+
+  <div id="dayZone">
+  <div class="daybox">
+  <div class="daybar" role="navigation" aria-label="التنقل بين الأيام">
+    <button class="nav-btn" id="dayPrev" type="button" aria-label="اليوم السابق">›</button>
+    <div class="day-pick">
+      <button type="button" id="dayPickBtn" aria-label="اختيار تاريخ آخر"><span id="dayName"></span><small id="dayRel"></small></button>
+      <input type="date" id="dayPick" tabindex="-1" aria-hidden="true">
+    </div>
+    <button class="nav-btn" id="dayNext" type="button" aria-label="اليوم التالي">‹</button>
+    <button class="btn ghost" id="dayToday" type="button" hidden>اليوم</button>
+    <button class="btn ghost" id="toggleCal" type="button" aria-expanded="false" aria-controls="monthPanel"><span class="lg">عرض </span>الشهر</button>
+  </div>
+  <div class="month-panel" id="monthPanel" hidden>
+    <div class="cal-nav">
+      <button class="nav-btn" id="prevM" type="button" aria-label="الشهر السابق">›</button>
+      <span class="title" id="calTitle"></span>
+      <button class="nav-btn" id="nextM" type="button" aria-label="الشهر التالي">‹</button>
+      <button class="chip" id="monthToday" type="button">هذا الشهر</button>
+    </div>
+    <div class="month-summary" id="monthSummary" aria-live="polite"></div>
+    <div class="cal-grid" id="calGrid" role="grid"></div>
+    <div class="legend"><span>مهام متبقية</span><span class="l3">مهام منجزة</span><span class="l2">ملاحظات</span></div>
+  </div>
+  </div>
+  <div class="grid two">
+    <!-- مهام اليوم -->
+    <section class="card" id="tasks" aria-labelledby="tasksTitle">
+      <div class="card-head">
+        <div><h2 id="tasksTitle">مهام</h2><p class="sub" id="tasksSub"></p></div>
+        <div class="seg" id="taskFilter" role="group" aria-label="تصفية المهام">
+          <button data-f="all" aria-pressed="true">الكل</button>
+          <button data-f="open" aria-pressed="false">المتبقية</button>
+          <button data-f="done" aria-pressed="false">المنجزة</button>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-track"><div class="prog-fill" id="progFill"></div></div><span id="progTxt"></span></div>
+      <div class="add">
+        <label class="sr" for="taskInput">مهمة جديدة</label>
+        <input class="field" id="taskInput" placeholder="مهمة جديدة لهذا اليوم" autocomplete="off">
+        <button class="btn" id="taskAdd">أضف</button>
+      </div>
+      <ul class="list" id="taskList"></ul>
+    </section>
+
+    <!-- الملاحظات -->
+    <section class="card" id="notes" aria-labelledby="notesTitle">
+      <div class="card-head">
+        <div><h2 id="notesTitle">ملاحظات</h2><p class="sub" id="notesSub"></p></div>
+        <div class="seg" id="noteView" role="group" aria-label="عرض الملاحظات">
+          <button data-n="day" aria-pressed="true">هذا اليوم</button>
+          <button data-n="all" aria-pressed="false">كل الملاحظات</button>
+        </div>
+      </div>
+      <div class="editor">
+        <label class="sr" for="noteTitle">عنوان الملاحظة</label>
+        <input class="field" id="noteTitle" placeholder="العنوان (اختياري)" autocomplete="off">
+        <label class="sr" for="noteText">نص الملاحظة</label>
+        <textarea class="field" id="noteText" placeholder="اكتب ملاحظتك هنا…"></textarea>
+        <div class="where" id="noteWhere"></div>
+        <div class="editor-actions">
+          <button class="btn" id="noteSave">حفظ الملاحظة</button>
+          <button class="btn ghost" id="noteCancel" hidden>إلغاء التعديل</button>
+          <span class="msg" id="noteMsg" aria-live="polite"></span>
+        </div>
+      </div>
+      <div id="noteSearchWrap" hidden style="margin-bottom:12px">
+        <label class="sr" for="noteSearch">بحث في الملاحظات</label>
+        <input class="field" id="noteSearch" type="search" placeholder="ابحث في كل الملاحظات">
+      </div>
+      <ul class="list" id="noteList"></ul>
+    </section>
+  </div>
+
+  </div><!-- /dayZone -->
+
+  <!-- القاعدة الرئيسية -->
+  <section class="card" id="base" style="margin-top:16px" aria-labelledby="baseTitle">
+    <div class="card-head">
+      <div><h2 id="baseTitle">القاعدة الرئيسية</h2><p class="sub" id="baseSub"></p></div>
+    </div>
+    <div class="seg tabs" id="baseTabs" role="group" aria-label="أقسام القاعدة">
+      <button type="button" data-bt="days" aria-pressed="true">الأيام والسجل</button>
+      <button type="button" data-bt="mains" aria-pressed="false">المهام الرئيسية</button>
+    </div>
+    <div class="tools">
+      <label class="sr" for="search">بحث</label>
+      <input class="field" id="search" type="search" placeholder="ابحث عن يوم أو مهمة أو ملاحظة" autocomplete="off">
+      <button type="button" class="btn base-add-btn" id="centralAddOpen">＋ إضافة</button>
+      <span class="item-tools" id="itemTools" hidden>
+        <label class="sr" for="statusFilter">تصفية بالحالة</label>
+        <select class="select" id="statusFilter" style="width:auto;min-width:140px">
+          <option value="all">كل الحالات</option>
+          <option value="0">جديد</option>
+          <option value="1">قيد التنفيذ</option>
+          <option value="2">مكتمل</option>
+        </select>
+        <div class="seg" id="viewSwitch" role="group" aria-label="طريقة العرض">
+          <button data-v="table" aria-pressed="true">قائمة</button>
+          <button data-v="board" aria-pressed="false">لوحة</button>
+        </div>
+      </span>
+    </div>
+    <div class="main-add" id="mainAddForm" role="group" aria-label="إضافة مهمة رئيسية" hidden>
+      <input class="field" id="mtName" placeholder="اسم المهمة الرئيسية (تتكرر في أيام كثيرة)" aria-label="اسم المهمة الرئيسية" autocomplete="off">
+      <select class="select" id="mtPrio" aria-label="الأولوية الافتراضية"><option value="0">عادية</option><option value="1" selected>مهمة</option><option value="2">عاجلة</option></select>
+      <button class="btn" id="mtAdd">أضف مهمة رئيسية</button>
+    </div>
+    <div class="central-add" id="centralAddForm" hidden aria-label="إضافة مهمة أو ملاحظة">
+      <div class="central-add-head"><div><strong>إضافة جديدة</strong><p class="sub">أضف مباشرة إلى اليوم المحدد أو وزّع المهمة على أيام الشهر.</p></div><button type="button" class="icon-btn" id="centralAddClose" aria-label="إغلاق نموذج الإضافة">✕</button></div>
+      <div class="central-add-grid">
+        <label>نوع الإضافة<select class="select" id="centralKind"><option value="task">مهمة</option><option value="note">ملاحظة</option></select></label>
+        <label id="centralTitleWrap">عنوان الملاحظة<input class="field" id="centralTitle" placeholder="عنوان اختياري"></label>
+        <label class="central-wide">النص أو اسم المهمة<input class="field" id="centralText" placeholder="اكتب ما تريد إضافته" autocomplete="off" required></label>
+        <label>التاريخ<input class="field" id="centralDate" type="date"></label>
+        <label id="centralScopeWrap">نطاق المهمة<select class="select" id="centralScope"><option value="day">هذا اليوم فقط</option><option value="month">كل أيام الشهر</option></select></label>
+        <label id="centralPrioWrap">الأهمية<select class="select" id="centralPrio"><option value="0">عادية</option><option value="1">مهمة</option><option value="2">عاجلة</option></select></label>
+      </div>
+      <div class="central-add-actions"><button type="button" class="btn" id="centralAddSave">إضافة الآن</button><button type="button" class="btn ghost" id="centralAddCancel">إلغاء</button></div>
+    </div>
+    <div id="baseView"></div>
+  </section>
+
+
+  <div class="overlay" id="settings" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="setTitle" style="margin:0;font-size:1.2rem">الإعدادات</h2><button class="icon-btn" id="setClose" aria-label="إغلاق">✕</button></div>
+
+    <h3>الساعة والتاريخ</h3>
+    <div class="srow"><div><b>نظام الساعة</b></div>
+      <div class="seg" data-setting="clockFmt" role="group" aria-label="نظام الساعة"><button type="button" data-val="12">12 ساعة</button><button type="button" data-val="24">24 ساعة</button></div></div>
+    <div class="srow"><div><b>إظهار الثواني</b></div><button type="button" class="sw" role="switch" data-setting="showSec" aria-label="إظهار الثواني"></button></div>
+    <div class="srow"><div><b>التاريخ الهجري</b></div><button type="button" class="sw" role="switch" data-setting="showHijri" aria-label="إظهار التاريخ الهجري"></button></div>
+
+    <h3>التقويم والمظهر</h3>
+    <div class="srow"><div><b>بداية الأسبوع</b></div>
+      <div class="seg" data-setting="weekStart" role="group" aria-label="بداية الأسبوع"><button type="button" data-val="6">السبت</button><button type="button" data-val="0">الأحد</button><button type="button" data-val="1">الاثنين</button></div></div>
+    <div class="srow"><div><b>المظهر</b></div>
+      <div class="seg" data-setting="theme" role="group" aria-label="المظهر"><button type="button" data-val="auto">تلقائي</button><button type="button" data-val="light">فاتح</button><button type="button" data-val="dark">داكن</button></div></div>
+
+    <h3>البيانات</h3>
+    <div class="srow"><div><b>نسخة احتياطية</b><p class="sub">تحميل ملف ببياناتك</p></div><button type="button" class="abtn" id="export">تحميل</button></div>
+    <div class="srow"><div><b>استعادة نسخة</b><p class="sub">من ملف حفظته سابقًا</p></div><button type="button" class="abtn" id="importBtn">اختيار ملف</button></div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <div class="srow"><div><b>مسح كل البيانات</b><p class="sub">المهام والملاحظات والقاعدة</p></div><button type="button" class="abtn danger" id="reset">مسح</button></div>
+    <p class="setmsg" id="setMsg" aria-live="polite"></p>
+    <p class="about">NEXORA 1.0 • تُحفظ بياناتك تلقائيًا على هذا الجهاز.</p>
+  </div>
+</div>
+</div>
+
+<div class="overlay" id="dlg" hidden role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+  <div class="sheet">
+    <h2 id="dlgTitle"></h2>
+    <p class="sub" id="dlgMsg"></p>
+    <input class="field" id="dlgInput" autocomplete="off" aria-label="النص" hidden style="margin-top:12px">
+    <div class="dlg-actions" id="dlgActions"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toastMsg"></span><button type="button" id="toastUndo" hidden>تراجع</button></div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const STATUS = ['جديد','قيد التنفيذ','مكتمل'];
+  const PRIO = ['عادية','مهمة','عاجلة'];
+  const KEY = 'plan-state-v2', OLD_KEY = 'plan-state-v1';
+  const uid = () => Math.random().toString(36).slice(2,9);
+  const pad = n => String(n).padStart(2,'0');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const dkey = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const dparse = k => new Date(k+'T00:00:00');
+  const todayKey = () => dkey(new Date());
+
+  /* ---------- التخزين: يعمل داخل Claude وخارجه ---------- */
+  const store = {
+    async get(k){
+      try{ if(window.storage){ const r = await window.storage.get(k); if(r && r.value != null) return r.value; } }catch(e){}
+      try{ return localStorage.getItem(k); }catch(e){ return null; }
+    },
+    async set(k,v){
+      try{ if(window.storage){ await window.storage.set(k,v); return true; } }catch(e){}
+      try{ localStorage.setItem(k,v); return true; }catch(e){ return false; }
+    }
+  };
+
+  let state = {tasks:[], notes:[], base:[], mainTasks:[]};
+  const DEFAULTS = {clockFmt:'12', theme:'dark', weekStart:'0', showSec:true, showHijri:true};
+  let settings = Object.assign({}, DEFAULTS);
+  let ui = {sel: todayKey(), calY:0, calM:0, calExpanded:false, filter:'all', noteView:'day', noteQ:'', editing:null, view:'table', q:'', st:'all', baseTab:'days', mainScope:'day', openMains:new Set()};
+  { const t = new Date(); ui.calY = t.getFullYear(); ui.calM = t.getMonth(); }
+  let saveTimer;
+
+  /* ---------- تنظيف البيانات وتوحيد التواريخ (دون حذف أي سجل) ---------- */
+  function normDate(v){
+    const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(v||''));
+    if(!m) return todayKey();
+    const k = m[1]+'-'+pad(+m[2])+'-'+pad(+m[3]);
+    return isNaN(dparse(k)) ? todayKey() : k;
+  }
+  function clean(src){
+    const uniq = arr => { const seen = new Set(); return (Array.isArray(arr)?arr:[]).filter(Boolean).map(o=>{ o = Object.assign({}, o); if(!o.id || seen.has(o.id)) o.id = uid(); seen.add(o.id); return o; }); };
+    const mainTasks = uniq(src.mainTasks).map(m=>{ m.name = String(m.name||'مهمة رئيسية'); m.prio = [0,1,2].includes(m.prio) ? m.prio : 1; return m; });
+    const mainIds = new Set(mainTasks.map(m=>m.id));
+    const pairs = new Set();
+    const tasks = uniq(src.tasks).map(t=>{
+      t.text = String(t.text||''); t.date = normDate(t.date); t.done = !!t.done; t.prio = [0,1,2].includes(t.prio) ? t.prio : 0;
+      if(t.mainId && !mainIds.has(t.mainId)) delete t.mainId;
+      return t;
+    }).filter(t=>{ if(!t.mainId) return true; const k = t.date+'|'+t.mainId; if(pairs.has(k)) return false; pairs.add(k); return true; });
+    const notes = uniq(src.notes).map(n=>{ n.title = String(n.title||''); n.text = String(n.text||''); n.date = normDate(n.date); n.created = Number(n.created)||Date.now(); return n; });
+    const base = uniq(src.base).map(b=>{ b.status = [0,1,2].includes(b.status) ? b.status : 0; return b; });
+    return {tasks, notes, base, mainTasks};
+  }
+
+  async function load(){
+    let raw = await store.get(KEY);
+    if(raw){
+      try{ const s = JSON.parse(raw); if(s && Array.isArray(s.tasks)){ state = clean(s); return; } }catch(e){}
+    }
+    // ترحيل بيانات النسخة الأولى
+    raw = await store.get(OLD_KEY);
+    if(raw){
+      try{
+        const s = JSON.parse(raw), t = todayKey();
+        state.tasks = (s.tasks||[]).map(x=>Object.assign({date:t}, x));
+        state.base = s.base || []; state.mainTasks = s.mainTasks || [];
+        if(s.note && String(s.note).trim()) state.notes.push({id:uid(), title:'', text:String(s.note), date:t, created:Date.now()});
+        save();
+      }catch(e){}
+    }
+  }
+  function renderStats(){
+    const total = state.tasks.length, done = state.tasks.filter(t=>t.done).length;
+    const dayTasks = state.tasks.filter(t=>t.date===ui.sel), dayDone = dayTasks.filter(t=>t.done).length;
+    $('#statTasks').textContent = dayTasks.length;
+    $('#statDone').textContent = (dayTasks.length ? Math.round(dayDone/dayTasks.length*100) : 0) + '%';
+    $('#statNotes').textContent = state.notes.filter(n=>n.date===ui.sel).length;
+    $('#statBase').textContent = state.base.length;
+  }
+  function save(){
+    renderStats();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>{ store.set(KEY, JSON.stringify(state)); }, 250);
+  }
+
+  /* ---------- الإعدادات ---------- */
+  async function loadSettings(){
+    try{
+      const raw = await store.get('plan-settings-v1');
+      if(raw){ settings = Object.assign({}, DEFAULTS, JSON.parse(raw)); return; }
+      const old = await store.get('plan-h24');
+      if(old !== null) settings.clockFmt = old==='1' ? '24' : '12';
+    }catch(e){}
+  }
+  function saveSettings(){ store.set('plan-settings-v1', JSON.stringify(settings)); }
+  function updateThemeIcons(theme){
+    const light = theme === 'light';
+    const bg = light ? '#477e82' : '#d58f68';
+    const fg = light ? '#ffffff' : '#21191d';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="2" y="2" width="60" height="60" rx="18" fill="${bg}"/><path d="M32 11 49 21v22L32 53 15 43V21Z" fill="none" stroke="${fg}" stroke-width="3.5" stroke-linejoin="round"/><path d="M23 40V25l18 15V25" fill="none" stroke="${fg}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach(link=>{ link.href=href; });
+    const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.content=bg;
+  }
+  if(window.matchMedia){
+    const scheme=window.matchMedia('(prefers-color-scheme: dark)');
+    const onSchemeChange=()=>{ if(settings.theme==='auto') applySettings(); };
+    if(scheme.addEventListener) scheme.addEventListener('change',onSchemeChange); else if(scheme.addListener) scheme.addListener(onSchemeChange);
+  }
+  function applySettings(){
+    const r = document.documentElement;
+    const effectiveTheme = settings.theme==='auto' ? ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light') : settings.theme;
+    r.setAttribute('data-theme', effectiveTheme);
+    updateThemeIcons(effectiveTheme);
+    document.querySelectorAll('#settings [data-setting]').forEach(g=>{
+      const k = g.dataset.setting;
+      if(g.classList.contains('sw')) g.setAttribute('aria-checked', String(!!settings[k]));
+      else g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', String(String(settings[k])===b.dataset.val)));
+    });
+    tick(); renderCal();
+  }
+  let opener = null;
+  function openSettings(){
+    const panel=$('#settings'); if(!panel.hidden) return;
+    opener = document.activeElement;
+    panel.hidden = false; document.body.style.overflow = 'hidden';
+    const closeButton = $('#setClose');
+    if(closeButton) closeButton.focus({preventScroll:true});
+  }
+  function closeSettings(){
+    $('#settings').hidden = true; document.body.style.overflow = '';
+    if(opener && opener.focus) opener.focus();
+  }
+  // الإعدادات تستخدم نفس آلية استجابة أزرار الواجهة: نقرة واحدة واضحة ومتوافقة مع اللمس والماوس ولوحة المفاتيح.
+  const settingsButton = $('#openSettings');
+  settingsButton.addEventListener('click', openSettings);
+  $('#setClose').addEventListener('click', closeSettings);
+  document.querySelector('.side-nav').addEventListener('click',e=>{const b=e.target.closest('[data-jump]');if(!b)return;const target=document.getElementById(b.dataset.jump);if(target)target.scrollIntoView({behavior:'smooth',block:'start'});});
+  document.getElementById('homeBrand')?.addEventListener('click',()=>{const home=document.querySelector('.hero')||document.querySelector('.wrap');if(home){home.scrollIntoView({behavior:'smooth',block:'start'});window.scrollTo({top:0,behavior:'smooth'});}});
+  document.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; if(dlgDone){ dlgDone(null); return; } if(!$('#settings').hidden) closeSettings(); });
+  $('#settings').addEventListener('click', e=>{
+    if(e.target.id==='settings'){ closeSettings(); return; }
+    const sw = e.target.closest('.sw');
+    if(sw){ const k = sw.dataset.setting; settings[k] = !settings[k]; saveSettings(); applySettings(); return; }
+    const b = e.target.closest('.seg button'); if(!b) return;
+    const g = b.closest('[data-setting]'); if(!g) return;
+    settings[g.dataset.setting] = b.dataset.val; saveSettings(); applySettings();
+  });
+
+  /* ---------- الساعة والتاريخ ---------- */
+  const fWk = new Intl.DateTimeFormat('ar-EG-u-nu-latn',{weekday:'long'});
+  const fGr = new Intl.DateTimeFormat('ar-EG-u-nu-latn',{day:'numeric',month:'long',year:'numeric'});
+  let fH; try{ fH = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn',{day:'numeric',month:'long',year:'numeric'}); }catch(e){}
+  let lastDay = -1;
+  function tick(){
+    const d = new Date(), h = d.getHours(), m = d.getMinutes(), sc = d.getSeconds();
+    const h24 = settings.clockFmt==='24';
+    $('#hh').textContent = h24 ? pad(h) : String(h%12||12);
+    $('#mm').textContent = pad(m);
+    $('#sec').textContent = pad(sc);
+    $('#sec').hidden = !settings.showSec;
+    $('#ap').textContent = h24 ? '' : (h<12 ? 'ص' : 'م');
+    $('#hij').hidden = !settings.showHijri || !fH;
+    const secs = h*3600+m*60+sc;
+    $('#dayFill').style.width = (secs/864)+'%';
+    $('#dayPct').textContent = Math.round(secs/864)+'%';
+    const rem = 86400-secs;
+    $('#left').textContent = Math.floor(rem/3600)+' س '+pad(Math.floor(rem%3600/60))+' د';
+    if(lastDay !== d.getDate()){
+      lastDay = d.getDate();
+      $('#greetText').textContent = h<5 ? 'ليلة هادئة' : h<12 ? 'صباح الخير' : h<17 ? 'نهارك سعيد' : h<21 ? 'مساء الخير' : 'ليلة سعيدة';
+      $('#wk').textContent = fWk.format(d);
+      $('#gr').textContent = fGr.format(d);
+      $('#hij').textContent = fH ? fH.format(d) : '';
+      renderCal(); renderDayBar();
+    }
+  }
+
+  /* ---------- التقويم ---------- */
+  const WD = ['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+  const fMonth = new Intl.DateTimeFormat('ar-EG-u-nu-latn',{month:'long',year:'numeric'});
+  const fDay = new Intl.DateTimeFormat('ar-EG-u-nu-latn',{weekday:'long',day:'numeric',month:'long'});
+  function dayInfo(){
+    const m = {};
+    state.tasks.forEach(t=>{ const o = m[t.date] || (m[t.date]={open:0,done:0,notes:0}); t.done ? o.done++ : o.open++; });
+    state.notes.forEach(n=>{ const o = m[n.date] || (m[n.date]={open:0,done:0,notes:0}); o.notes++; });
+    return m;
+  }
+  function renderCal(){
+    const y = ui.calY, mo = ui.calM, info = dayInfo(), tk = todayKey();
+    $('#monthPanel').hidden = !ui.calExpanded;
+    $('#toggleCal').innerHTML = ui.calExpanded ? 'إخفاء<span class="lg"> الشهر</span>' : '<span class="lg">عرض </span>الشهر';
+    $('#toggleCal').setAttribute('aria-label', ui.calExpanded ? 'إخفاء الشهر' : 'عرض الشهر');
+    $('#toggleCal').setAttribute('aria-expanded', String(ui.calExpanded));
+    if(!ui.calExpanded) return;
+    $('#calTitle').textContent = fMonth.format(new Date(y,mo,1));
+    const monthKeys = Object.keys(info).filter(k=>{const d=dparse(k);return d.getFullYear()===y && d.getMonth()===mo;});
+    const monthTasks = state.tasks.filter(t=>{const d=dparse(t.date);return d.getFullYear()===y && d.getMonth()===mo;});
+    const monthNotes = state.notes.filter(n=>{const d=dparse(n.date);return d.getFullYear()===y && d.getMonth()===mo;});
+    $('#monthSummary').innerHTML = '<span><b>'+monthKeys.length+'</b> يوم فيه نشاط</span><span><b>'+monthTasks.length+'</b> مهمة</span><span><b>'+monthTasks.filter(t=>t.done).length+'</b> منجزة</span><span><b>'+monthNotes.length+'</b> ملاحظة</span>'; 
+    const ws = Number(settings.weekStart)||0;
+    const first = (new Date(y,mo,1).getDay()-ws+7)%7, days = new Date(y,mo+1,0).getDate();
+    let h = [0,1,2,3,4,5,6].map(i=>'<div class="wd" role="columnheader">'+WD[(ws+i)%7]+'</div>').join('');
+    for(let i=0;i<first;i++) h += '<div class="cell blank" aria-hidden="true"></div>';
+    for(let d=1; d<=days; d++){
+      const k = dkey(new Date(y,mo,d)), o = info[k];
+      const cls = 'cell'+(k===tk?' today':'')+(k===ui.sel?' sel':''); let dots = '';
+      if(o){ if(o.open) dots+='<i></i>'; else if(o.done) dots+='<i class="ok"></i>'; if(o.notes) dots+='<i class="n"></i>'; }
+      h += '<button class="'+cls+'" data-d="'+k+'" role="gridcell" aria-selected="'+(k===ui.sel)+'" aria-label="'+fDay.format(dparse(k))+'"><span>'+d+'</span><span class="dots">'+dots+'</span></button>';
+    }
+    $('#calGrid').innerHTML = h;
+  }
+  /* ---------- فتح يوم محدد: دالة واحدة لكل المصادر (التقويم، القاعدة، البحث، الملاحظات، الشريط) ---------- */
+  function syncSegs(){
+    document.querySelectorAll('#taskFilter button').forEach(x=>x.setAttribute('aria-pressed', String(x.dataset.f===ui.filter)));
+    document.querySelectorAll('#noteView button').forEach(x=>x.setAttribute('aria-pressed', String(x.dataset.n===ui.noteView)));
+    $('#noteSearch').value = ui.noteQ;
+  }
+  function openDay(date, opts){
+    opts = opts || {};
+    const key = normDate(date), d = dparse(key);
+    ui.sel = key; ui.calY = d.getFullYear(); ui.calM = d.getMonth();
+    if(opts.reset){ ui.filter = 'all'; ui.noteView = 'day'; ui.noteQ = ''; }
+    syncSegs();
+    renderAll();
+    if(opts.scroll){
+      const zone = $('#dayZone');
+      zone.scrollIntoView({behavior:'smooth', block:'start'});
+      zone.classList.add('central-day-open'); setTimeout(()=>zone.classList.remove('central-day-open'), 1600);
+    }
+  }
+  function goDay(delta){ const d = dparse(ui.sel); d.setDate(d.getDate()+delta); openDay(dkey(d), {}); }
+  function renderDayBar(){
+    const d = dparse(ui.sel), diff = Math.round((d - dparse(todayKey()))/864e5);
+    const rel = diff===0 ? 'اليوم' : diff===1 ? 'غدًا' : diff===-1 ? 'أمس' : diff>0 ? 'بعد '+fmtDays(diff) : 'قبل '+fmtDays(-diff);
+    $('#dayName').textContent = fDay.format(d);
+    $('#dayRel').textContent = rel+' • '+d.getFullYear();
+    $('#dayPick').value = ui.sel;
+    $('#dayToday').hidden = diff===0;
+  }
+  $('#dayPrev').onclick = ()=>goDay(-1);
+  $('#dayNext').onclick = ()=>goDay(1);
+  $('#dayToday').onclick = ()=>openDay(todayKey(), {});
+  $('#dayPickBtn').onclick = ()=>{ const i = $('#dayPick'); try{ i.showPicker(); }catch(e){ i.focus(); i.click(); } };
+  $('#dayPick').addEventListener('change', e=>{ if(e.target.value) openDay(e.target.value, {reset:true}); });
+
+  $('#calGrid').addEventListener('click', e=>{
+    const c = e.target.closest('[data-d]'); if(!c) return;
+    ui.calExpanded = false;
+    openDay(c.dataset.d, {reset:true});
+  });
+  function shiftCal(n){ ui.calM += n; if(ui.calM<0){ui.calM=11;ui.calY--;} if(ui.calM>11){ui.calM=0;ui.calY++;} renderCal(); }
+  $('#prevM').onclick = ()=>shiftCal(-1);
+  $('#nextM').onclick = ()=>shiftCal(1);
+  $('#monthToday').onclick = ()=>{ const d=new Date(); ui.calY=d.getFullYear(); ui.calM=d.getMonth(); openDay(todayKey(), {reset:true}); renderCal(); };
+  $('#toggleCal').onclick = ()=>{ ui.calExpanded = !ui.calExpanded; const d = dparse(ui.sel); ui.calY = d.getFullYear(); ui.calM = d.getMonth(); renderCal(); renderBase(); };
+  const selLabel = () => (ui.sel===todayKey() ? 'اليوم، ' : '') + fDay.format(dparse(ui.sel));
+
+  /* ---------- أدوات مشتركة: حوار، إشعار، تراجع ---------- */
+  let dlgDone = null;
+  function ask(o){
+    return new Promise(resolve=>{
+      const el = $('#dlg'), inp = $('#dlgInput'), box = $('#dlgActions'), prev = document.activeElement;
+      $('#dlgTitle').textContent = o.title||''; $('#dlgMsg').textContent = o.msg||''; $('#dlgMsg').hidden = !o.msg;
+      inp.hidden = !o.input; inp.value = o.value||''; box.innerHTML = '';
+      const finish = v=>{
+        el.hidden = true; dlgDone = null;
+        document.body.style.overflow = $('#settings').hidden ? '' : 'hidden';
+        if(prev && prev.isConnected && prev.focus) prev.focus({preventScroll:true});
+        resolve(v);
+      };
+      dlgDone = finish;
+      (o.actions||[]).forEach(a=>{
+        const b = document.createElement('button'); b.type='button'; b.className = 'btn '+(a.kind||''); b.textContent = a.label;
+        b.onclick = ()=>{ if(a.needsInput && !inp.value.trim()){ inp.focus(); return; } finish({id:a.id, value:inp.value.trim()}); };
+        box.appendChild(b);
+      });
+      el.hidden = false; document.body.style.overflow = 'hidden';
+      setTimeout(()=>{ if(o.input){ inp.focus(); inp.select(); } else { const f = box.querySelector('button'); if(f) f.focus(); } }, 30);
+    });
+  }
+  $('#dlg').addEventListener('click', e=>{ if(e.target.id==='dlg' && dlgDone) dlgDone(null); });
+  $('#dlgInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); const f = $('#dlgActions .btn:not(.ghost)'); if(f) f.click(); } });
+  let toastTimer, undoFn = null;
+  function toast(msg, undo){
+    $('#toastMsg').textContent = msg; undoFn = undo||null; $('#toastUndo').hidden = !undo; $('#toast').hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ $('#toast').hidden = true; undoFn = null; }, undo ? 7000 : 2800);
+  }
+  $('#toastUndo').onclick = ()=>{ if(undoFn) undoFn(); $('#toast').hidden = true; undoFn = null; };
+  function snapshotUndo(){ const snap = JSON.stringify(state); return ()=>{ state = JSON.parse(snap); renderAll(); save(); toast('تم التراجع'); }; }
+
+  /* ---------- المهام ---------- */
+  const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>';
+  const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10.5 11v5M13.5 11v5"/></svg>';
+  const fmtDays = n => n===1 ? 'يوم' : n===2 ? 'يومين' : n<=10 ? n+' أيام' : n+' يومًا';
+  const mainOf = t => t && t.mainId ? state.mainTasks.find(m=>m.id===t.mainId) : null;
+  const linksOf = m => state.tasks.filter(t=>t.mainId===m.id);
+  function addMainTo(m, dates){
+    let added = 0;
+    dates.forEach(date=>{ if(!state.tasks.some(x=>x.date===date && x.mainId===m.id)){ state.tasks.push({id:uid(), mainId:m.id, text:m.name, date, done:false, prio:[0,1,2].includes(m.prio)?m.prio:1}); added++; } });
+    return added;
+  }
+  function renderTasks(){
+    const day = state.tasks.filter(t=>t.date===ui.sel);
+    const total = day.length, done = day.filter(t=>t.done).length;
+    $('#tasksTitle').textContent = ui.sel===todayKey() ? 'مهام اليوم' : 'مهام اليوم المحدد';
+    $('#tasksSub').textContent = selLabel() + (total ? ' • متبقي '+(total-done) : '');
+    $('#progFill').style.width = (total ? Math.round(done/total*100) : 0)+'%';
+    $('#progTxt').textContent = done+' من '+total;
+    $('#taskInput').setAttribute('aria-label','مهمة جديدة ليوم '+ui.sel);
+    let items = day.filter(t => ui.filter==='all' || (ui.filter==='done'?t.done:!t.done));
+    items = items.slice().sort((a,b)=> a.done-b.done || (Number(b.prio)||0)-(Number(a.prio)||0));
+    if(!items.length){
+      $('#taskList').innerHTML = '<li class="empty">'+(total?'لا توجد مهام في هذا العرض.':'لا توجد مهام لهذا اليوم. اكتب أول مهمة في الحقل أعلاه.')+'</li>';
+      return;
+    }
+    $('#taskList').innerHTML = items.map(t=>{
+      const m = mainOf(t), p = [0,1,2].includes(t.prio) ? t.prio : 0, n = m ? linksOf(m).length : 0;
+      return `
+      <li class="task p${p} ${t.done?'done':''}" data-id="${esc(t.id)}">
+        <button class="check" role="checkbox" aria-checked="${t.done}" aria-label="إنجاز: ${esc(t.text)}" data-a="toggle">✓</button>
+        <div class="t-body"><span class="t-text">${esc(t.text)}</span><span class="t-sub"><button class="chip ${p?'p'+p:''}" data-a="prio" title="غيّر الأولوية">${PRIO[p]}</button>${m?`<span class="t-meta">◆ مهمة رئيسية • في ${fmtDays(n)}</span>`:''}</span></div>
+        <div class="t-actions">
+          <button class="icon-btn" data-a="edit" aria-label="تعديل المهمة">${ICON_EDIT}</button>
+          <button class="icon-btn" data-a="del" aria-label="حذف المهمة">${ICON_DEL}</button>
+        </div>
+      </li>`;}).join('');
+  }
+  function addTask(){
+    const el = $('#taskInput'), text = el.value.trim();
+    if(!text){ el.focus(); return; }
+    state.tasks.push({id:uid(), text, done:false, prio:0, date:ui.sel});
+    el.value=''; el.focus(); renderTasks(); renderCal(); renderBase(); save();
+  }
+  $('#taskAdd').onclick = addTask;
+  $('#taskInput').addEventListener('keydown', e=>{ if(e.key==='Enter') addTask(); });
+  $('#taskFilter').addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    ui.filter = b.dataset.f; syncSegs(); renderTasks();
+  });
+  $('#taskList').addEventListener('click', async e=>{
+    const btn = e.target.closest('[data-a]'); if(!btn) return;
+    const li = btn.closest('[data-id]'); const t = state.tasks.find(x=>x.id===li.dataset.id); if(!t) return;
+    const a = btn.dataset.a, main = mainOf(t);
+    if(a==='toggle'){ t.done = !t.done; }
+    else if(a==='prio'){ t.prio = ((Number(t.prio)||0)+1)%3; }
+    else if(a==='edit'){
+      const n = main ? linksOf(main).length : 0;
+      const r = await ask({
+        title:'تعديل المهمة', msg: main ? 'هذه المهمة مرتبطة بمهمة رئيسية موجودة في '+fmtDays(n)+'. اختر نطاق التعديل.' : '',
+        input:true, value:t.text,
+        actions: main
+          ? [{id:'all',label:'تعديل في كل الأيام ('+n+')',needsInput:true},{id:'one',label:'هذا اليوم فقط (يفك الارتباط)',kind:'ghost',needsInput:true},{id:'cancel',label:'إلغاء',kind:'ghost'}]
+          : [{id:'save',label:'حفظ',needsInput:true},{id:'cancel',label:'إلغاء',kind:'ghost'}]
+      });
+      if(!r || r.id==='cancel') return;
+      if(r.id==='all'){ main.name = r.value; state.tasks.forEach(x=>{ if(x.mainId===main.id) x.text = r.value; }); }
+      else if(r.id==='one'){ t.text = r.value; delete t.mainId; }
+      else t.text = r.value;
+    }
+    else if(a==='del'){
+      const undo = snapshotUndo();
+      if(main){
+        const n = linksOf(main).length;
+        const r = await ask({
+          title:'حذف المهمة', msg:'«'+t.text+'» مرتبطة بمهمة رئيسية وموجودة في '+fmtDays(n)+'.',
+          actions:[{id:'one',label:'حذف من هذا اليوم فقط'},{id:'all',label:'حذف نهائي من كل الأيام ومن القائمة',kind:'danger'},{id:'cancel',label:'إلغاء',kind:'ghost'}]
+        });
+        if(!r || r.id==='cancel') return;
+        if(r.id==='one'){ state.tasks = state.tasks.filter(x=>x!==t); toast('حُذفت من هذا اليوم فقط', undo); }
+        else { state.tasks = state.tasks.filter(x=>x.mainId!==main.id); state.mainTasks = state.mainTasks.filter(x=>x.id!==main.id); toast('حُذفت نهائيًا من '+fmtDays(n), undo); }
+      }else{
+        state.tasks = state.tasks.filter(x=>x!==t); toast('حُذفت المهمة', undo);
+      }
+    }
+    renderAll(); save();
+  });
+
+  /* ---------- الملاحظات ---------- */
+  const fTime = new Intl.DateTimeFormat('ar-EG-u-nu-latn',{hour:'numeric',minute:'2-digit'});
+  const fShort = new Intl.DateTimeFormat('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric'});
+  let msgTimer;
+  function flash(msg){
+    $('#noteMsg').textContent = msg; $('#setMsg').textContent = msg; clearTimeout(msgTimer);
+    msgTimer = setTimeout(()=>{ $('#noteMsg').textContent=''; $('#setMsg').textContent=''; }, 2500);
+  }
+  function renderNotes(){
+    const all = ui.noteView==='all';
+    $('#noteSearchWrap').hidden = !all;
+    let items;
+    if(all){
+      const q = ui.noteQ.trim().toLowerCase();
+      items = state.notes.filter(n=>!q || n.text.toLowerCase().includes(q) || (n.title||'').toLowerCase().includes(q));
+      items.sort((a,b)=> b.date.localeCompare(a.date) || b.created-a.created);
+      $('#notesSub').textContent = state.notes.length ? state.notes.length+' ملاحظة محفوظة' : '';
+    }else{
+      items = state.notes.filter(n=>n.date===ui.sel).sort((a,b)=>b.created-a.created);
+      $('#notesSub').textContent = selLabel();
+    }
+    const editingNote = ui.editing ? state.notes.find(x=>x.id===ui.editing) : null;
+    $('#noteWhere').textContent = editingNote ? 'أنت تعدّل ملاحظة بتاريخ '+fShort.format(dparse(editingNote.date)) : 'ستُحفظ في: ' + selLabel();
+    $('#noteSave').textContent = ui.editing ? 'حفظ التعديل' : 'حفظ الملاحظة';
+    $('#noteCancel').hidden = !ui.editing;
+    if(!items.length){
+      $('#noteList').innerHTML = '<li class="empty">'+(all ? (state.notes.length?'لا توجد نتائج مطابقة.':'لا توجد ملاحظات محفوظة بعد.') : 'لا توجد ملاحظات محفوظة لهذا اليوم.')+'</li>';
+      return;
+    }
+    $('#noteList').innerHTML = items.map(n=>`
+      <li class="ncard ${ui.editing===n.id?'editing':''}" data-id="${n.id}">
+        <div class="nhead">
+          <span class="ntitle">${esc(n.title || 'بدون عنوان')}</span>
+          ${all ? '<button class="chip" data-a="goto" title="افتح هذا اليوم">'+fShort.format(dparse(n.date))+'</button>' : ''}
+        </div>
+        <p class="nbody">${esc(n.text)}</p>
+        <div class="nfoot">
+          <span>${fTime.format(new Date(n.created))}</span>
+          <span><button class="link" data-a="nedit">تعديل</button><button class="link danger" data-a="ndel">حذف</button></span>
+        </div>
+      </li>`).join('');
+  }
+  function clearEditor(){ $('#noteTitle').value=''; $('#noteText').value=''; ui.editing=null; }
+  $('#noteSave').onclick = ()=>{
+    const text = $('#noteText').value.trim(), title = $('#noteTitle').value.trim();
+    if(!text){ $('#noteText').focus(); flash('اكتب نص الملاحظة أولًا'); return; }
+    if(ui.editing){
+      const n = state.notes.find(x=>x.id===ui.editing);
+      if(n){ n.text = text; n.title = title; }
+    }else{
+      state.notes.push({id:uid(), title, text, date:ui.sel, created:Date.now()});
+    }
+    const wasEditing = !!ui.editing;
+    clearEditor(); renderNotes(); renderCal(); renderBase(); save();
+    flash(wasEditing ? 'تم حفظ التعديل ✓' : 'تم حفظ الملاحظة ✓');
+  };
+  $('#noteCancel').onclick = ()=>{ clearEditor(); renderNotes(); };
+  $('#noteView').addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    ui.noteView = b.dataset.n; syncSegs();
+    renderNotes();
+  });
+  $('#noteSearch').addEventListener('input', e=>{ ui.noteQ = e.target.value; renderNotes(); });
+  const armed = new Map();
+  $('#noteList').addEventListener('click', e=>{
+    const btn = e.target.closest('[data-a]'); if(!btn) return;
+    const li = btn.closest('[data-id]'); const n = state.notes.find(x=>x.id===li.dataset.id); if(!n) return;
+    const a = btn.dataset.a;
+    if(a==='goto'){
+      openDay(n.date, {reset:true, scroll:true}); return;
+    }
+    if(a==='nedit'){
+      ui.editing = n.id; $('#noteTitle').value = n.title||''; $('#noteText').value = n.text;
+      renderNotes(); $('#noteText').focus(); return;
+    }
+    if(a==='ndel'){
+      if(!armed.get(n.id)){
+        armed.set(n.id,true); btn.textContent = 'تأكيد الحذف؟';
+        setTimeout(()=>{ armed.delete(n.id); if(btn.isConnected) btn.textContent='حذف'; }, 3000);
+        return;
+      }
+      state.notes = state.notes.filter(x=>x!==n);
+      if(ui.editing===n.id) clearEditor();
+      renderNotes(); renderCal(); renderBase(); save();
+    }
+  });
+
+  /* ---------- القاعدة الرئيسية ---------- */
+  const fD = v => v ? new Intl.DateTimeFormat('ar-EG-u-nu-latn',{day:'numeric',month:'short'}).format(dparse(v)) : '—';
+  function fShortBase(v){ return v ? new Intl.DateTimeFormat('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric'}).format(dparse(v)) : ''; }
+  function scopeDates(scope){
+    const out = [];
+    if(scope==='month'){ const n = new Date(ui.calY, ui.calM+1, 0).getDate(); for(let d=1; d<=n; d++) out.push(dkey(new Date(ui.calY, ui.calM, d))); }
+    else if(scope==='week'){ const ws = Number(settings.weekStart)||0, s0 = dparse(ui.sel), off = (s0.getDay()-ws+7)%7; for(let i=0;i<7;i++){ const d = new Date(s0); d.setDate(s0.getDate()-off+i); out.push(dkey(d)); } }
+    else out.push(ui.sel);
+    return out;
+  }
+  function daysHTML(){
+    const q = ui.q.trim().toLowerCase(), tk = todayKey();
+    const days = [...new Set([...state.tasks.map(t=>t.date), ...state.notes.map(n=>n.date)])].filter(Boolean).sort((a,b)=>b.localeCompare(a));
+    // القاعدة الرئيسية تعرض البيانات الأصلية نفسها، ولا تنشئ نسخًا منفصلة منها.
+    const rows = days.map(date=>({date, tasks:state.tasks.filter(t=>t.date===date), notes:state.notes.filter(n=>n.date===date)})).filter(d=>{
+      if(!q) return true;
+      return d.date.includes(q) || fShortBase(d.date).toLowerCase().includes(q) || d.tasks.some(t=>String(t.text||'').toLowerCase().includes(q)) || d.notes.some(n=>String(n.title||'').toLowerCase().includes(q)||String(n.text||'').toLowerCase().includes(q));
+    });
+    if(!rows.length) return '<div class="empty">'+(days.length?'لا توجد أيام أو مهام أو ملاحظات مطابقة للبحث.':'لا توجد بيانات يومية بعد. أضف مهمة أو ملاحظة في أي يوم وستظهر هنا تلقائيًا.')+'</div>';
+    return '<div class="base-table-wrap"><table class="base-day-table"><thead><tr><th scope="col">التاريخ</th><th scope="col">المهام</th><th scope="col">الملاحظات</th><th scope="col">التفاصيل</th></tr></thead><tbody>'+rows.map(d=>
+      '<tr class="'+(d.date===ui.sel?'is-sel':'')+'"><td class="date-cell" data-label="التاريخ"><button type="button" class="datebtn" data-central-date="'+esc(d.date)+'">'+esc(fShortBase(d.date))+'</button>'+(d.date===tk?'<span class="mini-tag">اليوم</span>':'')+'<br><span class="muted-cell">'+esc(d.date)+'</span></td>'+
+      '<td class="content-cell" data-label="المهام">'+(d.tasks.length?d.tasks.map(t=>'<span class="task-line">'+(t.done?'☑ ':'◻ ')+(mainOf(t)?'◆ ':'')+esc(t.text)+'</span>').join(''):'<span class="muted-cell">لا توجد مهام</span>')+'</td>'+
+      '<td class="content-cell" data-label="الملاحظات">'+(d.notes.length?d.notes.map(n=>'<span class="note-line">'+esc((n.title||n.text).slice(0,240))+'</span>').join(''):'<span class="muted-cell">لا توجد ملاحظات</span>')+'</td>'+
+      '<td class="open-cell"><button class="chip" data-central-date="'+esc(d.date)+'">فتح اليوم</button></td></tr>').join('')+'</tbody></table></div>';
+  }
+  function mainsHTML(){
+    const q = ui.q.trim().toLowerCase();
+    const list = state.mainTasks.filter(m=>!q || String(m.name).toLowerCase().includes(q) || linksOf(m).some(t=>String(t.text||'').toLowerCase().includes(q) || t.date.includes(q) || fShortBase(t.date).toLowerCase().includes(q)));
+    const taskHits = q ? state.tasks.filter(t=>String(t.text||'').toLowerCase().includes(q) || String(t.date||'').includes(q) || fShortBase(t.date).toLowerCase().includes(q)) : [];
+    const noteHits = q ? state.notes.filter(n=>String(n.title||'').toLowerCase().includes(q) || String(n.text||'').toLowerCase().includes(q) || String(n.date||'').includes(q) || fShortBase(n.date).toLowerCase().includes(q)) : [];
+    const scopes = [['day','اليوم المحدد'],['week','أسبوع اليوم المحدد'],['month','شهر '+fMonth.format(new Date(ui.calY,ui.calM,1))]];
+    let html = '';
+    if(list.length) html += '<div class="mlist">'+list.map(m=>{
+      const links = linksOf(m).sort((a,b)=>a.date.localeCompare(b.date)), done = links.filter(t=>t.done).length, onSel = links.some(t=>t.date===ui.sel);
+      const matchedLinks = q ? links.filter(t=>String(t.text||'').toLowerCase().includes(q)||t.date.includes(q)||fShortBase(t.date).toLowerCase().includes(q)) : links;
+      const p = [0,1,2].includes(m.prio) ? m.prio : 1;
+      const stat = links.length ? 'في '+fmtDays(links.length)+' • منجز '+done+' • متبقي '+(links.length-done) : 'لم تُضف إلى أي يوم بعد';
+      return '<article class="mcard" data-main-id="'+esc(m.id)+'">'+
+        '<div class="mhead"><b class="mname">'+esc(m.name)+'</b><button class="chip '+(p?'p'+p:'')+'" data-ma="prio" title="الأولوية الافتراضية للأيام الجديدة">'+PRIO[p]+'</button></div>'+
+        '<p class="sub" style="margin:0">'+stat+'</p>'+
+        '<div class="madd"><select class="select main-scope" aria-label="نطاق إضافة '+esc(m.name)+'">'+scopes.map(o=>'<option value="'+o[0]+'"'+(ui.mainScope===o[0]?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select><button class="btn" data-ma="add">أضف</button></div>'+
+        (onSel?'<div><button class="chip" data-ma="removeDay">إزالة من اليوم المحدد فقط</button></div>':'')+
+        (links.length?'<details class="mdays"'+(ui.openMains.has(m.id)?' open':'')+' data-det="'+esc(m.id)+'"><summary>'+(q && matchedLinks.length!==links.length?'نتائج البحث ('+matchedLinks.length+') من ':'الأيام المرتبطة (')+links.length+')</summary><div class="daychips">'+(q?matchedLinks:links).map(t=>'<button type="button" class="chip '+(t.done?'done':'')+'" data-central-date="'+esc(t.date)+'" title="فتح اليوم">'+(t.done?'✓ ':'')+esc(fShortBase(t.date))+'</button>').join('')+'</div></details>':'')+
+        '<div class="mfoot"><button class="link" data-ma="rename">تعديل الاسم</button><button class="link danger" data-ma="delete">حذف نهائي</button></div>'+
+      '</article>';
+    }).join('')+'</div>';
+    else if(!q) html += '<div class="empty">لا توجد مهام رئيسية بعد. استخدم «إضافة» لإنشاء مهمة أو ملاحظة، أو أضف مهمة رئيسية متكررة من الحقل أعلاه.</div>';
+    if(q){
+      html += '<section class="search-results"><h3>نتائج المهام ('+taskHits.length+')</h3>'+(taskHits.length?taskHits.map(t=>'<div class="search-hit"><div class="hit-main"><div class="hit-title">'+(t.done?'✓ ':'')+esc(t.text)+'</div><div class="hit-meta">'+esc(fShortBase(t.date))+'</div></div><span class="priority-tag '+(Number(t.prio)?'p'+Number(t.prio):'')+'">'+PRIO[[0,1,2].includes(Number(t.prio))?Number(t.prio):0]+'</span><button class="chip" data-central-date="'+esc(t.date)+'">فتح اليوم</button></div>').join(''):'<p class="sub">لا توجد مهام مطابقة.</p>')+'</section>';
+      html += '<section class="search-results"><h3>نتائج الملاحظات ('+noteHits.length+')</h3>'+(noteHits.length?noteHits.map(n=>'<div class="search-hit"><div class="hit-main"><div class="hit-title">'+esc(n.title||n.text.slice(0,100))+'</div><div class="hit-meta">'+esc(fShortBase(n.date))+' • '+esc(n.text.slice(0,180))+'</div></div><button class="chip" data-central-date="'+esc(n.date)+'">فتح اليوم</button></div>').join(''):'<p class="sub">لا توجد ملاحظات مطابقة.</p>')+'</section>';
+      if(!list.length && !taskHits.length && !noteHits.length) html = '<div class="empty">لا توجد نتائج مطابقة في المهام الرئيسية أو المهام أو الملاحظات.</div>';
+    }
+    return html;
+  }
+  function itemsHTML(){
+    const q = ui.q.trim().toLowerCase();
+    const items = state.base.filter(b =>
+      (ui.st==='all' || String(b.status)===ui.st) &&
+      (!q || String(b.name||'').toLowerCase().includes(q) || String(b.cat||'').toLowerCase().includes(q)));
+    if(!items.length) return '<div class="empty">'+(state.base.length?'لا توجد عناصر مطابقة.':'لا توجد عناصر إضافية في القاعدة.')+'</div>';
+    if(ui.view==='table') return '<div class="rows-head"><span>الاسم</span><span>التصنيف</span><span>التاريخ</span><span>الحالة</span><span></span></div><div class="rows">'+items.map(b=>'<div class="row" data-id="'+esc(b.id)+'"><span class="r-name">'+esc(b.name)+'</span><span class="r-meta">'+esc(b.cat||'بدون تصنيف')+'</span><span class="r-meta">'+fD(b.date)+'</span><button class="chip s'+b.status+'" data-a="status">'+STATUS[b.status]+'</button><button class="icon-btn" data-a="bdel" aria-label="حذف العنصر">'+ICON_DEL+'</button></div>').join('')+'</div>';
+    return '<div class="board">'+STATUS.map((st,i)=>'<div class="col"><h3>'+st+'<span>'+items.filter(b=>b.status===i).length+'</span></h3>'+items.filter(b=>b.status===i).map(b=>'<div class="kcard" data-id="'+esc(b.id)+'"><b>'+esc(b.name)+'</b><span class="r-meta">'+esc(b.cat||'بدون تصنيف')+' • '+fD(b.date)+'</span><div class="kfoot"><button class="chip" data-a="status">نقل للحالة التالية</button><button class="icon-btn" data-a="bdel" aria-label="حذف العنصر">'+ICON_DEL+'</button></div></div>').join('')+'</div>').join('')+'</div>';
+  }
+  function renderBase(){
+    const tab = ui.baseTab;
+    const nDays = new Set([...state.tasks.map(t=>t.date), ...state.notes.map(n=>n.date)]).size;
+    $('#baseSub').textContent = nDays+' يوم • '+state.tasks.length+' مهمة • '+state.notes.length+' ملاحظة • '+state.mainTasks.length+' مهمة رئيسية';
+    document.querySelectorAll('#baseTabs button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.bt===tab)));
+    $('#itemTools').hidden = true; $('#centralAddForm').hidden = true; $('#mainAddForm').hidden = true;
+    $('#search').placeholder = tab==='days' ? 'ابحث عن يوم أو مهمة أو ملاحظة' : 'ابحث في المهام الرئيسية والمهام والملاحظات والتواريخ';
+    $('#baseView').innerHTML = tab==='days' ? daysHTML() : mainsHTML();
+  }
+  $('#baseTabs').addEventListener('click', e=>{ const b = e.target.closest('button'); if(!b) return; ui.baseTab = b.dataset.bt; renderBase(); });
+  const centralKind = $('#centralKind');
+  function syncCentralKind(){
+    const note = centralKind.value==='note';
+    $('#centralTitleWrap').hidden = !note;
+    $('#centralScopeWrap').hidden = note;
+    $('#centralPrioWrap').hidden = note;
+    $('#centralText').placeholder = note ? 'اكتب نص الملاحظة' : 'اكتب اسم المهمة';
+  }
+  function openCentralAdd(){
+    $('#centralDate').value = ui.sel || todayKey();
+    $('#centralKind').value='task'; $('#centralText').value=($('#search').value||'').trim(); $('#centralTitle').value=''; $('#centralScope').value='day'; $('#centralPrio').value='0';
+    syncCentralKind(); $('#centralAddForm').hidden=false; $('#centralText').focus();
+  }
+  $('#centralAddOpen').onclick=openCentralAdd;
+  $('#centralAddClose').onclick=()=>$('#centralAddForm').hidden=true;
+  $('#centralAddCancel').onclick=()=>$('#centralAddForm').hidden=true;
+  centralKind.addEventListener('change',syncCentralKind);
+  $('#centralAddSave').onclick=()=>{
+    const kind=$('#centralKind').value, text=$('#centralText').value.trim(), date=$('#centralDate').value||ui.sel||todayKey();
+    if(!text){$('#centralText').focus();toast(kind==='note'?'اكتب نص الملاحظة أولًا':'اكتب اسم المهمة أولًا');return;}
+    if(kind==='note'){
+      state.notes.push({id:uid(),title:$('#centralTitle').value.trim(),text,date,created:Date.now()});
+      ui.sel=date; const d=dparse(date); ui.calY=d.getFullYear(); ui.calM=d.getMonth();
+      renderAll(); save(); $('#centralAddForm').hidden=true; toast('تمت إضافة الملاحظة إلى '+fShortBase(date)); return;
+    }
+    const prio=Number($('#centralPrio').value)||0, scope=$('#centralScope').value;
+    const dates=scope==='month'?(()=>{const d=dparse(date), n=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();return Array.from({length:n},(_,i)=>dkey(new Date(d.getFullYear(),d.getMonth(),i+1)));})():[date];
+    let added=0;
+    dates.forEach(day=>{ if(!state.tasks.some(t=>t.date===day && String(t.text).trim().toLowerCase()===text.toLowerCase())){state.tasks.push({id:uid(),text,done:false,prio,date:day});added++;} });
+    ui.sel=date; const d=dparse(date); ui.calY=d.getFullYear(); ui.calM=d.getMonth();
+    renderAll(); save(); $('#centralAddForm').hidden=true;
+    toast(added?'أُضيفت المهمة إلى '+(scope==='month'?'أيام الشهر ('+added+' يوم)':'اليوم المحدد'):'المهمة موجودة مسبقًا في النطاق المحدد');
+  };
+  $('#centralText').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#centralAddSave').click();}});
+
+  function addMain(){
+    const i = $('#mtName'), name = i.value.trim();
+    if(!name){ i.focus(); return; }
+    if(state.mainTasks.some(m=>String(m.name).trim().toLowerCase()===name.toLowerCase())){ toast('توجد مهمة رئيسية بالاسم نفسه'); i.focus(); return; }
+    state.mainTasks.push({id:uid(), name, prio:Number($('#mtPrio').value)||0, created:Date.now()});
+    i.value=''; i.focus(); renderAll(); save(); toast('أُضيفت المهمة الرئيسية «'+name+'»');
+  }
+  $('#mtAdd').onclick = addMain;
+  $('#mtName').addEventListener('keydown', e=>{ if(e.key==='Enter') addMain(); });
+  $('#search').addEventListener('input', e=>{ ui.q = e.target.value; renderBase(); });
+  $('#statusFilter').addEventListener('change', e=>{ ui.st = e.target.value; renderBase(); });
+  $('#viewSwitch').addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    ui.view = b.dataset.v;
+    document.querySelectorAll('#viewSwitch button').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    renderBase();
+  });
+  $('#baseView').addEventListener('toggle', e=>{
+    const d = e.target.closest && e.target.closest('[data-det]'); if(!d) return;
+    if(d.open) ui.openMains.add(d.dataset.det); else ui.openMains.delete(d.dataset.det);
+  }, true);
+  $('#baseView').addEventListener('change', e=>{ if(e.target.classList.contains('main-scope')) ui.mainScope = e.target.value; });
+  $('#baseView').addEventListener('click', async e=>{
+    const dayBtn = e.target.closest('[data-central-date]');
+    if(dayBtn){ openDay(dayBtn.dataset.centralDate, {reset:true, scroll:true}); return; }
+    const ma = e.target.closest('[data-ma]');
+    if(ma){
+      const el = ma.closest('[data-main-id]'); const m = el && state.mainTasks.find(x=>x.id===el.dataset.mainId); if(!m) return;
+      const a = ma.dataset.ma;
+      if(a==='prio'){ m.prio = ((Number(m.prio)||0)+1)%3; renderBase(); save(); return; }
+      if(a==='add'){
+        const scope = ui.mainScope || 'day', n = addMainTo(m, scopeDates(scope));
+        renderAll(); save();
+        toast(n ? 'أُضيفت «'+m.name+'» إلى '+fmtDays(n) : 'المهمة موجودة بالفعل في النطاق المحدد'); return;
+      }
+      if(a==='removeDay'){
+        const undo = snapshotUndo();
+        state.tasks = state.tasks.filter(t=>!(t.mainId===m.id && t.date===ui.sel));
+        renderAll(); save(); toast('أُزيلت من '+selLabel()+' فقط', undo); return;
+      }
+      if(a==='rename'){
+        const r = await ask({title:'تعديل اسم المهمة الرئيسية', msg:'سيتغير الاسم في كل الأيام المرتبطة ('+linksOf(m).length+').', input:true, value:m.name, actions:[{id:'save',label:'حفظ',needsInput:true},{id:'cancel',label:'إلغاء',kind:'ghost'}]});
+        if(!r || r.id!=='save') return;
+        if(state.mainTasks.some(x=>x!==m && String(x.name).trim().toLowerCase()===r.value.toLowerCase())){ toast('توجد مهمة رئيسية بالاسم نفسه'); return; }
+        m.name = r.value; state.tasks.forEach(t=>{ if(t.mainId===m.id) t.text = r.value; });
+        renderAll(); save(); toast('تم تعديل الاسم في كل الأيام'); return;
+      }
+      if(a==='delete'){
+        const n = linksOf(m).length, undo = snapshotUndo();
+        const r = await ask({title:'حذف نهائي', msg:'ستُحذف «'+m.name+'» من القائمة الرئيسية ومن '+fmtDays(n)+'. لن تتأثر المهام العادية ولا الملاحظات.', actions:[{id:'del',label:'حذف نهائي',kind:'danger'},{id:'cancel',label:'إلغاء',kind:'ghost'}]});
+        if(!r || r.id!=='del') return;
+        state.mainTasks = state.mainTasks.filter(x=>x.id!==m.id); state.tasks = state.tasks.filter(t=>t.mainId!==m.id); ui.openMains.delete(m.id);
+        renderAll(); save(); toast('حُذفت نهائيًا', undo); return;
+      }
+      return;
+    }
+    const btn = e.target.closest('[data-a]'); if(!btn) return;
+    const el = btn.closest('[data-id]'); const b = el && state.base.find(x=>x.id===el.dataset.id); if(!b) return;
+    if(btn.dataset.a==='status') b.status = (b.status+1)%3;
+    if(btn.dataset.a==='bdel'){ const undo = snapshotUndo(); state.base = state.base.filter(x=>x!==b); toast('حُذف العنصر', undo); }
+    renderBase(); save();
+  });
+
+  /* ---------- نسخ احتياطي ومسح ---------- */
+  $('#export').onclick = ()=>{
+    const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'plan-backup.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  };
+  $('#importBtn').onclick = ()=> $('#importFile').click();
+  $('#importFile').addEventListener('change', async e=>{
+    const f = e.target.files[0]; if(!f) return;
+    try{
+      const s = JSON.parse(await f.text());
+      if(!s || !Array.isArray(s.tasks)) throw new Error('bad');
+      state = clean(s);
+      clearEditor(); renderAll(); save(); flash('تمت استعادة النسخة ✓');
+    }catch(err){ flash('الملف غير صالح'); }
+    e.target.value = '';
+  });
+  let rArmed = false;
+  $('#reset').onclick = function(){
+    if(!rArmed){ rArmed = true; this.textContent = 'تأكيد المسح'; setTimeout(()=>{ rArmed=false; this.textContent='مسح'; },4000); return; }
+    state = {tasks:[],notes:[],base:[],mainTasks:[]}; clearEditor();
+    rArmed=false; this.textContent='مسح'; renderAll(); save(); flash('تم مسح البيانات');
+  };
+
+  function renderAll(){ renderCal(); renderDayBar(); renderTasks(); renderNotes(); renderBase(); renderStats(); }
+
+  /* ---------- بدء التشغيل ---------- */
+  (async function init(){
+    tick(); setInterval(tick, 1000);
+    await load(); await loadSettings();
+    applySettings(); renderAll();
+  })();
+})();
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+
+/* أدوات PWA: حالة الاتصال والتثبيت */
+(function(){
+  const badge=document.getElementById('netStatus');
+  const label=document.getElementById('netStatusText');
+  const install=document.getElementById('installApp');
+  function updateConnection(){
+    const online=navigator.onLine;
+    badge.classList.toggle('offline',!online);
+    label.textContent=online?'متصل بالإنترنت':'وضع عدم الاتصال';
+    badge.setAttribute('aria-label',label.textContent);
+  }
+  window.addEventListener('online',updateConnection);
+  window.addEventListener('offline',updateConnection);
+  updateConnection();
+  let installPrompt=null;
+  window.addEventListener('beforeinstallprompt',event=>{
+    event.preventDefault(); installPrompt=event; install.hidden=false;
+  });
+  install.addEventListener('click',async()=>{
+    if(!installPrompt)return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt=null; install.hidden=true;
+  });
+  window.addEventListener('appinstalled',()=>{
+    install.hidden=true; installPrompt=null;
+    if(typeof flash==='function') flash('تم تثبيت نكسورا بنجاح ✓');
+  });
+})();
+</script>
+</body>
+</html>

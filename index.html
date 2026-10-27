@@ -1,24 +1,635 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f7f8ff"><meta name="description" content="Learnly — مركزك الشخصي لمتابعة الكورسات وتوثيق ما تعلمته"><title>Learnly | كورساتك في مكان واحد</title>
-<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0C12">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="دليل عربي مبسّط يشرح اضطراب فرط الحركة وتشتت الانتباه ADHD، مع دعم العمل دون اتصال.">
+<title>ADHD | دليل مبسّط</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f7f8fc;--surface:#fff;--surface2:#f2f4ff;--text:#172b55;--muted:#7885a2;--line:#e7ebf5;--primary:#3458df;--primary2:#637dff;--bluewash:#edf1ff;--green:#22b96b;--greenbg:#dcf7e9;--orange:#f59e0b;--orangebg:#fff0d8;--gray:#98a1b2;--graybg:#edf0f5;--shadow:0 8px 28px rgba(37,57,110,.055);--radius:16px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif;line-height:1.65}body.dark{--bg:#0b1223;--surface:#111d34;--surface2:#182744;--text:#edf2ff;--muted:#a1aec9;--line:#263653;--bluewash:#1d2d55;--greenbg:#153b31;--orangebg:#49351a;--graybg:#293246;--shadow:0 8px 28px rgba(0,0,0,.16)}button,input,select{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}.container{width:min(1240px,calc(100% - 36px));margin:auto}.topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.nav{height:76px;display:flex;align-items:center;justify-content:space-between;gap:22px}.brand{display:flex;align-items:center;gap:10px;font-size:25px;font-weight:700;letter-spacing:-.5px}.brand-mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,#4268f3,#2445b8);display:grid;place-items:center;color:#fff;box-shadow:0 7px 16px #3458df35}.brand-mark svg{width:26px}.navlinks{display:flex;gap:28px;align-items:center;color:var(--muted);font-size:14px;font-weight:600}.navlinks a.active,.navlinks a:hover{color:var(--primary)}.nav-actions{display:flex;gap:9px;align-items:center}.iconbtn{width:42px;height:42px;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:13px;display:grid;place-items:center}.iconbtn svg{width:19px;height:19px}.hero{padding:38px 0 24px}.hero-panel{position:relative;overflow:hidden;border:1px solid #e4e9ff;border-radius:24px;padding:32px 36px;background:linear-gradient(115deg,var(--surface) 0%,var(--surface) 57%,#edf1ff 100%);display:grid;grid-template-columns:1.35fr .65fr;gap:24px;align-items:center}.dark .hero-panel{background:linear-gradient(115deg,var(--surface),var(--surface) 57%,#1b2a4e)}.eyebrow{display:inline-flex;gap:8px;align-items:center;background:var(--bluewash);color:var(--primary);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700}.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--primary)}h1{font-size:clamp(27px,3.2vw,42px);line-height:1.3;letter-spacing:-1px;margin:14px 0 12px} .hero p{color:var(--muted);max-width:670px;margin:0 0 22px;font-size:15px}.hero-actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:12px;padding:11px 17px;font-weight:700;font-size:13px;display:inline-flex;gap:8px;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s}.btn:hover{transform:translateY(-1px)}.btn-primary{background:linear-gradient(120deg,var(--primary),var(--primary2));color:#fff;box-shadow:0 7px 16px #3458df2b}.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--line)}.hero-art{min-height:190px;display:grid;place-items:center;position:relative}.artbook{width:190px;height:145px;position:relative;transform:rotate(-6deg)}.book{position:absolute;bottom:0;right:14px;width:150px;height:28px;border-radius:7px;background:#dbe4ff;border:1px solid #bdccff;box-shadow:0 9px 16px #2649b520}.book.b2{bottom:24px;right:25px;background:#fff;width:137px;height:25px}.screen{position:absolute;right:43px;bottom:48px;width:105px;height:82px;border:7px solid #4168e9;border-radius:12px;background:linear-gradient(140deg,#dce5ff,#fff);box-shadow:0 12px 24px #3458df2e;display:grid;place-items:center}.play{width:30px;height:30px;background:var(--primary);color:white;border-radius:10px;display:grid;place-items:center}.plant{position:absolute;bottom:10px;left:4px;width:28px;height:45px;border-bottom:15px solid #c89c75}.plant:before,.plant:after{content:'';position:absolute;background:#38b976;width:20px;height:33px;border-radius:100% 0 100% 0;transform:rotate(-30deg);top:-16px;left:-4px}.plant:after{transform:rotate(25deg);left:12px;top:-7px;background:#67d39b}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 17px;display:flex;align-items:center;gap:13px;box-shadow:var(--shadow)}.stat-icon{width:42px;height:42px;border-radius:13px;background:var(--bluewash);color:var(--primary);display:grid;place-items:center;font-size:20px}.stat-num{font-size:24px;font-weight:700;line-height:1.1}.stat-label{color:var(--muted);font-size:12px;margin-top:5px}.section{padding:22px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:18px}.section-head h2{font-size:22px;margin:0;letter-spacing:-.4px}.section-head p{color:var(--muted);font-size:13px;margin:4px 0 0}.category-row{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:thin}.chip{white-space:nowrap;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:8px 15px;font-size:12px;font-weight:600}.chip.active{background:var(--primary);border-color:var(--primary);color:#fff}.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.searchbox{height:43px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;min-width:230px}.searchbox svg{width:17px;color:var(--muted);flex-shrink:0}.searchbox input{border:0;outline:0;background:transparent;color:var(--text);width:100%;font-size:13px}.select{height:43px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:0 12px;font-size:13px;outline:none}.course-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}.course-card{background:var(--surface);border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow);transition:transform .18s,border-color .18s;min-width:0}.course-card:hover{transform:translateY(-3px);border-color:#c8d2ff}.course-cover{height:145px;position:relative;overflow:hidden;background:linear-gradient(135deg,#eaf0ff,#cdd9ff)}.course-cover img{width:100%;height:100%;object-fit:cover;display:block}.cover-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(17,34,76,.28),transparent 62%)}.status{position:absolute;top:12px;right:12px;border-radius:8px;padding:5px 9px;font-size:10px;font-weight:700;z-index:1}.status.done{background:var(--greenbg);color:var(--green)}.status.progress{background:var(--orangebg);color:#d88900}.status.todo{background:var(--graybg);color:#7b8494}.cover-symbol{position:absolute;bottom:13px;left:14px;font-size:26px;filter:drop-shadow(0 2px 5px #0002)}.card-body{padding:15px 16px 16px}.cat-label{font-size:10px;font-weight:700;color:var(--primary);background:var(--bluewash);border-radius:7px;padding:4px 8px;display:inline-block;margin-bottom:9px}.card-title{font-size:16px;font-weight:700;margin:0 0 5px;line-height:1.55}.instructor{font-size:11px;color:var(--muted)}.meta-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}.rating{color:#f59e0b;font-weight:700;white-space:nowrap}.card-foot{display:flex;gap:8px;margin-top:13px}.card-foot .btn{width:100%;padding:9px;font-size:12px}.progressbar{height:5px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:12px}.progressbar span{height:100%;display:block;background:linear-gradient(90deg,var(--primary),#7d92ff);border-radius:99px}.empty{padding:44px 15px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:16px;grid-column:1/-1}.analytics{display:grid;grid-template-columns:1fr 1fr;gap:17px}.panel{background:var(--surface);border:1px solid var(--line);border-radius:17px;padding:20px;box-shadow:var(--shadow)}.panel h3{font-size:15px;margin:0 0 18px}.bars{display:grid;gap:14px}.bar-row{display:grid;grid-template-columns:100px 1fr 26px;gap:10px;align-items:center;font-size:12px}.bar-track{height:8px;border-radius:99px;background:var(--line);overflow:hidden}.bar-track span{height:100%;display:block;border-radius:99px;background:linear-gradient(90deg,#3458df,#7d91ff)}.donut-wrap{display:flex;align-items:center;justify-content:center;gap:24px;min-height:160px}.donut{width:142px;height:142px;border-radius:50%;background:conic-gradient(var(--green) 0 40%,var(--orange) 40% 70%,#a5adbb 70% 100%);display:grid;place-items:center;position:relative;flex-shrink:0}.donut:before{content:'';position:absolute;inset:17px;border-radius:50%;background:var(--surface)}.donut-center{position:relative;text-align:center;font-size:25px;font-weight:700}.donut-center small{display:block;font-size:10px;color:var(--muted);font-weight:500}.legend{display:grid;gap:10px;font-size:12px;color:var(--muted)}.legend span{display:flex;align-items:center;gap:8px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}.footer{margin-top:30px;border-top:1px solid var(--line);padding:22px 0;color:var(--muted);font-size:12px}.footer-inner{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}.footer strong{color:var(--text)}
-/* details view */
-.detail-view{display:none;padding:26px 0 45px}.detail-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}.detail-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(270px,.8fr);gap:20px}.detail-main,.detail-side{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}.detail-cover{height:235px;position:relative}.detail-cover img{width:100%;height:100%;object-fit:cover}.detail-content{padding:24px}.detail-content h1{font-size:29px;margin:12px 0 6px}.detail-content>p{color:var(--muted);font-size:14px}.learned{background:var(--bluewash);border:1px solid #dfe6ff;border-radius:15px;padding:19px;margin:20px 0}.learned h3{margin:0 0 10px;font-size:16px}.learned ul,.detail-content ul{padding-right:21px;margin:0}.learned li,.detail-content li{margin:7px 0;font-size:13px}.detail-content h3{font-size:17px;margin:25px 0 10px}.detail-content table{border-collapse:collapse;width:100%;font-size:12px;margin:12px 0}.detail-content th,.detail-content td{border:1px solid var(--line);padding:10px;text-align:right}.detail-content th{background:var(--surface2)}.detail-side{padding:20px;height:max-content}.detail-side h3{margin:0 0 16px;font-size:16px}.detail-info{display:grid;gap:13px}.info-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px solid var(--line);padding-bottom:11px}.info-row span{color:var(--muted)}.detail-side .btn{width:100%;margin-top:17px}.detail-nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}.toast{position:fixed;bottom:20px;left:20px;background:var(--text);color:var(--surface);padding:11px 16px;border-radius:12px;box-shadow:var(--shadow);font-size:13px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;z-index:100}.toast.show{opacity:1;transform:translateY(0)}
-@media(max-width:900px){.hero-panel{grid-template-columns:1fr .45fr;padding:26px}.hero-art{transform:scale(.8)}.course-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-layout{grid-template-columns:1fr}.detail-side{order:-1}.navlinks{gap:15px}.analytics{grid-template-columns:1fr 1fr}}@media(max-width:620px){.container{width:calc(100% - 26px)}.nav{height:64px}.brand{font-size:22px}.brand-mark{width:37px;height:37px}.navlinks{display:none}.hero{padding-top:20px}.hero-panel{display:block;padding:23px 20px;border-radius:20px}.hero-art{display:none}.hero p{font-size:13px}.stats{gap:8px;margin-top:13px}.stat{padding:12px 9px;display:block;text-align:center}.stat-icon{margin:0 auto 8px;width:34px;height:34px;font-size:16px}.stat-num{font-size:20px}.stat-label{font-size:10px}.section{padding:16px 0}.section-head{align-items:start;flex-direction:column}.section-head h2{font-size:20px}.filters{width:100%}.searchbox{min-width:0;flex:1;width:100%}.select{flex:1;min-width:0}.course-grid{grid-template-columns:1fr;gap:13px}.course-cover{height:165px}.card-body{padding:14px}.analytics{grid-template-columns:1fr}.donut-wrap{gap:17px}.donut{width:125px;height:125px}.donut:before{inset:15px}.detail-top{align-items:flex-start;flex-direction:column}.detail-cover{height:180px}.detail-content{padding:18px}.detail-content h1{font-size:24px}.detail-side{padding:16px}.footer-inner{flex-direction:column}.bar-row{grid-template-columns:90px 1fr 22px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+:root{
+  --font:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+  --r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:26px;
+  --bg:#F2F3F8;--bg-glow:rgba(79,107,255,.12);
+  --surface:#FFFFFF;--surface-2:#F5F6FB;--surface-3:#E9ECF5;
+  --line:rgba(18,24,43,.08);--line-2:rgba(18,24,43,.15);
+  --ink:#12151F;--ink-2:#323951;--muted:#6C7490;
+  --accent:#4F6BFF;--accent-2:#8B5CF6;--accent-ink:#FFFFFF;--accent-soft:rgba(79,107,255,.11);--accent-line:rgba(79,107,255,.38);
+  --ok:#0EA877;--ok-soft:rgba(14,168,119,.12);
+  --warn:#D98A06;--warn-soft:rgba(217,138,6,.13);
+  --rose:#E5365B;--rose-soft:rgba(229,54,91,.11);
+  --hero-a:#4F6BFF;--hero-b:#8B5CF6;
+  --shadow:0 1px 2px rgba(18,24,43,.04),0 10px 30px -12px rgba(18,24,43,.14);
+  --shadow-lg:0 24px 60px -18px rgba(18,24,43,.35);
+  --fs:17px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0A0C12;--bg-glow:rgba(124,156,255,.13);
+  --surface:#12161F;--surface-2:#181D28;--surface-3:#212736;
+  --line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.14);
+  --ink:#EDF0F7;--ink-2:#C3C9D9;--muted:#8890A6;
+  --accent:#7C9CFF;--accent-2:#A78BFA;--accent-ink:#0A0C12;--accent-soft:rgba(124,156,255,.14);--accent-line:rgba(124,156,255,.4);
+  --ok:#34D399;--ok-soft:rgba(52,211,153,.13);
+  --warn:#FBBF24;--warn-soft:rgba(251,191,36,.13);
+  --rose:#FB7185;--rose-soft:rgba(251,113,133,.13);
+  --hero-a:#2E3FA8;--hero-b:#5A38B5;
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 14px 34px -14px rgba(0,0,0,.6);
+  --shadow-lg:0 28px 70px -20px rgba(0,0,0,.75);
+  color-scheme:dark;
+}
+:root[data-size="lg"]{--fs:19px}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:20px}
+body{margin:0;min-height:100vh;min-height:100dvh;font-family:var(--font);font-size:var(--fs);line-height:1.8;color:var(--ink);
+  background:radial-gradient(1000px 520px at 85% -8%,var(--bg-glow),transparent 70%),var(--bg);background-attachment:fixed;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+h1,h2,h3,h4,p{margin:0}
+ul,ol{margin:0;padding:0;list-style:none}
+img{display:block;max-width:100%}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+::selection{background:var(--accent-soft)}
+.sub{font-size:.85rem;color:var(--muted)}
 
-/* أدوات إدارة المحتوى */
-.hero-actions{align-items:center}.hero-actions .btn{min-height:42px}.modal-backdrop{display:none;position:fixed;inset:0;z-index:100;background:#101a32a8;backdrop-filter:blur(5px);padding:20px;overflow:auto;align-items:flex-start;justify-content:center}.modal-backdrop.open{display:flex}.editor-modal{width:min(850px,100%);margin:auto;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:20px;box-shadow:0 25px 80px #0003;padding:22px}.editor-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px}.editor-head h2{font-size:23px;margin:8px 0 0}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.form-grid label{display:grid;gap:6px;font-size:12px;font-weight:700;color:var(--muted)}.form-grid label.wide{grid-column:1/-1}.form-grid input,.form-grid select,.form-grid textarea{width:100%;min-width:0;border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:var(--bg);color:var(--text);outline:none;font:inherit;font-size:13px}.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px #3458df18}.form-grid textarea{resize:vertical}.form-grid small{font-size:11px;font-weight:400}.editor-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}.course-link-btn{width:100%;margin-top:10px}.no-image{display:grid;place-items:center;height:100%;font-size:42px;background:linear-gradient(135deg,#edf1ff,#dbe4ff)}.upload-label{border:1px dashed var(--line);padding:12px;border-radius:12px}.danger-btn{color:#c24141!important}.editor-help{font-size:12px;color:var(--muted)}@media(max-width:620px){.hero-actions .btn{flex:1}.form-grid{grid-template-columns:1fr}.form-grid label.wide{grid-column:auto}.modal-backdrop{padding:8px}.editor-modal{padding:16px;border-radius:16px}.editor-head h2{font-size:20px}}
-.settings-modal{width:min(480px,100%)}.settings-actions{display:grid;gap:10px}.settings-actions .btn{width:100%}.manage-courses{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.manage-courses h3{margin:0 0 10px;font-size:15px}.manage-course-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.manage-course-row span{font-size:13px;overflow-wrap:anywhere}.btn-danger{background:#fff0f0;color:#b42318;border:1px solid #f3c4c1;padding:7px 12px;flex-shrink:0}.settings-version{margin-top:20px;padding:15px;border:1px solid var(--line);border-radius:13px;display:grid;gap:4px;background:var(--surface2)}.settings-version span,.settings-version small{color:var(--muted);font-size:12px}.settings-version strong{font-size:18px;color:var(--primary)}@media(max-width:520px){.navlinks{display:none}.brand{font-size:21px}.nav{gap:8px}.nav-actions{gap:6px}.iconbtn{width:38px;height:38px}}
-.manage-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:12px;padding:13px 15px;font-size:15px;font-weight:700;text-align:right}.manage-toggle span{font-size:22px;color:var(--primary);line-height:1}.manage-courses #deleteCoursesPanel{padding-top:10px}.learned h3{font-size:19px}.learned-body{max-height:155px;overflow:hidden;transition:max-height .25s ease}.learned-body.expanded{max-height:none}.learned li{font-size:16px;line-height:1.9;margin:9px 0}.learned-more{margin-top:10px;padding:7px 13px;border:1px solid #cbd5ff;border-radius:9px;background:var(--surface);color:var(--primary);font-size:14px;font-weight:700}.learned-more[hidden]{display:none}@media(max-width:600px){.learned li{font-size:15px}.learned h3{font-size:18px}}
-</style></head>
+/* الهيكل */
+.wrap{max-width:1160px;margin:0 auto;padding:60px 16px 120px}
+.app-tools{position:absolute;top:14px;left:16px;z-index:5;display:flex;align-items:center;gap:8px}
+.net-status,.install-app{display:inline-flex;align-items:center;gap:7px;min-height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-size:.74rem;font-weight:600}
+.net-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.net-status.offline .net-dot{background:var(--rose);box-shadow:0 0 0 3px var(--rose-soft)}
+.install-app[hidden]{display:none}
+.install-app{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+
+/* التنقل */
+.side-nav{position:fixed;z-index:40;display:flex;align-items:center;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);border:1px solid var(--line-2);box-shadow:var(--shadow-lg)}
+.side-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:var(--muted);border-radius:16px;font-size:.66rem;font-weight:600;transition:background .15s,color .15s}
+.side-nav button:hover{background:var(--surface-3);color:var(--ink)}
+.side-nav button:active{transform:scale(.96)}
+.side-nav button[aria-current="true"]{background:var(--accent-soft);color:var(--accent)}
+.side-nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav-brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 6px 16px -10px var(--accent)}
+.nav-brand-mark i{display:block;width:10px;height:18px;background:#fff;clip-path:polygon(0 0,100% 0,100% 100%,50% 72%,0 100%)}
+.side-nav .nav-brand{color:var(--ink)}
+.nav-brand-name{font-size:.6rem;letter-spacing:.12em;font-weight:700;color:var(--muted)}
+.nav-divider{background:var(--line)}
+@media(min-width:901px){
+  .side-nav{top:50%;transform:translateY(-50%);right:max(18px,calc((100vw - 1160px)/2 + 18px));flex-direction:column;gap:6px;padding:12px 9px;border-radius:25px;width:74px}
+  .side-nav button{width:100%;min-height:58px;padding:6px 2px}
+  .side-nav .nav-brand{min-height:64px}
+  .nav-divider{width:70%;height:1px;margin:4px 0}
+  .wrap{padding-right:112px}
+}
+@media(max-width:900px){
+  .side-nav{bottom:max(12px,env(safe-area-inset-bottom));inset-inline:12px;margin-inline:auto;max-width:460px;justify-content:space-between;gap:2px;padding:8px 10px;border-radius:26px}
+  .side-nav button{flex:1;min-height:50px;padding:4px 0}
+  .side-nav button span:not(.nav-brand-mark){display:none}
+  .nav-divider{display:none}
+  .nav-brand-mark{width:34px;height:34px}
+}
+
+/* أزرار */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 20px;border:1px solid transparent;border-radius:var(--r-md);background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.93rem;white-space:nowrap}
+.btn:hover{filter:brightness(1.08)}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-2)}
+.btn.ghost:hover{background:var(--surface-3);filter:none}
+.abtn{min-height:38px;padding:0 16px;border:1px solid var(--line-2);border-radius:12px;background:var(--surface-2);color:var(--ink);font-weight:600;font-size:.86rem;white-space:nowrap}
+.abtn:hover{background:var(--surface-3)}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;border:0;border-radius:11px;background:transparent;color:var(--muted)}
+.icon-btn:hover{background:var(--surface-3);color:var(--ink)}
+.seg{display:inline-flex;background:var(--surface-3);border-radius:14px;padding:4px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:11px;padding:6px 14px;font-size:.86rem;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
+
+/* البطل */
+.hero{position:relative;overflow:hidden;border-radius:var(--r-xl);padding:clamp(24px,5vw,44px);color:#fff;background:linear-gradient(135deg,var(--hero-a),var(--hero-b));box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;inset:auto auto -90px -60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%);pointer-events:none}
+.hero .kicker{font-size:.9rem;opacity:.85;margin-bottom:4px}
+.hero h1{font-size:clamp(4.4rem,18vw,8.5rem);line-height:1;font-weight:700;letter-spacing:-.02em;direction:ltr;text-align:right}
+.hero h2{font-size:clamp(1.3rem,4vw,1.9rem);font-weight:700;margin:8px 0 10px}
+.hero .lead{max-width:38em;opacity:.93}
+.not{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.not span{padding:3px 14px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);font-size:.9rem;text-decoration:line-through;text-decoration-color:#fff}
+.hero-grid{display:grid;gap:16px;margin-top:16px}
+
+/* بطاقات */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);box-shadow:var(--shadow);padding:clamp(20px,3.5vw,30px)}
+.card h3{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chips li{background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:2px 14px;font-size:.9rem}
+
+/* تجربة */
+.lab-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.path{position:relative;min-height:70px;padding:10px 0 4px}
+.path ol{display:flex;flex-direction:column;gap:8px}
+.path li{display:flex;align-items:center;gap:12px;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s;margin-inline-start:var(--dx,0px)}
+.path li.on{opacity:1;transform:none}
+.path li b{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:.85rem;font-weight:700;color:#fff;background:var(--c,var(--ok))}
+.path li span{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:3px 14px;font-size:.96rem}
+.path .end{margin-top:12px;border-inline-start:4px solid var(--warn);padding:2px 14px;font-weight:600;opacity:0;transition:opacity .5s}
+.path .end.on{opacity:1}
+
+/* أقسام */
+section.s{margin-top:18px;scroll-margin-top:16px}
+.panel{border-radius:var(--r-xl);padding:clamp(20px,4vw,38px);border:1px solid var(--line)}
+.sage{background:color-mix(in srgb,var(--ok-soft) 100%,var(--surface))}
+.blush{background:color-mix(in srgb,var(--rose-soft) 100%,var(--surface))}
+.sky{background:color-mix(in srgb,var(--accent-soft) 100%,var(--surface))}
+.sand{background:color-mix(in srgb,var(--warn-soft) 100%,var(--surface))}
+.panel h2{font-size:clamp(1.35rem,3.6vw,1.9rem);font-weight:700;line-height:1.4;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px}
+.panel h2 i{flex:none;margin-top:7px;width:12px;height:24px;background:var(--warn);clip-path:polygon(0 0,100% 0,100% 100%,50% 74%,0 100%)}
+.panel h3{font-size:1.12rem;font-weight:700;margin:22px 0 8px}
+.panel p{margin-bottom:.7em}
+.cols{display:grid;gap:20px}
+.bul li{position:relative;padding-inline-start:20px;margin:3px 0}
+.bul li::before{content:"";position:absolute;inset-inline-start:0;top:.85em;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.quote{border-inline-start:4px solid var(--accent);padding:2px 16px;margin:14px 0;font-weight:600}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 18px;margin-top:16px;font-size:.94rem;color:var(--ink-2)}
+.four{display:grid;gap:14px}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin:0}
+.fig img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.fig div{padding:14px 18px 18px}
+.fig h3{margin:0 0 4px;font-size:1.02rem}
+.fig p{margin:0;font-size:.94rem;color:var(--ink-2);line-height:1.7}
+.fig small{display:block;direction:ltr;text-align:right;color:var(--muted);font-size:.78rem}
+.pair{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin:16px 0}
+.pair div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px}
+.pair h4{margin:0 0 6px;font-size:1rem;font-weight:700}
+.pair .game h4{color:var(--ok)}.pair .study h4{color:var(--rose)}
+.tl{position:relative;margin:14px 0;padding-inline-start:26px}
+.tl::before{content:"";position:absolute;inset-inline-start:7px;top:6px;bottom:6px;width:2px;background:var(--line-2)}
+.tl li{position:relative;margin-bottom:16px}
+.tl li::before{content:"";position:absolute;inset-inline-start:-26px;top:8px;width:16px;height:16px;border-radius:50%;background:var(--surface);border:3px solid var(--warn)}
+.tl li:last-child::before{border-color:var(--rose);background:var(--rose)}
+.tl h4{margin:0;font-size:1rem;font-weight:700}
+.tl p{margin:0;color:var(--ink-2);font-size:.95rem}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:10px 0 14px;padding-bottom:2px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:1px solid var(--line-2);background:var(--surface);border-radius:999px;padding:7px 18px;font-weight:600;font-size:.9rem}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 22px}
+.tp[hidden]{display:none}.tp h3{margin-top:0}
+.vs{display:grid;gap:14px}
+.vs>div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 22px}
+.vs h3{margin:0 0 6px}.vs .a h3{color:var(--rose)}.vs .b h3{color:var(--ok)}
+.progress{display:flex;align-items:center;gap:12px;margin:12px 0 4px;font-size:.88rem;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.progress .tr{flex:1;height:8px;border-radius:99px;background:var(--surface);overflow:hidden;border:1px solid var(--line)}
+.progress .fl{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .3s}
+.checks{display:grid;gap:10px;margin-top:14px}
+.chk{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 16px;cursor:pointer}
+.chk input{appearance:none;flex:none;width:26px;height:26px;margin:3px 0 0;border-radius:8px;border:2px solid var(--line-2);background:transparent;display:grid;place-items:center;cursor:pointer}
+.chk input:checked{background:var(--ok);border-color:var(--ok)}
+.chk input:checked::after{content:"";width:6px;height:12px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(40deg) translate(-1px,-1px)}
+.chk b{display:block;font-weight:700;font-size:1rem}
+.chk span{display:block;color:var(--ink-2);font-size:.92rem;line-height:1.7}
+.chk:has(input:checked) b{text-decoration:line-through;text-decoration-color:var(--ok);color:var(--muted)}
+.pomo{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);padding:20px 22px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+.pomo h3{margin:0 0 2px;font-size:1.05rem}.pomo p{margin:0;color:var(--muted);font-size:.88rem}
+.time{font-weight:700;font-size:3rem;font-variant-numeric:tabular-nums;direction:ltr;line-height:1}
+.pomo .ctl{display:flex;gap:8px;flex-wrap:wrap}
+.mode{display:inline-block;margin-bottom:4px;font-size:.8rem;font-weight:700;padding:1px 12px;border-radius:99px;background:var(--ok-soft);color:var(--ok)}
+.mode.rest{background:var(--rose-soft);color:var(--rose)}
+.big{text-align:center;padding:46px 0 14px}
+.big p{font-size:clamp(1.3rem,4.2vw,2.1rem);line-height:1.6;font-weight:700;max-width:20em;margin:0 auto}
+.big .x{color:var(--rose);text-decoration:line-through;text-decoration-thickness:2px}
+.big .y{color:var(--ok)}
+.big small{display:block;margin-top:12px;color:var(--muted);font-size:.95rem}
+footer{margin-top:30px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:.86rem}
+footer p{max-width:44em}
+
+/* إعدادات */
+.overlay{position:fixed;inset:0;z-index:999;display:flex;align-items:flex-end;justify-content:center;background:rgba(6,9,16,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.overlay[hidden]{display:none}
+.sheet{width:100%;max-width:520px;max-height:90dvh;overflow:auto;padding:22px 22px calc(22px + env(safe-area-inset-bottom));border-radius:var(--r-xl) var(--r-xl) 0 0;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg)}
+@media(min-width:700px){.overlay{align-items:center}.sheet{border-radius:var(--r-xl)}}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.sheet-head h2{font-size:1.2rem}
+.sheet h3{margin:22px 0 4px;font-size:.74rem;font-weight:700;letter-spacing:.04em;color:var(--accent)}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.srow b{font-weight:600;font-size:.94rem}
+.about{margin-top:18px;font-size:.8rem;color:var(--muted);text-align:center}
+.toast{position:fixed;inset-inline:0;bottom:96px;margin:auto;width:max-content;max-width:90vw;z-index:1000;background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:.9rem;font-weight:600}
+.toast[hidden]{display:none}
+
+@media(min-width:760px){
+  .four{grid-template-columns:1fr 1fr}.vs{grid-template-columns:1fr 1fr}
+  .cols.two{grid-template-columns:1fr 1fr}.hero-grid{grid-template-columns:1fr 1.1fr;align-items:start}
+}
+@media(max-width:520px){.pair{grid-template-columns:1fr}.time{font-size:2.6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.side-nav,.app-tools,.pomo,.overlay{display:none!important}body{background:#fff}.wrap{padding:0}}
+</style>
+</head>
 <body>
-<header class="topbar"><div class="container nav"><a href="#home" class="brand" aria-label="Learnly الرئيسية"><span class="brand-mark"><svg viewBox="0 0 40 40" fill="none"><path d="M5 10.5 17.7 4v25.2L5 35V10.5Z" fill="white"/><path d="M20.5 10.4 35 3v25.4l-14.5 8V10.4Z" fill="#AFC0FF"/><path d="m22 3 10 5.5-10 5.8V3Z" fill="white"/></svg></span>Learnly</a><nav class="navlinks"><a href="#home" class="active">الرئيسية</a><a href="#courses">الكورسات</a><a href="#analytics">الإحصائيات</a></nav><div class="nav-actions"><button class="iconbtn" id="focusSearch" aria-label="بحث"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button><button class="iconbtn" id="settingsBtn" aria-label="الإعدادات" title="الإعدادات">⚙</button><button class="iconbtn" id="themeToggle" aria-label="تغيير المظهر"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.5 14.2A8.3 8.3 0 0 1 9.8 3.5 8.7 8.7 0 1 0 20.5 14.2Z"/></svg></button></div></div></header>
-<main id="mainPage"><section class="hero" id="home"><div class="container"><div class="hero-panel"><div><span class="eyebrow"><i></i> رحلتك في التعلّم، موثقة ومنظمة</span><h1>كل كورساتك في <span style="color:var(--primary)">مكان واحد</span></h1><p>تابع تقدّمك، نظّم تعلّمك، ووثّق أهم الفوائد من كل كورس لتبني مكتبة معرفية ترجع لها دائمًا.</p><div class="hero-actions"><a class="btn btn-primary" href="#courses">استكشف كورساتك <span>←</span></a><button class="btn btn-secondary" id="heroSearch">ابحث في المكتبة ⌕</button><button class="btn btn-primary" id="addCourseBtn">＋ إضافة كورس</button></div></div><div class="hero-art" aria-hidden="true"><div class="artbook"><div class="book"></div><div class="book b2"></div><div class="screen"><span class="play">▶</span></div><div class="plant"></div></div></div></div><div class="stats"><div class="stat"><div class="stat-icon">▤</div><div><div class="stat-num" id="totalCount">10</div><div class="stat-label">إجمالي الكورسات</div></div></div><div class="stat"><div class="stat-icon" style="color:var(--green);background:var(--greenbg)">✓</div><div><div class="stat-num" id="doneCount">4</div><div class="stat-label">كورسات مكتملة</div></div></div><div class="stat"><div class="stat-icon" style="color:var(--orange);background:var(--orangebg)">◷</div><div><div class="stat-num" id="progressCount">3</div><div class="stat-label">قيد التنفيذ</div></div></div></div></div></section>
-<section class="section" id="courses"><div class="container"><div class="section-head"><div><h2>مكتبة الكورسات</h2><p>كل خطوة تتعلمها اليوم، معرفة تبقى معك غدًا.</p></div><div class="filters"><label class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="searchInput" placeholder="ابحث عن كورس..." aria-label="ابحث عن كورس"></label><select id="statusFilter" class="select" aria-label="فلترة الحالة"><option value="all">كل الحالات</option><option value="todo">لم تبدأ</option><option value="progress">قيد التنفيذ</option><option value="done">مكتمل</option></select><select id="sortSelect" class="select" aria-label="ترتيب الكورسات"><option value="newest">الأحدث أولًا</option><option value="oldest">الأقدم أولًا</option><option value="rating">الأعلى تقييمًا</option><option value="name">الاسم</option></select></div></div><div class="category-row" id="categoryChips"></div><div class="course-grid" id="courseGrid"></div></div></section>
-<section class="section" id="analytics"><div class="container"><div class="section-head"><div><h2>رحلة التقدّم</h2><p>نظرة سريعة على توزيع مكتبتك التعليمية.</p></div></div><div class="analytics"><div class="panel"><h3>الكورسات حسب التصنيف</h3><div class="bars" id="categoryBars"></div></div><div class="panel"><h3>توزيع الكورسات حسب الحالة</h3><div class="donut-wrap"><div class="donut" id="donutChart"><div class="donut-center"><span id="donutTotal">10</span><small>كورس</small></div></div><div class="legend" id="statusLegend"></div></div></div></div></div></section>
-<footer class="footer"><div class="container footer-inner"><span><strong>Learnly</strong> — رحلتك في التعلّم، موثقة ومنظمة.</span><span>صُنع بحب لكل شخص يحب أن يتعلّم ♥</span><span>© <span id="year"></span> Learnly</span></div></footer></main>
-<section class="detail-view" id="detailView"><div class="container"><div class="detail-top"><button class="btn btn-secondary" id="backBtn">← الرئيسية</button></div><div id="detailContent"></div></div></section><div class="modal-backdrop" id="editorBackdrop" aria-hidden="true"><section class="editor-modal" role="dialog" aria-modal="true" aria-labelledby="editorTitle"><div class="editor-head"><div><span class="eyebrow"><i></i> إدارة المكتبة</span><h2 id="editorTitle">إضافة كورس جديد</h2></div><button class="iconbtn" type="button" id="closeEditor" aria-label="إغلاق">✕</button></div><form id="courseForm"><input type="hidden" id="editId"><div class="form-grid"><label>اسم الكورس *<input id="fName" required maxlength="180" placeholder="مثال: أساسيات التصميم"></label><label>المقدم / المنصة<input id="fInstructor" placeholder="Udemy، Coursera..."></label><label>التصنيف *<input id="fCategory" list="categoryOptions" required placeholder="اختر أو اكتب تصنيفًا"><datalist id="categoryOptions"></datalist></label><label>الحالة<select id="fStatus"><option value="todo">لم تبدأ</option><option value="progress">قيد التنفيذ</option><option value="done">تم</option></select></label><label>تاريخ البدء<input id="fStart" type="date"></label><label>تاريخ الانتهاء<input id="fEnd" type="date"></label><label>آخر مراجعة<input id="fReview" type="date"></label><label>التقييم (من 0 إلى 5)<input id="fRating" type="number" min="0" max="5" step="0.1" value="0"></label><label>نسبة التقدم (%)<input id="fProgress" type="number" min="0" max="100" step="1" value="0"></label><label>رابط الكورس<input id="fLink" type="url" placeholder="https://..."></label><label class="wide">رابط صورة الغلاف<input id="fImage" type="url" placeholder="https://... أو ارفع صورة أدناه"></label><label class="wide upload-label">أو ارفع صورة من جهازك<input id="fImageFile" type="file" accept="image/*"><small>سيتم تصغير الصورة لتناسب الموقع وملف التصدير.</small></label><label class="wide">وصف الكورس<textarea id="fDescription" rows="3" placeholder="ما موضوع الكورس؟"></textarea></label><label class="wide">أهم ما تعلمته (كل نقطة في سطر)<textarea id="fLearned" rows="4" placeholder="النقطة الأولى&#10;النقطة الثانية"></textarea></label><label class="wide">الأقسام التفصيلية (كل سطر: عنوان القسم | نقطة 1؛ نقطة 2)<textarea id="fSections" rows="4" placeholder="المفاهيم الأساسية | الفكرة الأولى؛ الفكرة الثانية&#10;تطبيق عملي | جرّب ما تعلمته"></textarea><small>اكتب عنوان القسم ثم | ثم النقاط مفصولة بفاصلة منقوطة ؛</small></label></div><div class="editor-actions"><button type="button" class="btn btn-secondary" id="cancelEditor">إلغاء</button><button type="submit" class="btn btn-primary">حفظ الكورس</button></div></form></section></div><div class="modal-backdrop" id="settingsBackdrop" aria-hidden="true"><section class="editor-modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="editor-head"><div><span class="eyebrow"><i></i> تفضيلات التطبيق</span><h2 id="settingsTitle">الإعدادات</h2></div><button class="iconbtn" type="button" id="closeSettings" aria-label="إغلاق">✕</button></div><div class="settings-actions"><button class="btn btn-primary" id="exportBtn">⇩ تصدير نسخة احتياطية</button><button class="btn btn-secondary" id="importBtn">⇧ استيراد نسخة احتياطية</button><input type="file" id="importFile" accept="application/json,.json" hidden></div><div class="manage-courses"><button type="button" class="manage-toggle" id="toggleDeleteCourses" aria-expanded="false">🗑 إدارة حذف الكورسات <span id="deleteToggleIcon">＋</span></button><div id="deleteCoursesPanel" hidden><p class="editor-help">يمكن حذف الكورسات من هذه القائمة فقط.</p><div id="deleteCoursesList"></div></div></div><div class="settings-version"><span>إصدار البرنامج</span><strong>1.1.3</strong><small>تاريخ الإصدار: 27 أكتوبر 2026</small></div></section></div><div class="toast" id="toast"></div>
-<script src="app.js"></script></body></html>
+
+<div class="app-tools" aria-label="حالة التطبيق">
+  <span class="net-status" id="netStatus" role="status" aria-live="polite"><span class="net-dot" aria-hidden="true"></span><span id="netStatusText">متصل</span></span>
+  <button class="install-app" id="installApp" type="button" hidden>تثبيت التطبيق</button>
+</div>
+
+<nav class="side-nav" aria-label="التنقل السريع">
+  <button type="button" class="nav-brand" data-jump="top" aria-label="أعلى الصفحة" title="الرئيسية"><span class="nav-brand-mark"><i></i></span><span class="nav-brand-name">ADHD</span></button>
+  <button type="button" data-jump="brain" aria-label="الدماغ" title="الدماغ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a3.5 3.5 0 0 0-3.5 3.5A3 3 0 0 0 6.5 12a3 3 0 0 0 2 4.5A3.5 3.5 0 0 0 12 20V4Z"/><path d="M12 4a3.5 3.5 0 0 1 3.5 3.5A3 3 0 0 1 17.5 12a3 3 0 0 1-2 4.5A3.5 3.5 0 0 1 12 20"/></svg><span>الدماغ</span></button>
+  <button type="button" data-jump="hidden" aria-label="الأعراض" title="الأعراض الخفية"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/></svg><span>الأعراض</span></button>
+  <button type="button" data-jump="types" aria-label="الأنواع" title="الأنواع"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg><span>الأنواع</span></button>
+  <button type="button" data-jump="care" aria-label="العلاج" title="العلاج"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.5 2.3C19.5 15.4 12 20 12 20Z"/></svg><span>العلاج</span></button>
+  <button type="button" data-jump="coping" aria-label="التعامل" title="طرق التعامل"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></svg><span>التعامل</span></button>
+  <div class="nav-divider"></div>
+  <button type="button" id="openSettings" aria-label="الإعدادات" aria-controls="settings" title="الإعدادات"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.2 13.5 1.1.9-1.4 2.4-1.4-.5a7.7 7.7 0 0 1-1.6.9l-.3 1.5h-2.8l-.3-1.5a7.7 7.7 0 0 1-1.6-.9l-1.4.5-1.4-2.4 1.1-.9a7 7 0 0 1 0-1.8l-1.1-.9 1.4-2.4 1.4.5a7.7 7.7 0 0 1 1.6-.9l.3-1.5h2.8l.3 1.5a7.7 7.7 0 0 1 1.6.9l1.4-.5 1.4 2.4-1.1.9a7 7 0 0 1 0 1.8Z"/></svg><span>الإعدادات</span></button>
+</nav>
+
+<div class="wrap" id="top">
+<main>
+
+<header class="hero" aria-label="التعريف">
+  <p class="kicker">دليل مبسّط بالعربي</p>
+  <h1>ADHD</h1>
+  <h2>ما هو اضطراب ADHD فعلًا؟</h2>
+  <p class="lead">اضطراب فرط الحركة وتشتت الانتباه، واسمه الكامل Attention-Deficit/Hyperactivity Disorder. الناس غالبًا يتخيلونه طفلًا يتحرك كثيرًا في الفصل، لكن الحقيقة أعمق بكثير.</p>
+  <div class="not" aria-label="ما ليس ADHD"><span>كسل</span><span>قلة تربية</span><span>شخص كثير الحركة</span></div>
+</header>
+
+<div class="hero-grid">
+  <div class="card">
+    <h3>هو اختلاف في طريقة عمل الدماغ، خصوصًا في:</h3>
+    <ul class="chips">
+      <li>تنظيم الانتباه</li><li>التحكم بالاندفاع</li><li>إدارة الدافع والمكافأة</li>
+      <li>تنظيم الوقت والطاقة</li><li>الانتقال بين المهام</li><li>التحكم بالمشاعر أحيانًا</li>
+    </ul>
+  </div>
+  <div class="card" id="lab">
+    <div class="lab-head">
+      <h3 style="margin:0">جرّب: افتح كتابًا</h3>
+      <div class="seg" id="labMode" role="group" aria-label="اختر الشخص">
+        <button type="button" data-m="normal" aria-pressed="true">شخص عادي</button>
+        <button type="button" data-m="adhd" aria-pressed="false">شخص ADHD</button>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:6px">تخيّل أنك تريد أن تفتح كتابًا. شاهد الطريق من الفكرة إلى البدء.</p>
+    <div class="path" aria-live="polite"><ol id="steps"></ol><p class="end" id="end"></p></div>
+    <button class="btn" id="go" type="button" style="margin-top:12px">ابدأ التجربة</button>
+  </div>
+</div>
+
+<!-- ================= الجوانب الأربعة ================= -->
+<section class="s" id="sides" aria-labelledby="sidesT">
+  <div class="panel sand">
+    <h2 id="sidesT"><i></i>أربعة جوانب لحالة واحدة</h2>
+    <p style="max-width:40em">ADHD ليس وجهًا واحدًا. هذه أربع لقطات تلخّص تنوّع التجربة اليومية.</p>
+    <div class="four" style="margin-top:18px">
+      <figure class="fig" style="margin:0"><img src="img/hyper.jpg" alt="رجل يركّز بعمق على بناء مجسّم معماري" loading="lazy"><div><small>Hyperfocus and Distraction</small><h3>التركيز المفرط والتشتت</h3><p>الجانب المضيء: قدرة هائلة على الانغماس في هواية ممتعة، وفي الوقت نفسه تشتت عن الواجبات اليومية.</p></div></figure>
+      <figure class="fig" style="margin:0"><img src="img/chaos.jpg" alt="مطبخ تتراكم فيه الأغراض والأوراق" loading="lazy"><div><small>Chaos, Forgetfulness, and Impulsivity</small><h3>الفوضى والنسيان والاندفاع</h3><p>فوضى يومية تتراكم فيها المهام وتضيع الأشياء، فيأتي الشعور بالإرهاق.</p></div></figure>
+      <figure class="fig" style="margin:0"><img src="img/sensory.jpg" alt="رجل يغطي أذنيه في شارع مزدحم مليء بالأضواء" loading="lazy"><div><small>Sensory Overload and Shut Down</small><h3>الحمل الحسي الزائد والانغلاق</h3><p>قد تصبح الضوضاء والأضواء ساحقة، فيدفع ذلك صاحبها إلى الانسحاب والانغلاق على نفسه.</p></div></figure>
+      <figure class="fig" style="margin:0"><img src="img/coping.jpg" alt="رجل مبتسم بجانب لوحة ألوان لتنظيم الروتين" loading="lazy"><div><small>Support Structure and Coping</small><h3>بنية الدعم والتأقلم</h3><p>أدوات بسيطة مثل الخريطة الذهنية الملونة والمنبهات تبني بنية تساعد على تنظيم الحياة والتعايش بفعالية.</p></div></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ================= الدماغ ================= -->
+<section class="s" id="brain" aria-labelledby="brainT">
+  <div class="panel blush">
+    <h2 id="brainT"><i></i>كيف يعمل الدماغ في ADHD؟</h2>
+    <p>الشرح العلمي المبسّط: يوجد ناقل عصبي مهم اسمه <b>الدوبامين (Dopamine)</b>. الناس يختصرونه بأنه «هرمون السعادة»، لكن هذا غير دقيق.</p>
+    <div class="cols two">
+      <div>
+        <h3>الدوبامين مرتبط أكثر بـ</h3>
+        <ul class="bul"><li>التحفيز</li><li>التوقع</li><li>المكافأة</li><li>بدء الحركة الذهنية</li></ul>
+      </div>
+      <div>
+        <h3>في ADHD</h3>
+        <p>نظام الدوبامين يعمل بطريقة مختلفة، لذلك الدماغ يبحث عن:</p>
+        <ul class="bul"><li>التحفيز</li><li>السرعة</li><li>الجديد</li><li>الإثارة</li></ul>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="study"><h4>المهام المملة</h4><p style="margin:0">تصبح مؤلمة.</p></div>
+      <div class="game"><h4>الأشياء المثيرة</h4><p style="margin:0">يتحول الشخص فيها إلى وحش تركيز.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= الألعاب والدراسة ================= -->
+<section class="s" id="games" aria-labelledby="gamesT">
+  <div class="panel sage">
+    <h2 id="gamesT"><i></i>لماذا يستطيع التركيز على الألعاب ولا يستطيع الدراسة؟</h2>
+    <p>هذا أكثر سؤال يسمعه المصابون. السبب ليس التناقض، بل أن ADHD ليس «نقص انتباه». هو <b>اضطراب في تنظيم الانتباه</b>، يعني أن الدماغ لا يوزّع الانتباه بشكل ثابت.</p>
+    <div class="pair">
+      <div class="game"><h4>الألعاب تعطي</h4><ul class="bul"><li>مكافآت سريعة</li><li>صوت وحركة</li><li>تقدم واضح</li><li>إثارة</li><li>دوبامين مستمر</li></ul></div>
+      <div class="study"><h4>الدراسة التقليدية</h4><ul class="bul"><li>مكافأتها بعيدة</li><li>رتيبة</li><li>بطيئة</li><li>تحتاج صبرًا تنفيذيًا</li></ul></div>
+    </div>
+    <p class="quote">فالدماغ يقول: «هذا لا يكفي لتحفيزي.»</p>
+
+    <h3>قصة واقعية متكررة جدًا: طالب ذكي جدًا</h3>
+    <ol class="tl">
+      <li><h4>في الابتدائي</h4><p>يجيب درجات ممتازة بدون مذاكرة، سريع الفهم، والجميع يقول «عبقري».</p></li>
+      <li><h4>في المتوسط والثانوي</h4><p>يبدأ التأخير: نسيان الواجبات، التسويف، الفوضى، والتوتر.</p></li>
+      <li><h4>في الجامعة</h4><p>ينهار النظام بالكامل.</p></li>
+    </ol>
+    <p>ليس لأنه أصبح غبيًا، بل لأن الحياة بدأت تحتاج تنظيمًا ذاتيًا وإدارة وقت وتخطيطًا طويلًا. وهذه تحديدًا المنطقة التي يتعب فيها ADHD.</p>
+  </div>
+</section>
+
+<!-- ================= الأعراض الخفية ================= -->
+<section class="s" id="hidden" aria-labelledby="hiddenT">
+  <div class="panel blush">
+    <h2 id="hiddenT"><i></i>الأعراض الحقيقية التي لا يتكلم عنها الناس</h2>
+    <p>ليس فقط الحركة. هناك أشياء خفية جدًا:</p>
+    <div class="tabs" role="tablist" data-tabs="sym" aria-label="الأعراض الخفية">
+      <button role="tab" aria-selected="true" aria-controls="sym1" id="t-sym1">الشلل التنفيذي</button>
+      <button role="tab" aria-selected="false" aria-controls="sym2" id="t-sym2">عمى الوقت</button>
+      <button role="tab" aria-selected="false" aria-controls="sym3" id="t-sym3">الحساسية العاطفية</button>
+      <button role="tab" aria-selected="false" aria-controls="sym4" id="t-sym4">الضوضاء الداخلية</button>
+    </div>
+    <div class="tp" role="tabpanel" id="sym1" aria-labelledby="t-sym1">
+      <h3>الشلل التنفيذي (Executive Dysfunction)</h3>
+      <p>أحيانًا تكون المهمة بسيطة جدًا: الرد على رسالة، فتح ملف، غسل كوب. لكن الدماغ يتعامل معها كأنها جبل، فتدخل في:</p>
+      <ul class="bul"><li>تأجيل</li><li>توتر</li><li>جلد ذات</li><li>هروب</li></ul>
+    </div>
+    <div class="tp" role="tabpanel" id="sym2" aria-labelledby="t-sym2" hidden>
+      <h3>عمى الوقت (Time Blindness)</h3>
+      <p>الشخص لا يشعر بالوقت طبيعيًا. مثال: يقول «خمس دقائق» فيكتشف أنها ساعة. أو يظن أن الموعد بعيد وفجأة يصبح غدًا.</p>
+      <p>لهذا يتأخر، وينسى، ويراكم المهام.</p>
+    </div>
+    <div class="tp" role="tabpanel" id="sym3" aria-labelledby="t-sym3" hidden>
+      <h3>الحساسية العاطفية</h3>
+      <p>كثير من المصابين يشعرون بالرفض بقوة، وبالنقد بحدة، وبالإحراج بشكل مضاعف. أحيانًا تعليق بسيط يهزهم ساعات.</p>
+      <p>يوجد مفهوم مشهور يسمى <span dir="ltr">Rejection Sensitive Dysphoria (RSD)</span>. ليس تشخيصًا رسميًا مستقلًا، لكنه شائع جدًا مع ADHD.</p>
+    </div>
+    <div class="tp" role="tabpanel" id="sym4" aria-labelledby="t-sym4" hidden>
+      <h3>الضوضاء الداخلية</h3>
+      <p>العقل لا يسكت، كأن هناك:</p>
+      <ul class="bul"><li>20 تبويبًا مفتوحًا</li><li>أفكارًا متداخلة</li><li>موسيقى داخلية</li><li>حوارًا مستمرًا</li></ul>
+      <p style="margin-top:8px">ولهذا يشعر الشخص بالإرهاق حتى وهو جالس.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= الأنواع ================= -->
+<section class="s" id="types" aria-labelledby="typesT">
+  <div class="panel sage">
+    <h2 id="typesT"><i></i>أنواع ADHD</h2>
+    <div class="tabs" role="tablist" data-tabs="typ" aria-label="أنواع ADHD">
+      <button role="tab" aria-selected="true" aria-controls="typ1" id="t-typ1">كثير الحركة والاندفاع</button>
+      <button role="tab" aria-selected="false" aria-controls="typ2" id="t-typ2">التشتتي</button>
+      <button role="tab" aria-selected="false" aria-controls="typ3" id="t-typ3">المختلط</button>
+    </div>
+    <div class="tp" role="tabpanel" id="typ1" aria-labelledby="t-typ1">
+      <h3>النوع كثير الحركة والاندفاع</h3>
+      <p>واضح خارجيًا:</p>
+      <ul class="bul"><li>حركة مستمرة</li><li>مقاطعة</li><li>تسرّع</li><li>اندفاع</li></ul>
+    </div>
+    <div class="tp" role="tabpanel" id="typ2" aria-labelledby="t-typ2" hidden>
+      <h3>النوع التشتتي</h3>
+      <p>هذا يُفوَّت كثيرًا، خصوصًا عند البنات. الشخص هادئ، سارح، ينسى كثيرًا، ويعيش داخل أفكاره.</p>
+      <p>فيظنه الناس كسولًا أو غير مهتم أو حساسًا، بينما هو يعاني داخليًا.</p>
+    </div>
+    <div class="tp" role="tabpanel" id="typ3" aria-labelledby="t-typ3" hidden>
+      <h3>النوع المختلط</h3>
+      <p>يجمع الاثنين.</p>
+    </div>
+
+    <h3 style="margin-top:28px">ADHD عند الأطفال وعند البالغين</h3>
+    <div class="vs">
+      <div>
+        <h3>عند الأطفال</h3>
+        <ul class="bul"><li>ينسى أغراضه دائمًا</li><li>يتحرك كثيرًا ويقاطع</li><li>يكره الواجبات</li><li>يتشتت بسرعة</li><li>يترك المهام نصف منتهية</li></ul>
+        <p class="note" style="margin-top:12px"><b>مهم جدًا:</b> كل الأطفال يتحركون ويتشتتون أحيانًا. التشخيص لا يعتمد على عرض واحد، بل على شدة الأعراض، واستمرارها، وتأثيرها على الحياة، وظهورها في أكثر من بيئة.</p>
+      </div>
+      <div>
+        <h3>عند البالغين</h3>
+        <p>يتغير الشكل. بدل الجري والقفز يصبح:</p>
+        <ul class="bul"><li>قلق داخلي وفوضى</li><li>تسويف وإنهاك</li><li>كثرة تغيير الاهتمامات</li><li>صعوبة الاستمرار</li><li>مشاكل مالية أو تنظيمية</li></ul>
+        <p style="margin-top:8px">وكثيرون يكتشفونه بعد الثلاثين أو الأربعين.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= الكسل ================= -->
+<section class="s" id="lazy" aria-labelledby="lazyT">
+  <div class="panel sage">
+    <h2 id="lazyT"><i></i>الفرق بين «الكسلان» وADHD</h2>
+    <p>وهذا فرق ضخم. شخص ADHD لا يقول: «لا أريد.» بل يقول داخليًا:</p>
+    <p class="quote">«لماذا لا أستطيع أن أبدأ رغم أني أريد؟»</p>
+    <div class="vs">
+      <div class="a">
+        <h3>شخص ADHD</h3>
+        <ul class="bul"><li>يشعر بالشلل الذهني</li><li>يلوم نفسه باستمرار</li><li>يتوتر لأنه لا يبدأ</li><li>يريد الإنجاز فعلًا</li></ul>
+      </div>
+      <div class="b">
+        <h3>الكسلان عادة</h3>
+        <ul class="bul"><li>يختار الراحة</li><li>لا يشعر بعذاب داخلي كبير</li><li>يستطيع العمل إذا اضطر</li></ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:28px">لماذا يتعب المصابون نفسيًا؟</h3>
+    <p>لأنهم يسمعون طوال حياتهم: «شد حيلك»، «ركّز»، «ليش كسول؟»، «أنت ذكي لكن مهمل». فتتكوّن لديهم قلة ثقة، وجلد ذات، وشعور بالفشل. كثير منهم يكبر وهو يعتقد «فيّ شيء غلط»، بينما المشكلة عصبية تنظيمية حقيقية.</p>
+
+    <h3>هل ADHD مرض نفسي؟</h3>
+    <p>هو اضطراب عصبي نمائي، يعني يتعلق بتطوّر وعمل الدماغ. وليس ضعف إيمان، ولا دلعًا، ولا كسلًا، ولا قلة ذكاء.</p>
+
+    <h3>هل ADHD له فوائد؟</h3>
+    <p>نعم... أحيانًا. بعض المصابين يمتلكون إبداعًا عاليًا، وسرعة بديهة، وتفكيرًا غير تقليدي، وطاقة كبيرة، وقدرة على الابتكار، وتركيزًا هائلًا في الشغف. لكن هذه «ميزات محتملة»، وليست تعويضًا سحريًا عن المعاناة.</p>
+  </div>
+</section>
+
+<!-- ================= العلاج ================= -->
+<section class="s" id="care" aria-labelledby="careT">
+  <div class="panel sage">
+    <h2 id="careT"><i></i>العلاج: هل يوجد حل؟</h2>
+    <p>العلاج ليس «تحويل الشخص إلى إنسان طبيعي»، بل «مساعدته على أن يفهم دماغه ويتعامل معه».</p>
+    <div class="tabs" role="tablist" data-tabs="care" aria-label="أنواع العلاج">
+      <button role="tab" aria-selected="true" aria-controls="care1" id="t-care1">الأدوية</button>
+      <button role="tab" aria-selected="false" aria-controls="care2" id="t-care2">العلاج السلوكي</button>
+      <button role="tab" aria-selected="false" aria-controls="care3" id="t-care3">البيئة المناسبة</button>
+    </div>
+    <div class="tp" role="tabpanel" id="care1" aria-labelledby="t-care1">
+      <h3>الأدوية</h3>
+      <p>الأشهر هي المنبّهات العصبية (stimulants)، مثل <span dir="ltr">Methylphenidate</span> و<span dir="ltr">Adderall</span>. تساعد بعض الناس بشكل هائل: وضوح ذهني، وهدوء داخلي، وقدرة على البدء.</p>
+      <p>لكن:</p>
+      <ul class="bul"><li>ليست مناسبة للجميع</li><li>تحتاج إشرافًا طبيًا</li><li>ليست «حبوب ذكاء»</li></ul>
+    </div>
+    <div class="tp" role="tabpanel" id="care2" aria-labelledby="t-care2" hidden>
+      <h3>العلاج السلوكي والتنظيمي</h3>
+      <p>يتعلم الشخص:</p>
+      <ul class="bul"><li>تقسيم المهام</li><li>بناء أنظمة</li><li>إدارة الوقت</li><li>التعامل مع التسويف</li><li>فهم المحفزات</li></ul>
+    </div>
+    <div class="tp" role="tabpanel" id="care3" aria-labelledby="t-care3" hidden>
+      <h3>البيئة المناسبة</h3>
+      <p>شخص ADHD قد ينجح جدًا إذا أحب المجال، ووجد تنوعًا، وكان العمل تفاعليًا، وامتلك حرية حركة وإبداع.</p>
+      <p>وقد ينهار في بيئة رتيبة جدًا، أو جامدة، أو مليئة بالتفاصيل المتكررة.</p>
+    </div>
+    <p class="note">هذا المحتوى تثقيفي ولا يُغني عن تقييم متخصص. التشخيص والعلاج الدوائي يقرّرهما الطبيب.</p>
+  </div>
+</section>
+
+<!-- ================= الفكرة الكبرى ================= -->
+<div class="big" aria-label="أهم فكرة لفهم ADHD">
+  <p>الشخص لا يعاني من <span class="x">عدم معرفة ما يجب فعله</span>، بل من <span class="y">صعوبة تحويل المعرفة إلى تنفيذ</span>.</p>
+  <small>أهم فكرة لفهم ADHD</small>
+</div>
+
+<!-- ================= طرق التعامل ================= -->
+<section class="s" id="coping" aria-labelledby="copingT">
+  <div class="panel sky">
+    <h2 id="copingT"><i></i>كيفية التعامل مع ADHD بدون أدوية</h2>
+    <p>تسع عادات تدعم الدماغ. علّم على ما طبّقته اليوم.</p>
+    <div class="progress"><span id="pTxt">0 من 9</span><div class="tr"><div class="fl" id="pFill"></div></div></div>
+    <div class="checks" id="checks">
+      <label class="chk"><input type="checkbox"><div><b>التغذية</b><span>ما تضعه في فمك يؤثر بلا شك في دماغك وعقلك: اشرب الماء طوال اليوم، فكّر في المكمّلات الغذائية، وخذ القهوة بدون سكر.</span></div></label>
+      <label class="chk"><input type="checkbox"><div><b>ممارسة الرياضة والتمارين</b><span>تمرين يجعلك تتعرّق.</span></div></label>
+      <label class="chk"><input type="checkbox"><div><b>النوم</b><span>القراءة قبل النوم من كتاب ورقي وبضوء بسيط.</span></div></label>
+      <label class="chk"><input type="checkbox"><div><b>الروتين الصباحي</b><span>ابدأ يومك بخطوات ثابتة تعرفها مسبقًا.</span></div></label>
+      <label class="chk"><input type="checkbox"><div><b>تقنية بومودورو</b><span>25 دقيقة عمل ثم 5 دقائق راحة. يعمل العقل بأفضل شكل حين يعرف بالضبط ما يعمل عليه. جرّبها بالمؤقت بالأسفل.</span></div></label>
+      <label class="chk"><input type="checkbox"><div><b>إدارة الطاقة</b><span>أنجز المهام التي تتطلب تركيزًا عميقًا في الفترة التي تكون فيها طاقتك الذهنية في أعلى مستوياتها.</span></div></label>
+      <label class="chk"><input type="checkbox"><div><b>الأصوات البيضاء</b><span>صوت هادئ ثابت يخفف تشويش الضوضاء حولك.</span></div></label>
+      <label class="chk"><input type="checkbox"><div><b>خصّص وقتًا محددًا</b><span>حدّد وقتًا للمهمة بدل تركها مفتوحة.</span></div></label>
+      <label class="chk"><input type="checkbox"><div><b>ابنِ فريقًا وشبكة دعم</b><span>أشخاص يفهمونك ويذكّرونك ويشجعونك.</span></div></label>
+    </div>
+
+    <div class="pomo" id="pomo">
+      <div>
+        <span class="mode" id="pMode">عمل</span>
+        <h3>مؤقت بومودورو</h3>
+        <p>25 دقيقة عمل، 5 دقائق راحة</p>
+      </div>
+      <div class="time" id="pTime" role="timer" aria-live="off">25:00</div>
+      <div class="ctl">
+        <button type="button" class="main" id="pGo">ابدأ</button>
+        <button type="button" id="pReset">إعادة</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<footer>
+  <p>مصدر المحتوى: ملف «ADHD» المرفق. هذا الدليل للتوعية فقط ولا يُستخدم للتشخيص الذاتي. إن لاحظت هذه الأعراض عليك أو على من تحب، تحدّث مع طبيب أو أخصائي نفسي.</p>
+</footer>
+</main>
+</div>
+
+<div class="overlay" id="settings" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="setTitle">الإعدادات</h2><button class="icon-btn" id="setClose" type="button" aria-label="إغلاق">✕</button></div>
+    <h3>المظهر</h3>
+    <div class="srow"><b>الوضع</b>
+      <div class="seg" data-setting="theme" role="group" aria-label="المظهر"><button type="button" data-val="auto">تلقائي</button><button type="button" data-val="light">فاتح</button><button type="button" data-val="dark">داكن</button></div></div>
+    <div class="srow"><b>حجم الخط</b>
+      <div class="seg" data-setting="size" role="group" aria-label="حجم الخط"><button type="button" data-val="md">عادي</button><button type="button" data-val="lg">كبير</button></div></div>
+    <h3>البيانات</h3>
+    <div class="srow"><div><b>علامات اليوم</b><p class="sub">عادات قسم التعامل تُصفَّر كل يوم تلقائيًا</p></div><button type="button" class="abtn" id="resetChecks">تصفير الآن</button></div>
+    <p class="about">ADHD دليل مبسّط 1.0 • يعمل دون اتصال بعد أول فتح.</p>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const safe={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+  const root=document.documentElement;
+  function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2200)}
+
+  /* ---------- الإعدادات ---------- */
+  let S={theme:'auto',size:'md'};
+  try{Object.assign(S,JSON.parse(safe.get('adhd-settings')||'{}'))}catch(e){}
+  const mq=matchMedia('(prefers-color-scheme: dark)');
+  function applySettings(){
+    const dark=S.theme==='dark'||(S.theme==='auto'&&mq.matches);
+    root.dataset.theme=dark?'dark':'light';root.dataset.size=S.size;
+    const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#0A0C12':'#F2F3F8';
+    $$('[data-setting]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(S[g.dataset.setting]===b.dataset.val))));
+  }
+  mq.addEventListener&&mq.addEventListener('change',applySettings);
+  $$('[data-setting] button').forEach(b=>b.addEventListener('click',()=>{S[b.parentElement.dataset.setting]=b.dataset.val;safe.set('adhd-settings',JSON.stringify(S));applySettings()}));
+  applySettings();
+  const sheet=$('#settings');
+  $('#openSettings').addEventListener('click',()=>{sheet.hidden=false;$('#setClose').focus()});
+  $('#setClose').addEventListener('click',()=>{sheet.hidden=true;$('#openSettings').focus()});
+  sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.hidden=true});
+  addEventListener('keydown',e=>{if(e.key==='Escape'&&!sheet.hidden)sheet.hidden=true});
+
+  /* ---------- التنقل ---------- */
+  const navBtns=$$('.side-nav [data-jump]');
+  navBtns.forEach(b=>b.addEventListener('click',()=>{const t=b.dataset.jump==='top'?document.body:document.getElementById(b.dataset.jump);if(t)t.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:b.dataset.jump==='top'?'start':'start'})}));
+  const GROUP={sides:'brain',brain:'brain',games:'brain',hidden:'hidden',types:'types',lazy:'types',care:'care',coping:'coping'};
+  const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const g=GROUP[e.target.id];navBtns.forEach(b=>b.setAttribute('aria-current',String(b.dataset.jump===g)))}})},{rootMargin:'-30% 0px -60% 0px'});
+  $$('section.s').forEach(s=>io.observe(s));
+  addEventListener('scroll',()=>{if(scrollY<200)navBtns.forEach(b=>b.setAttribute('aria-current','false'))},{passive:true});
+
+  /* ---------- التبويبات ---------- */
+  $$('[data-tabs]').forEach(list=>{
+    const tabs=[...list.querySelectorAll('[role=tab]')];
+    const pick=t=>tabs.forEach(x=>{const on=x===t;x.setAttribute('aria-selected',String(on));document.getElementById(x.getAttribute('aria-controls')).hidden=!on});
+    tabs.forEach((t,i)=>{
+      t.addEventListener('click',()=>pick(t));
+      t.addEventListener('keydown',e=>{let n=null;if(e.key==='ArrowLeft')n=tabs[(i+1)%tabs.length];if(e.key==='ArrowRight')n=tabs[(i-1+tabs.length)%tabs.length];if(n){e.preventDefault();n.focus();pick(n)}});
+    });
+  });
+
+  /* ---------- تجربة فتح الكتاب ---------- */
+  const DATA={
+    normal:{steps:['يفكر','يفتح الكتاب','يبدأ'],end:'ثلاث خطوات، وبدأ القراءة.',cols:['#0EA877','#0EA877','#0EA877'],dx:[0,0,0]},
+    adhd:{steps:['يفكر','يتذكر مهمة ثانية','يفتح الجوال','يشعر بالذنب','يتوتر','يؤجل','يكره نفسه','يهرب','يضيع اليوم'],
+      end:'ثم في الليل يقول: «ماذا فعلت بوقتي؟»',
+      cols:['#0EA877','#6FAE3A','#D98A06','#E0701F','#E5503F','#E5365B','#C92D6B','#A5307E','#7C3A9A'],
+      dx:[0,18,4,28,8,34,2,24,10]}
+  };
+  let mode='normal',timers=[],running=false;
+  const ol=$('#steps'),end=$('#end'),go=$('#go');
+  function clear(){timers.forEach(clearTimeout);timers=[];running=false;go.disabled=false;go.textContent='ابدأ التجربة';end.classList.remove('on');end.textContent=''}
+  function build(){clear();const d=DATA[mode];ol.innerHTML='';d.steps.forEach((s,i)=>{const li=document.createElement('li');li.style.setProperty('--c',d.cols[i]);li.style.setProperty('--dx',d.dx[i]+'px');li.innerHTML='<b>'+(i+1)+'</b><span>'+s+'</span>';ol.appendChild(li)})}
+  go.addEventListener('click',()=>{
+    if(running)return;build();running=true;go.disabled=true;go.textContent='جارٍ العرض…';
+    const d=DATA[mode],items=[...ol.children],gap=mode==='adhd'?650:500;
+    items.forEach((li,i)=>timers.push(setTimeout(()=>li.classList.add('on'),i*gap+100)));
+    timers.push(setTimeout(()=>{end.textContent=d.end;end.classList.add('on');running=false;go.disabled=false;go.textContent='أعد التجربة'},items.length*gap+250));
+  });
+  $$('#labMode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.m;$$('#labMode button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));build()}));
+  build();
+
+  /* ---------- قائمة العادات ---------- */
+  const boxes=$$('#checks input'),day=new Date().toISOString().slice(0,10);
+  let st={};try{st=JSON.parse(safe.get('adhd-checks')||'{}')}catch(e){}
+  if(st.day!==day)st={day,v:[]};
+  function upd(){const n=boxes.filter(b=>b.checked).length;$('#pTxt').textContent=n+' من 9';$('#pFill').style.width=(n/9*100)+'%'}
+  boxes.forEach((b,i)=>{b.checked=!!st.v[i];b.addEventListener('change',()=>{st.v[i]=b.checked;safe.set('adhd-checks',JSON.stringify(st));upd()})});
+  $('#resetChecks').addEventListener('click',()=>{st={day,v:[]};safe.set('adhd-checks',JSON.stringify(st));boxes.forEach(b=>b.checked=false);upd();toast('تم تصفير علامات اليوم')});
+  upd();
+
+  /* ---------- بومودورو ---------- */
+  const T={work:25*60,rest:5*60};let ph='work',left=T.work,tick=null;
+  const tEl=$('#pTime'),mEl=$('#pMode'),gEl=$('#pGo');
+  const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  function paint(){tEl.textContent=fmt(left);mEl.textContent=ph==='work'?'عمل':'راحة';mEl.classList.toggle('rest',ph==='rest');document.title=(tick?fmt(left)+' • ':'')+'ADHD | دليل مبسّط'}
+  function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=660;g.gain.setValueAtTime(.15,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.6);o.start();o.stop(c.currentTime+.6)}catch(e){}}
+  function stop(){clearInterval(tick);tick=null;gEl.textContent='ابدأ'}
+  gEl.addEventListener('click',()=>{
+    if(tick){stop();gEl.textContent='تابع';paint();return}
+    gEl.textContent='إيقاف مؤقت';
+    tick=setInterval(()=>{left--;if(left<=0){beep();ph=ph==='work'?'rest':'work';left=T[ph];toast(ph==='rest'?'وقت الراحة: 5 دقائق':'رجعنا للعمل: 25 دقيقة')}paint()},1000);paint();
+  });
+  $('#pReset').addEventListener('click',()=>{stop();ph='work';left=T.work;paint()});
+  paint();
+
+  /* ---------- الاتصال والتثبيت ---------- */
+  const badge=$('#netStatus'),label=$('#netStatusText'),install=$('#installApp');
+  function net(){const on=navigator.onLine;badge.classList.toggle('offline',!on);label.textContent=on?'متصل':'دون اتصال'}
+  addEventListener('online',net);addEventListener('offline',net);net();
+  let dp=null;
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;install.hidden=false});
+  install.addEventListener('click',async()=>{if(!dp)return;dp.prompt();await dp.userChoice;dp=null;install.hidden=true});
+  addEventListener('appinstalled',()=>{install.hidden=true});
+  if('serviceWorker' in navigator&&location.protocol.startsWith('http')){navigator.serviceWorker.register('./sw.js').catch(()=>{})}
+})();
+</script>
+</body>
+</html>

@@ -105,7 +105,7 @@ function printQuote(id){
  const PAGE_TABLE_BUDGET=137; // mm available for table body before footer/notes
  const estimateRowHeight=(row)=>{
    const text=String(row.title||'').replace(/\\s+/g,' ').trim();
-   const charsPerLine=24; // conservative Arabic wrapping estimate for the description column
+   const charsPerLine=38; // match the reference quote: keep the five normal items on page one
    const lines=Math.max(1,Math.ceil(text.length/charsPerLine));
    return Math.max(15,lines*7.2+8);
  };

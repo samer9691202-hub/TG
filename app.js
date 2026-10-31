@@ -102,7 +102,7 @@ function printQuote(id){
  // Item numbering may continue to 6, 9, or any number. When the table reaches the
  // available page height, move the last complete numbered row to the next page.
  const pageGroups=[];let currentPage=[],usedHeight=0;
- const PAGE_TABLE_BUDGET=137; // mm available for table body before footer/notes
+ const PAGE_TABLE_BUDGET=91; // mm: body-height limit calibrated to the maximum table expansion in the supplied reference PDF
  const estimateRowHeight=(row)=>{
    const text=String(row.title||'').replace(/\\s+/g,' ').trim();
    const charsPerLine=38; // approximate wrapping at the reference table's description-column width

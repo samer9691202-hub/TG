@@ -104,7 +104,7 @@ function printQuote(id){
  const rowMarkupJSON=JSON.stringify(rowMarkup).replace(/</g,'\\u003c');
  const headerJSON=JSON.stringify(headerImage),footerJSON=JSON.stringify(footerImage),dateJSON=JSON.stringify(dateDisplay),codeJSON=JSON.stringify(q.code||'QT-00001'),customerJSON=JSON.stringify(customerName(q.customerId)),noteJSON=JSON.stringify(q.note||'');
  const totalHTML=JSON.stringify(`<tr><td colspan="5" style="text-align:right;font-weight:900;height:14mm;white-space:nowrap;font-size:13pt;direction:rtl;color:#74183e">إجمالي المبلغ&nbsp; ${quoteNumber(q.total)||'0'}&nbsp;ريال قطري</td></tr>`);
- const PAGE_TABLE_BUDGET=91;
+ const PAGE_TABLE_BUDGET=108;
  const paginationScript=`
  const rows=${rowMarkupJSON}, header=${headerJSON}, footer=${footerJSON}, dateText=${dateJSON}, code=${codeJSON}, customer=${customerJSON}, note=${noteJSON}, totalRow=${totalHTML};
  const budget=${PAGE_TABLE_BUDGET};

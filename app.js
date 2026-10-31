@@ -1,18 +1,124 @@
-const $=s=>document.querySelector(s);
-const API=(window.NOVA_CONFIG?.API_BASE_URL||'').replace(/\/$/,'');
-let currentUrl='',jobs={};const autoSaved=new Set();
-function endpoint(path){return API+path}
-async function api(path,opts={}){const r=await fetch(endpoint(path),opts);const d=await r.json().catch(()=>({error:'استجابة غير مفهومة'}));if(!r.ok)throw Error(d.error||'حدث خطأ');return d}
-function setPage(id){document.querySelectorAll('.side-link').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));$('#pageTitle').textContent=({home:'الرئيسية',downloads:'التنزيلات',settings:'الإعدادات'})[id];$('#sidebar').classList.remove('open');$('#scrim').classList.remove('show')}
-document.querySelectorAll('.side-link').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
-$('#menuBtn').onclick=()=>{$('#sidebar').classList.toggle('open');$('#scrim').classList.toggle('show')};$('#scrim').onclick=()=>{$('#sidebar').classList.remove('open');$('#scrim').classList.remove('show')};
-async function health(){if(!API||API.includes('YOUR-BACKEND-DOMAIN')){$('#serverState').innerHTML='<i></i> اربط خادم التنزيل';$('#settingsState').textContent='لم يتم ضبط رابط الخادم';$('#message').textContent='انشر خادم NOVA الخارجي، ثم ضع رابطه في ملف config.js.';return}try{await api('/api/health');$('#serverState').innerHTML='<i style="background:#6f9656"></i> المحرك متصل';$('#settingsState').textContent='متصل';$('#message').textContent='أدخل الرابط ثم اضغط تحليل الرابط.'}catch{$('#serverState').innerHTML='<i></i> المحرك غير متصل';$('#settingsState').textContent='تعذر الاتصال بالخادم';$('#message').textContent='تحقق من رابط الخادم وإعدادات النشر.'}}
-$('#refreshBtn').onclick=health;
-$('#pasteBtn').onclick=async()=>{try{$('#urlInput').value=await navigator.clipboard.readText()}catch{$('#message').textContent='تعذر اللصق التلقائي؛ الصق الرابط يدوياً.'}};
-$('#inspectBtn').onclick=async()=>{currentUrl=$('#urlInput').value.trim();if(!currentUrl){$('#message').textContent='أدخل رابطاً أولاً.';return}$('#message').textContent='جارٍ تحليل الرابط...';$('#downloadBtn').disabled=true;$('#videoInfo').classList.add('hidden');try{const d=await api('/api/info',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:currentUrl})});$('#videoInfo').innerHTML='<b>'+esc(d.title||'فيديو')+'</b><div>'+esc(d.extractor||'مصدر الفيديو')+' • '+(d.duration?Math.round(d.duration/60)+' دقيقة':'المدة غير معروفة')+'</div>';$('#videoInfo').classList.remove('hidden');$('#downloadBtn').disabled=false;$('#message').textContent='تم تحليل الرابط بنجاح. اختر الصيغة والجودة.'}catch(e){$('#message').textContent=e.message+' — قد لا يكون الموقع مدعوماً.'}};
-$('#downloadBtn').onclick=async()=>{try{const d=await api('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:currentUrl,format:$('#format').value,quality:$('#quality').value})});jobs[d.id]=d;$('#message').textContent='بدأ التنزيل. يمكنك متابعة التقدم من القائمة الجانبية.';setPage('downloads');poll()}catch(e){$('#message').textContent=e.message}};
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function saveToDevice(j){if(j.state==='finished'&&j.file&&!autoSaved.has(j.id)){autoSaved.add(j.id);const a=document.createElement('a');a.href=endpoint('/downloads/'+encodeURIComponent(j.file));a.download=j.file;a.hidden=true;document.body.appendChild(a);a.click();a.remove()}}
-async function poll(){if(!API||API.includes('YOUR-BACKEND-DOMAIN'))return;try{const d=await api('/api/jobs');d.jobs.forEach(j=>{jobs[j.id]=j;saveToDevice(j)});renderJobs();if(d.jobs.some(j=>j.state==='queued'||j.state==='downloading'))setTimeout(poll,1800)}catch{$('#jobs').innerHTML='<div class="empty">تعذر الاتصال بخادم التنزيل.</div>'}}
-function renderJobs(){const a=Object.values(jobs).sort((x,y)=>y.created-x.created);$('#jobs').innerHTML=a.length?a.map(j=>`<article class="item"><div class="itemhead"><b>${esc(j.title||'تنزيل فيديو')}</b><span class="kind">${esc(j.state)}</span></div><div class="url">${esc(j.url)}</div><div class="status">${esc(j.message||'')} • ${j.percent||0}%</div><div class="bar"><i style="width:${Math.max(0,Math.min(100,j.percent||0))}%"></i></div>${j.file?`<div class="actions"><a href="${endpoint('/downloads/'+encodeURIComponent(j.file))}" download>حفظ الملف على الجهاز ↓</a></div>`:''}</article>`).join(''):'<div class="empty">لا توجد تنزيلات حتى الآن.</div>'}
-health();poll();
+const $ = s => document.querySelector(s);
+let currentUrl = "", currentBlobUrl = "", historyItems = [];
+const HISTORY_KEY = "nova-browser-download-history-v1";
+
+function setPage(id) {
+  document.querySelectorAll(".side-link").forEach(b => b.classList.toggle("active", b.dataset.page === id));
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === id));
+  $("#pageTitle").textContent = ({home:"الرئيسية",downloads:"التنزيلات",settings:"الإعدادات"})[id];
+  $("#sidebar").classList.remove("open"); $("#scrim").classList.remove("show");
+}
+document.querySelectorAll(".side-link").forEach(b => b.onclick = () => setPage(b.dataset.page));
+$("#menuBtn").onclick = () => { $("#sidebar").classList.toggle("open"); $("#scrim").classList.toggle("show"); };
+$("#scrim").onclick = () => { $("#sidebar").classList.remove("open"); $("#scrim").classList.remove("show"); };
+
+function setEngineState() {
+  $("#serverState").innerHTML = '<i style="background:#6f9656"></i> وضع المتصفح';
+  $("#settingsState").textContent = "لا يحتاج خادماً";
+  $("#message").textContent = "أدخل رابط ملف فيديو أو صوت مباشر بصيغة MP4 أو WEBM أو MP3.";
+}
+function validHttpUrl(value) {
+  try { const u = new URL(value); return ["http:", "https:"].includes(u.protocol) ? u : null; }
+  catch { return null; }
+}
+function isDirectMedia(url) {
+  return /\.(mp4|m4v|webm|mp3|m4a|ogg|ogv|wav)(?:$|[?#])/i.test(url);
+}
+function fileNameFromUrl(url) {
+  try {
+    const name = decodeURIComponent(new URL(url).pathname.split("/").pop() || "nova-media");
+    return name.replace(/[\\/:*?"<>|]/g, "_") || "nova-media";
+  } catch { return "nova-media"; }
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+$("#pasteBtn").onclick = async () => {
+  try { $("#urlInput").value = await navigator.clipboard.readText(); }
+  catch { $("#message").textContent = "تعذر اللصق التلقائي؛ الصق الرابط يدوياً في الخانة."; }
+};
+$("#inspectBtn").onclick = () => {
+  currentUrl = $("#urlInput").value.trim();
+  const u = validHttpUrl(currentUrl);
+  $("#downloadBtn").disabled = true;
+  $("#videoInfo").classList.add("hidden");
+  if (!u) { $("#message").textContent = "أدخل رابطاً صحيحاً يبدأ بـ https:// أو http://."; return; }
+  if (!isDirectMedia(currentUrl)) {
+    $("#message").textContent = "هذا رابط صفحة مشاهدة وليس رابط ملف مباشر. وضع المتصفح لا يستطيع استخراج الفيديو من YouTube أو صفحات المشاهدة؛ جرّب رابط ملف MP4 أو WEBM أو MP3 مباشر.";
+    return;
+  }
+  const name = fileNameFromUrl(currentUrl);
+  $("#videoInfo").innerHTML = "<b>" + esc(name) + "</b><div>ملف وسائط مباشر • سيتم جلبه من المصدر إلى جهازك إذا كان المصدر يسمح بذلك.</div>";
+  $("#videoInfo").classList.remove("hidden");
+  $("#downloadBtn").disabled = false;
+  $("#message").textContent = "الرابط يبدو كملف وسائط مباشر. اضغط بدء التنزيل.";
+};
+function addHistory(item) {
+  historyItems.unshift(item);
+  historyItems = historyItems.slice(0, 30);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(historyItems)); } catch {}
+  renderHistory();
+}
+function renderHistory() {
+  $("#jobs").innerHTML = historyItems.length ? historyItems.map((x, i) =>
+    `<article class="item"><div class="itemhead"><b>${esc(x.name)}</b><span class="kind">${esc(x.status)}</span></div><div class="url">${esc(x.url)}</div><div class="status">${esc(x.date)}</div></article>`
+  ).join("") : '<div class="empty">لا توجد تنزيلات حتى الآن.</div>';
+}
+try { historyItems = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { historyItems = []; }
+renderHistory();
+
+$("#downloadBtn").onclick = async () => {
+  const url = currentUrl;
+  if (!url) return;
+  $("#downloadBtn").disabled = true;
+  $("#progressWrap").classList.remove("hidden");
+  $("#progressBar").style.width = "0%";
+  $("#progressText").textContent = "جارٍ الاتصال بالمصدر...";
+  $("#message").textContent = "قد يمنع المصدر التنزيل المباشر بسبب إعدادات الحماية أو CORS.";
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("المصدر أعاد حالة HTTP " + response.status);
+    const total = Number(response.headers.get("content-length") || 0);
+    const reader = response.body?.getReader();
+    let blob;
+    if (reader) {
+      const chunks = []; let loaded = 0;
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        chunks.push(value); loaded += value.length;
+        if (total) {
+          const pct = Math.min(99, Math.round(loaded / total * 100));
+          $("#progressBar").style.width = pct + "%";
+          $("#progressText").textContent = pct + "%";
+        } else {
+          $("#progressText").textContent = (loaded / 1048576).toFixed(1) + " MB";
+        }
+      }
+      blob = new Blob(chunks, {type: response.headers.get("content-type") || "application/octet-stream"});
+    } else {
+      blob = await response.blob();
+    }
+    if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = URL.createObjectURL(blob);
+    const name = fileNameFromUrl(url);
+    const a = document.createElement("a");
+    a.href = currentBlobUrl; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    $("#progressBar").style.width = "100%"; $("#progressText").textContent = "اكتمل";
+    $("#message").textContent = "تم تجهيز الملف وبدء حفظه على جهازك.";
+    addHistory({name, url, status:"اكتمل", date:new Date().toLocaleString("ar")});
+    setTimeout(() => { if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); currentBlobUrl = ""; } }, 60000);
+  } catch (err) {
+    $("#message").textContent = "تعذر جلب الملف داخل المتصفح. غالباً المصدر يمنع الوصول من مواقع أخرى (CORS) أو أن الرابط ليس ملفاً مباشراً. جرّب فتح الرابط مباشرة ثم استخدم خيار حفظ الفيديو من المتصفح إن كان متاحاً.";
+    addHistory({name:fileNameFromUrl(url), url, status:"تعذر التنزيل", date:new Date().toLocaleString("ar")});
+  } finally {
+    $("#downloadBtn").disabled = false;
+    renderHistory();
+  }
+};
+$("#clearHistoryBtn").onclick = () => {
+  historyItems = [];
+  try { localStorage.removeItem(HISTORY_KEY); } catch {}
+  renderHistory();
+};
+setEngineState();

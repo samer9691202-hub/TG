@@ -13,3 +13,9 @@ footer{text-align:center;color:#929989;font-size:9px;padding:15px;border-top:1px
 .scrim{display:none}
 @media(max-width:800px){.sidebar{transform:translateX(105%);transition:transform .25s}.sidebar.open{transform:translateX(0)}.main-area{margin-right:0}.menu-btn{display:block;margin-left:12px}.topbar{justify-content:flex-start;padding:0 18px}.server-state{margin-right:auto;font-size:9px}.content{width:calc(100% - 32px);padding-top:23px}.scrim.show{display:block;position:fixed;inset:0;background:#15251b80;z-index:15}.info-strip{grid-template-columns:1fr}.welcome{padding:23px}.welcome-leaf{font-size:55px}}
 @media(max-width:460px){.options{grid-template-columns:1fr}.download-card{padding:16px}.url-row{flex-direction:column}.light-btn{width:100%}.welcome h1{font-size:21px}.welcome p{max-width:250px;line-height:1.8}.welcome-leaf{display:none}.section-title h2{font-size:17px}}
+
+.progress-wrap{display:flex;align-items:center;gap:12px;margin:14px 0}
+.progress-wrap .bar{flex:1;height:8px;background:#e7e4d8;border-radius:20px;overflow:hidden}
+.progress-wrap .bar i{display:block;height:100%;background:#6f9656;border-radius:20px;transition:width .2s}
+.progress-wrap small{min-width:48px;color:#59664f}
+.hidden{display:none!important}

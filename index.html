@@ -32,43 +32,41 @@
     <main class="content">
       <section id="home" class="page active">
         <div class="welcome">
-          <div><span class="overline">مساحة التنزيل الخاصة بك</span><h1>مرحباً بك في <em>NOVA</em></h1><p>أدخل رابط الفيديو، افحصه، ثم اختر الصيغة والجودة المناسبة.</p></div>
+          <div><span class="overline">مساحة التنزيل الخاصة بك</span><h1>مرحباً بك في <em>NOVA</em></h1><p>أدخل رابط ملف وسائط مباشر، ثم احفظه على جهازك من المتصفح.</p></div>
           <div class="welcome-leaf">❧</div>
         </div>
 
-        <div class="section-title"><div><h2>تنزيل فيديو جديد</h2><p>يدعم المحرك المواقع التي يستطيع تحليلها.</p></div></div>
+        <div class="section-title"><div><h2>تنزيل فيديو جديد</h2><p>يعمل دون خادم؛ يقبل روابط ملفات الوسائط المباشرة فقط.</p></div></div>
         <div class="download-card">
-          <label for="urlInput">رابط الفيديو أو صفحة المشاهدة</label>
-          <div class="url-row"><input id="urlInput" type="url" inputmode="url" placeholder="https://example.com/watch/..."><button id="pasteBtn" class="light-btn">لصق</button></div>
-          <button id="inspectBtn" class="secondary-btn">تحليل الرابط</button>
+          <label for="urlInput">رابط ملف الفيديو أو الصوت المباشر</label>
+          <div class="url-row"><input id="urlInput" type="url" inputmode="url" placeholder="https://example.com/video.mp4"><button id="pasteBtn" class="light-btn">لصق</button></div>
+          <button id="inspectBtn" class="secondary-btn">فحص الرابط</button>
           <div id="videoInfo" class="video-info hidden"></div>
-          <div class="options">
-            <label>صيغة الملف<select id="format"><option value="mp4">MP4 – فيديو</option><option value="mp3">MP3 – صوت</option><option value="webm">WEBM – فيديو</option></select></label>
-            <label>جودة الفيديو<select id="quality"><option value="best">أفضل جودة متاحة</option><option value="1080">1080p</option><option value="720">720p</option><option value="480">480p</option><option value="360">360p</option></select></label>
-          </div>
-          <button id="downloadBtn" class="primary-btn" disabled>↓　بدء التنزيل</button>
+
+                    <div id="progressWrap" class="progress-wrap hidden"><div class="bar"><i id="progressBar" style="width:0%"></i></div><small id="progressText">0%</small></div>
+          <button id="downloadBtn" class="primary-btn" disabled>↓　حفظ الملف على الجهاز</button>
           <p id="message" class="message" aria-live="polite">شغّل محرك التنزيل أولاً.</p>
         </div>
 
         <div class="info-strip">
-          <div><span class="info-icon">✓</span><div><b>تحليل قبل التنزيل</b><small>اعرف إن كان الرابط مدعوماً</small></div></div>
-          <div><span class="info-icon">▤</span><div><b>تنسيقات متعددة</b><small>اختر MP4 أو MP3 أو WEBM</small></div></div>
-          <div><span class="info-icon">↓</span><div><b>حفظ على الجهاز</b><small>احفظ الملف بعد اكتماله</small></div></div>
+          <div><span class="info-icon">✓</span><div><b>فحص الرابط</b><small>تحقق من صيغة الملف</small></div></div>
+          <div><span class="info-icon">▤</span><div><b>لا يحتاج خادماً</b><small>يعمل من المتصفح مباشرة</small></div></div>
+          <div><span class="info-icon">↓</span><div><b>حفظ على الجهاز</b><small>احفظ الملف على جهازك</small></div></div>
         </div>
       </section>
 
       <section id="downloads" class="page">
-        <div class="section-title"><div><h2>التنزيلات</h2><p>تابع حالة الملفات التي أضفتها.</p></div></div>
-        <div id="jobs" class="jobs"><div class="empty">لا توجد تنزيلات حتى الآن.</div></div>
+        <div class="section-title"><div><h2>التنزيلات</h2><p>سجل عمليات الحفظ على هذا الجهاز.</p></div></div>
+        <div class="jobs"><div id="jobs" class="empty">لا توجد تنزيلات حتى الآن.</div><button id="clearHistoryBtn" class="light-btn">مسح السجل</button></div>
       </section>
 
       <section id="settings" class="page">
-        <div class="section-title"><div><h2>الإعدادات</h2><p>معلومات تشغيل محرك NOVA.</p></div></div>
+        <div class="section-title"><div><h2>الإعدادات</h2><p>إعدادات وضع المتصفح.</p></div></div>
         <div class="settings-card">
-          <div class="setting-row"><div><b>حالة محرك التنزيل</b><small>الاتصال بخادم التنزيل الخارجي</small></div><span id="settingsState" class="state-tag">جارٍ الفحص</span></div>
-          <div class="setting-row"><div><b>مكان حفظ الملفات</b><small>مساحة التخزين على خادم التنزيل</small></div><span class="state-tag">خارجي</span></div>
-          <div class="setting-row"><div><b>تحديث الاتصال</b><small>إعادة فحص محرك التنزيل</small></div><button id="refreshBtn" class="light-btn">تحديث</button></div>
-          <p class="legal-note">لا يدعم المشروع تجاوز DRM أو تسجيل الدخول أو الاشتراكات أو قيود الوصول. استخدمه فقط لتنزيل المحتوى الذي تملك حق تنزيله أو يسمح الموقع بتنزيله.</p>
+          <div class="setting-row"><div><b>طريقة التشغيل</b><small>لا يوجد خادم خارجي مطلوب</small></div><span id="settingsState" class="state-tag">جارٍ الفحص</span></div>
+          <div class="setting-row"><div><b>مكان حفظ الملفات</b><small>يتم الحفظ على جهازك عبر المتصفح</small></div><span class="state-tag">جهازك</span></div>
+          <div class="setting-row"><div><b>حالة التشغيل</b><small>وضع تنزيل مباشر من المتصفح</small></div><span class="state-tag">مفعّل</span></div>
+          <p class="legal-note">تنبيه: هذا الوضع لا يستخرج الفيديو من صفحات المشاهدة ولا يتجاوز DRM أو تسجيل الدخول أو الاشتراكات أو قيود الوصول. يعمل فقط مع روابط ملفات وسائط مباشرة، وقد يمنع المصدر التنزيل بسبب CORS. استخدمه للمحتوى الذي تملك حق تنزيله أو يسمح الموقع بتنزيله.</p>
         </div>
       </section>
     </main>
@@ -76,6 +74,5 @@
   </div>
 </div>
 <div class="scrim" id="scrim"></div>
-<script src="config.js"></script>
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body></html>

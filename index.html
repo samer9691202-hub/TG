@@ -2,47 +2,43 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101923">
-<title>ورشة بو منصور | إدارة الحدادة والألمنيوم واليو بي في سي</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090b16">
+<title>NOVA Downloader</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app-shell">
+<div class="shell">
   <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <div class="brand-mark">BM</div>
-      <div><strong>بو منصور</strong><small>للحدادة والألمنيوم واليو بي في سي</small></div>
-    </div>
-    <div class="side-label">القائمة الرئيسية</div>
-    <nav id="navigation">
-      <button class="nav-item active" data-page="dashboard"><span>▦</span> لوحة التحكم</button>
-      <button class="nav-item" data-page="customers"><span>♙</span> العملاء</button>
-      <button class="nav-item" data-page="projects"><span>▤</span> المشاريع والقياسات</button>
-      <button class="nav-item" data-page="quotes"><span>▧</span> عروض الأسعار</button>
-      <button class="nav-item" data-page="production"><span>⚒</span> أوامر التصنيع</button>
-      <button class="nav-item" data-page="inventory"><span>▥</span> المخزون والمواد</button>
-      <button class="nav-item" data-page="purchases"><span>⇩</span> المشتريات والموردون</button>
-      <button class="nav-item" data-page="installations"><span>⌂</span> التركيب والتسليم</button>
-      <button class="nav-item" data-page="invoices"><span>▣</span> الفواتير والدفعات</button>
-      <button class="nav-item" data-page="expenses"><span>↗</span> المصروفات</button>
-      <button class="nav-item" data-page="reports"><span>▧</span> التقارير</button>
-      <button class="nav-item" data-page="settings"><span>⚙</span> الإعدادات والنسخ الاحتياطي</button>
-    </nav>
-    <div class="sidebar-bottom"><span class="status-dot"></span> يعمل محليًا دون إنترنت</div>
+    <div class="brand"><div class="logo">✦</div><div><b>NOVA</b><small>DOWNLOADER</small></div></div>
+    <div class="nav-label">القائمة الرئيسية</div>
+    <button class="nav active" data-tab="home">⌂ <span>الرئيسية</span></button>
+    <button class="nav" data-tab="downloads">⇩ <span>التحميلات</span></button>
+    <button class="nav" data-tab="settings">⚙ <span>الإعدادات</span></button>
+    <div class="side-foot"><i></i> واجهة تجريبية محلية</div>
   </aside>
-  <main class="main">
-    <header class="topbar">
-      <button class="mobile-menu" id="mobileMenu" aria-label="القائمة">☰</button>
-      <div class="crumb"><span>بو منصور</span><b>/</b><strong id="pageTitle">لوحة التحكم</strong></div>
-      <div class="top-actions"><span class="offline-pill"><i></i> وضع محلي</span><button class="btn btn-primary" id="quickAdd">＋ إضافة جديدة</button></div>
-    </header>
-    <section class="content" id="content"></section>
-    <footer>ورشة بو منصور <span>•</span> نظام إدارة الحدادة والألمنيوم واليو بي في سي <span class="footer-muted">البيانات محفوظة على هذا الجهاز</span></footer>
+  <main>
+    <header class="topbar"><button id="menu" class="menu">☰</button><div class="crumb">NOVA <span>/</span> <b id="crumb">الرئيسية</b></div><div class="badge">● جاهز</div></header>
+    <section class="page" id="home">
+      <div class="hero"><div><div class="eyebrow">SMART MEDIA MANAGER</div><h1>حمّل بطريقتك<span>.</span></h1><p>أضف رابط المحتوى المسموح بتنزيله، واختر الصيغة والجودة المناسبة.</p></div><div class="orb">N</div></div>
+      <div class="card form-card">
+        <div class="card-title"><div class="title-icon">↗</div><div><h2>رابط المحتوى</h2><small>الصق الرابط في الحقل أدناه</small></div></div>
+        <div class="url-row"><input id="url" type="url" placeholder="https://example.com/video" autocomplete="off"><button id="paste" class="secondary">لصق الرابط</button></div>
+        <div class="fields">
+          <label>صيغة الملف<select id="format"><option>MP4</option><option>MP3</option><option>WEBM</option></select></label>
+          <label>الجودة<select id="quality"><option>أفضل جودة متاحة</option><option>1080p</option><option>720p</option><option>480p</option><option>360p</option><option>صوت فقط</option></select></label>
+        </div>
+        <button id="add" class="primary">＋ إضافة إلى قائمة التحميل</button>
+        <div class="hint">هذه النسخة تنظّم قائمة الروابط فقط؛ لا تنزّل ملفات الفيديو فعلياً ولا تتجاوز قيود المنصات.</div>
+      </div>
+      <div class="section-head"><div><h2>آخر العناصر</h2><small>الروابط التي أضفتها مؤخراً</small></div><button class="text-btn" id="all">عرض الكل ←</button></div>
+      <div id="recent" class="items"><div class="empty"><div class="empty-icon">⇩</div><b>لا توجد عناصر حتى الآن</b><span>أضف رابطاً ليظهر هنا</span></div></div>
+    </section>
+    <section class="page hidden" id="downloads"><div class="page-heading"><div class="eyebrow">YOUR LIBRARY</div><h1>التحميلات</h1><p>إدارة الروابط التي أضفتها إلى القائمة.</p></div><div id="allItems" class="items"></div></section>
+    <section class="page hidden" id="settings"><div class="page-heading"><div class="eyebrow">PREFERENCES</div><h1>الإعدادات</h1><p>خيارات واجهة NOVA Downloader.</p></div><div class="card settings-card"><div><b>إشعار عند لصق رابط</b><small>إظهار تنبيه داخل التطبيق عند إضافة رابط.</small></div><label class="switch"><input type="checkbox" id="notify" checked><span></span></label></div><div class="card settings-card"><div><b>حفظ القائمة على هذا الجهاز</b><small>تُحفظ العناصر في تخزين المتصفح.</small></div><span class="status">مفعّل</span></div><button id="clear" class="danger">مسح قائمة الروابط</button></section>
+    <footer>NOVA Downloader <span>•</span> إصدار واجهة أولية</footer>
   </main>
 </div>
-<div class="toast" id="toast"></div>
-<div class="modal-backdrop" id="modalBackdrop"><div class="modal" id="modal"></div></div>
+<div id="toast" class="toast"></div>
 <script src="app.js"></script>
-</body>
-</html>
+</body></html>

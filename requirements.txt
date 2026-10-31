@@ -1,1 +1,4 @@
-Flask>=3.0,<4\nyt-dlp>=2025.1.15\n
+Flask>=3.0,<4
+flask-cors>=4.0,<6
+yt-dlp>=2025.1.1
+gunicorn>=22,<24

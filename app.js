@@ -1,37 +1,12 @@
-const KEY='nova_downloader_links_v1';
-let links=load();
-function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
-function save(){localStorage.setItem(KEY,JSON.stringify(links))}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
-function safeUrl(s){try{const u=new URL(s);return ['http:','https:'].includes(u.protocol)}catch(e){return false}}
-function render(){
- const recent=document.getElementById('recent'), all=document.getElementById('allItems');
- const empty='<div class="empty"><div class="empty-icon">⇩</div><b>لا توجد عناصر حتى الآن</b><span>أضف رابطاً ليظهر هنا</span></div>';
- const row=x=>`<div class="item"><div class="file-icon">▶</div><div class="item-info"><b>${x.format} · ${x.quality}</b><small>${escapeHtml(x.url)}</small></div><span class="tag">${escapeHtml(x.date)}</span><button class="remove" data-remove="${x.id}" title="حذف">×</button></div>`;
- recent.innerHTML=links.length?links.slice(0,3).map(row).join(''):empty;
- all.innerHTML=links.length?links.map(row).join(''):empty;
- document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{links=links.filter(x=>x.id!==b.dataset.remove);save();render();toast('تم حذف الرابط من القائمة')});
-}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-document.getElementById('add').onclick=()=>{
- const url=document.getElementById('url').value.trim();
- if(!safeUrl(url)){toast('يرجى إدخال رابط صحيح يبدأ بـ http أو https');return}
- links.unshift({id:Date.now().toString(),url,format:document.getElementById('format').value,quality:document.getElementById('quality').value,date:new Date().toLocaleDateString('ar')});
- save();document.getElementById('url').value='';render();
- if(document.getElementById('notify').checked)toast('تمت إضافة الرابط إلى القائمة');
-};
-document.getElementById('paste').onclick=async()=>{
- try{const t=await navigator.clipboard.readText();if(t){document.getElementById('url').value=t.trim();toast('تم لصق محتوى الحافظة')}else toast('الحافظة فارغة')}
- catch(e){toast('تعذّر الوصول للحافظة؛ اضغط مطولاً داخل الحقل واختر لصق')}
-};
-function tab(name){
- document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!==name));
- document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
- document.getElementById('crumb').textContent=({home:'الرئيسية',downloads:'التحميلات',settings:'الإعدادات'})[name];
- document.getElementById('sidebar').classList.remove('open');
-}
-document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
-document.getElementById('all').onclick=()=>tab('downloads');
-document.getElementById('menu').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
-document.getElementById('clear').onclick=()=>{if(confirm('هل تريد مسح جميع الروابط المحفوظة؟')){links=[];save();render();toast('تم مسح القائمة')}};
-render();
+const $=s=>document.querySelector(s);let currentUrl='',jobs={};const autoSaved=new Set();
+async function api(path,opts={}){const r=await fetch(path,opts);const d=await r.json().catch(()=>({error:'استجابة غير مفهومة'}));if(!r.ok)throw Error(d.error||'حدث خطأ');return d}
+async function health(){try{await api('/api/health');$('#serverState').innerHTML='<span class="dot" style="background:#6b9b53"></span> محرك التنزيل متصل';$('#message').textContent='أدخل الرابط ثم حلّله للمتابعة.'}catch{$('#serverState').innerHTML='<span class="dot" style="background:#b87552"></span> المحرك غير متصل';$('#message').textContent='شغّل start_server قبل بدء التنزيل.'}}
+$('#refreshBtn').onclick=health;
+$('#pasteBtn').onclick=async()=>{try{$('#urlInput').value=await navigator.clipboard.readText()}catch{$('#message').textContent='تعذر اللصق التلقائي؛ الصق الرابط يدوياً.'}};
+$('#inspectBtn').onclick=async()=>{currentUrl=$('#urlInput').value.trim();if(!currentUrl){$('#message').textContent='أدخل رابطاً أولاً.';return}$('#message').textContent='جارٍ تحليل الرابط...';$('#downloadBtn').disabled=true;$('#videoInfo').classList.add('hidden');try{const d=await api('/api/info',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:currentUrl})});$('#videoInfo').innerHTML='<b>'+esc(d.title||'فيديو')+'</b><div>'+esc(d.extractor||'مصدر الفيديو')+' • '+(d.duration?Math.round(d.duration/60)+' دقيقة':'المدة غير معروفة')+'</div>';$('#videoInfo').classList.remove('hidden');$('#downloadBtn').disabled=false;$('#message').textContent='تم تحليل الرابط. اختر الصيغة والجودة.'}catch(e){$('#message').textContent=e.message+' — قد لا يكون الموقع مدعوماً أو قد يتطلب صلاحية غير متاحة.'}};
+$('#downloadBtn').onclick=async()=>{try{const d=await api('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:currentUrl,format:$('#format').value,quality:$('#quality').value})});jobs[d.id]=d;$('#message').textContent='بدأ التنزيل؛ تابع تقدمه في قسم التنزيلات.';document.querySelector('#downloads').scrollIntoView({behavior:'smooth'});poll()}catch(e){$('#message').textContent=e.message}};
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function triggerDeviceSave(j){if(j.state==='finished'&&j.file&&!autoSaved.has(j.id)){autoSaved.add(j.id);const a=document.createElement('a');a.href='/downloads/'+encodeURIComponent(j.file);a.download=j.file;a.hidden=true;document.body.appendChild(a);a.click();a.remove();$('#message').textContent='اكتمل التنزيل. إذا لم يبدأ الحفظ تلقائياً اضغط زر حفظ الملف.'}}
+async function poll(){try{const d=await api('/api/jobs');d.jobs.forEach(j=>{jobs[j.id]=j;triggerDeviceSave(j)});renderJobs();if(d.jobs.some(j=>j.state==='queued'||j.state==='downloading'))setTimeout(poll,1500)}catch{$('#jobs').innerHTML='<div class="empty">تعذر الاتصال بمحرك التنزيل.</div>'}}
+function renderJobs(){const a=Object.values(jobs).sort((x,y)=>y.created-x.created);$('#jobs').innerHTML=a.length?a.map(j=>`<article class="item"><div class="itemhead"><b>${esc(j.title||'تنزيل فيديو')}</b><span class="kind">${esc(j.state)}</span></div><div class="url">${esc(j.url)}</div><div class="status">${esc(j.message||'')} • ${j.percent||0}%</div><div class="bar"><i style="width:${Math.max(0,Math.min(100,j.percent||0))}%"></i></div>${j.file?`<div class="actions"><a href="/downloads/${encodeURIComponent(j.file)}" download>حفظ الملف على الجهاز ↓</a></div>`:''}</article>`).join(''):'<div class="empty">لا توجد تنزيلات بعد.</div>'}
+health();poll();

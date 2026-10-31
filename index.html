@@ -1,44 +1,74 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#090b16">
-<title>NOVA Downloader</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#23452d"><title>NOVA Downloader</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="brand"><div class="logo">✦</div><div><b>NOVA</b><small>DOWNLOADER</small></div></div>
-    <div class="nav-label">القائمة الرئيسية</div>
-    <button class="nav active" data-tab="home">⌂ <span>الرئيسية</span></button>
-    <button class="nav" data-tab="downloads">⇩ <span>التحميلات</span></button>
-    <button class="nav" data-tab="settings">⚙ <span>الإعدادات</span></button>
-    <div class="side-foot"><i></i> واجهة تجريبية محلية</div>
-  </aside>
-  <main>
-    <header class="topbar"><button id="menu" class="menu">☰</button><div class="crumb">NOVA <span>/</span> <b id="crumb">الرئيسية</b></div><div class="badge">● جاهز</div></header>
-    <section class="page" id="home">
-      <div class="hero"><div><div class="eyebrow">SMART MEDIA MANAGER</div><h1>حمّل بطريقتك<span>.</span></h1><p>أضف رابط المحتوى المسموح بتنزيله، واختر الصيغة والجودة المناسبة.</p></div><div class="orb">N</div></div>
-      <div class="card form-card">
-        <div class="card-title"><div class="title-icon">↗</div><div><h2>رابط المحتوى</h2><small>الصق الرابط في الحقل أدناه</small></div></div>
-        <div class="url-row"><input id="url" type="url" placeholder="https://example.com/video" autocomplete="off"><button id="paste" class="secondary">لصق الرابط</button></div>
-        <div class="fields">
-          <label>صيغة الملف<select id="format"><option>MP4</option><option>MP3</option><option>WEBM</option></select></label>
-          <label>الجودة<select id="quality"><option>أفضل جودة متاحة</option><option>1080p</option><option>720p</option><option>480p</option><option>360p</option><option>صوت فقط</option></select></label>
+<div class="page-bg"></div>
+<header class="site-header wrap">
+  <a class="brand" href="#"><span class="brand-mark">N</span><span><b>NOVA <i>Downloader</i></b><small>حمّل ما يُسمح لك بتنزيله</small></span></a>
+  <span id="serverState" class="server-pill"><span class="dot"></span> جاري الاتصال...</span>
+</header>
+<main class="wrap">
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow">بساطة • طبيعة • تجربة مريحة</span>
+      <h1>مساحتك الهادئة<br><em>لتنزيل الفيديوهات</em></h1>
+      <p>أضف رابط المشاهدة، افحص المصدر، واختر الصيغة والجودة المناسبة. كل شيء في واجهة واحدة سهلة.</p>
+      <a class="hero-cta" href="#download">ابدأ الآن <span>←</span></a>
+    </div>
+    <div class="hero-art" aria-label="رسم توضيحي لغابة وجبال">
+      <div class="sun"></div><div class="mountain m1"></div><div class="mountain m2"></div>
+      <div class="tree t1"></div><div class="tree t2"></div><div class="tree t3"></div>
+      <div class="cabin"><span></span><i></i></div><div class="deck"></div>
+      <div class="art-caption">NOVA <small>DOWNLOAD SPACE</small></div>
+    </div>
+  </section>
+
+  <section class="features">
+    <article><span>↧</span><b>تنزيل منظم</b><small>تابع ملفاتك في مكان واحد</small></article>
+    <article><span>◈</span><b>خيارات متعددة</b><small>MP4 وMP3 وWEBM</small></article>
+    <article><span>◷</span><b>متابعة التقدم</b><small>اعرف حالة كل عملية</small></article>
+    <article><span>⌂</span><b>حفظ على جهازك</b><small>نزّل الملف بعد اكتماله</small></article>
+  </section>
+
+  <section id="download" class="download-section">
+    <div class="section-heading"><div><span class="script">Your media corner</span><h2>ابدأ تنزيلك <b>الآن</b></h2></div><span class="leaf">✦</span></div>
+    <div class="download-grid">
+      <div class="download-card">
+        <label for="urlInput">رابط الفيديو أو صفحة المشاهدة</label>
+        <div class="input-row"><input id="urlInput" type="url" placeholder="https://example.com/watch/..." inputmode="url"><button id="pasteBtn" class="paste">لصق الرابط</button></div>
+        <button id="inspectBtn" class="outline wide">تحليل الرابط <span>⌕</span></button>
+        <div id="videoInfo" class="video-info hidden"></div>
+        <div class="options">
+          <label>صيغة الملف<select id="format"><option value="mp4">MP4 فيديو</option><option value="mp3">MP3 صوت فقط</option><option value="webm">WEBM فيديو</option></select></label>
+          <label>الجودة<select id="quality"><option value="best">أفضل جودة متاحة</option><option value="1080">1080p</option><option value="720">720p</option><option value="480">480p</option><option value="360">360p</option></select></label>
         </div>
-        <button id="add" class="primary">＋ إضافة إلى قائمة التحميل</button>
-        <div class="hint">هذه النسخة تنظّم قائمة الروابط فقط؛ لا تنزّل ملفات الفيديو فعلياً ولا تتجاوز قيود المنصات.</div>
+        <button id="downloadBtn" class="download-btn" disabled>↓ <span>بدء التنزيل</span></button>
+        <p id="message" class="message" aria-live="polite">اتصل بمحرك التنزيل أولاً.</p>
       </div>
-      <div class="section-head"><div><h2>آخر العناصر</h2><small>الروابط التي أضفتها مؤخراً</small></div><button class="text-btn" id="all">عرض الكل ←</button></div>
-      <div id="recent" class="items"><div class="empty"><div class="empty-icon">⇩</div><b>لا توجد عناصر حتى الآن</b><span>أضف رابطاً ليظهر هنا</span></div></div>
-    </section>
-    <section class="page hidden" id="downloads"><div class="page-heading"><div class="eyebrow">YOUR LIBRARY</div><h1>التحميلات</h1><p>إدارة الروابط التي أضفتها إلى القائمة.</p></div><div id="allItems" class="items"></div></section>
-    <section class="page hidden" id="settings"><div class="page-heading"><div class="eyebrow">PREFERENCES</div><h1>الإعدادات</h1><p>خيارات واجهة NOVA Downloader.</p></div><div class="card settings-card"><div><b>إشعار عند لصق رابط</b><small>إظهار تنبيه داخل التطبيق عند إضافة رابط.</small></div><label class="switch"><input type="checkbox" id="notify" checked><span></span></label></div><div class="card settings-card"><div><b>حفظ القائمة على هذا الجهاز</b><small>تُحفظ العناصر في تخزين المتصفح.</small></div><span class="status">مفعّل</span></div><button id="clear" class="danger">مسح قائمة الروابط</button></section>
-    <footer>NOVA Downloader <span>•</span> إصدار واجهة أولية</footer>
-  </main>
-</div>
-<div id="toast" class="toast"></div>
+      <aside class="side-note"><div class="note-icon">❧</div><h3>تنزيل بهدوء</h3><p>صُممت NOVA لتكون واضحة وبسيطة؛ أضف الرابط، تحقق من بياناته، ثم ابدأ التنزيل.</p><div class="note-line"></div><small>يعمل التنزيل مع المواقع التي يدعمها المحرك فقط.</small></aside>
+    </div>
+  </section>
+
+  <section class="promos">
+    <div class="promo p1"><span>01 / FORMAT</span><h3>الصيغة التي تناسبك</h3><p>اختر الفيديو أو الصوت وفق الخيارات المتاحة للمصدر.</p></div>
+    <div class="promo p2"><span>02 / QUALITY</span><h3>جودة مرنة</h3><p>حدد الجودة المطلوبة أو اترك الاختيار للأفضل المتاح.</p></div>
+    <div class="promo p3"><span>03 / LIBRARY</span><h3>ملفاتك في مكان واحد</h3><p>تابع حالة التنزيل وافتح الملف بعد اكتماله.</p></div>
+  </section>
+
+  <section id="downloads" class="history-section">
+    <div class="section-heading"><div><span class="script">Your collection</span><h2>التنزيلات <b>الأخيرة</b></h2></div><span class="leaf">❧</span></div>
+    <div id="jobs" class="jobs"><div class="empty">لا توجد تنزيلات بعد.</div></div>
+  </section>
+
+  <section id="settings" class="settings">
+    <h2>إعدادات المحرك</h2><p>يعمل NOVA بمحرك محلي Python وyt-dlp. يجب تشغيل الخادم المرفق قبل الاستخدام.</p>
+    <button id="refreshBtn" class="outline">تحديث حالة الاتصال</button>
+  </section>
+</main>
+<footer><div class="wrap footer-inner"><div class="footer-brand"><span class="brand-mark">N</span><b>NOVA Downloader</b><p>تنزيلاتك، بواجهة هادئة مستوحاة من الطبيعة.</p></div><div><b>روابط سريعة</b><a href="#download">تنزيل فيديو</a><a href="#downloads">التنزيلات</a><a href="#settings">الإعدادات</a></div><div><b>تنبيه الاستخدام</b><p>احترم حقوق النشر وشروط المواقع. لا يدعم المشروع تجاوز الحماية أو DRM.</p></div></div><div class="copyright">NOVA • VIDEO DOWNLOADER</div></footer>
 <script src="app.js"></script>
 </body></html>

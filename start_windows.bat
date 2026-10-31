@@ -1,0 +1,1 @@
+@echo off\npy -m pip install -r requirements.txt\npy server.py\npause\n

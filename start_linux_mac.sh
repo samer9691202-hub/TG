@@ -1,0 +1,1 @@
+#!/bin/sh\npython3 -m pip install -r requirements.txt\npython3 server.py\n

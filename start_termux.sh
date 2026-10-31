@@ -1,0 +1,1 @@
+#!/data/data/com.termux/files/usr/bin/bash\nset -e\npkg update -y\npkg install -y python ffmpeg\npython -m pip install --upgrade pip\npython -m pip install -r requirements.txt\ntermux-setup-storage\npython server.py\n

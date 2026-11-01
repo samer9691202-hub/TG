@@ -59,3 +59,5 @@ html[dir="ltr"] table th, html[dir="ltr"] table td { text-align:left; }
 html[dir="ltr"] .badge { direction:ltr; }
 .language-card { margin-bottom:18px; max-width:100%; }
 .language-card .field { max-width:320px; }
+
+.quote-work-row-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}.quote-work-actions{display:flex;gap:4px;direction:ltr}.quote-work-actions .btn{min-width:30px;padding:3px 8px}

@@ -21,6 +21,7 @@ body.dark{--bg:#211c23;--surface:#2c2530;--surface2:#342c38;--text:#f2eaf2;--mut
 .auth-card h1{margin:4px 0 8px;font-size:34px;letter-spacing:.3px;color:#26383a}
 .auth-card>p:not(.auth-kicker){color:#718184;line-height:1.8;margin:0 0 22px}
 .auth-card form{text-align:right;display:grid;gap:13px}
+.auth-card form.hidden{display:none!important}
 .auth-card label{display:grid;gap:7px;color:#405658;font-size:13px;font-weight:700}
 .auth-card input{width:100%;padding:13px 14px;border:1px solid #dce7e2;border-radius:13px;background:#fff;color:#26383a;font:inherit;outline:none}
 .auth-card input:focus{border-color:var(--accent,#986b91);box-shadow:0 0 0 3px rgba(36,107,104,.12)}

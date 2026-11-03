@@ -37,3 +37,22 @@ body.dark .auth-card input{background:#302936;border-color:#55475b;color:#fff}
 /* Theme customization */
 .theme-picker{display:grid;gap:13px;justify-items:end}.color-options{display:flex;flex-wrap:wrap;gap:11px;max-width:340px}.swatch{width:30px;height:30px;transition:transform .18s,box-shadow .18s}.swatch:hover{transform:scale(1.12)}.custom-color{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}.custom-color input[type=color]{width:42px;height:34px;padding:3px;border-radius:10px;cursor:pointer}.theme-row{align-items:flex-start}
 @media(max-width:650px){.theme-row{display:grid;gap:14px}.theme-picker{justify-items:start}.color-options{max-width:100%}}
+
+
+/* In-app photo and video player */
+.media-thumb{position:relative;display:block;width:100%;padding:0;border:0;background:transparent;cursor:pointer;text-align:inherit}
+.media-thumb .photo-preview{margin:8px 0}
+.media-thumb span{position:absolute;inset:auto 10px 17px auto;padding:7px 12px;border-radius:20px;background:#211923c9;color:#fff;font:600 12px 'Tajawal';backdrop-filter:blur(8px)}
+.media-open{width:100%;margin:0 0 5px}
+.media-viewer{position:fixed;inset:0;z-index:10010;background:rgba(18,13,20,.94);display:grid;place-items:center;padding:16px}
+.media-viewer.hidden{display:none}
+.media-viewer-panel{width:min(1100px,100%);max-height:94%;display:flex;flex-direction:column;gap:12px;color:#fff}
+.media-viewer-top,.media-viewer-controls{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.media-viewer-top strong{display:block;font-size:17px}.media-viewer-top small{display:block;color:#c8bdc9;font-size:12px;margin-top:3px}
+.viewer-close{width:42px;height:42px;border:1px solid #ffffff35;border-radius:14px;background:#ffffff18;color:#fff;font-size:27px;cursor:pointer}
+.media-viewer-body{min-height:180px;flex:1;display:grid;place-items:center;overflow:hidden}
+.viewer-image,.viewer-video{display:block;max-width:100%;max-height:min(72vh,760px);object-fit:contain;border-radius:12px;background:#09070a}
+.viewer-video{width:min(100%,1000px)}
+.media-viewer-controls span{color:#c8bdc9;font-size:12px}
+.media-viewer-controls .btn{min-width:105px}
+@media(max-width:600px){.media-viewer{padding:10px}.media-viewer-panel{max-height:96%}.viewer-image,.viewer-video{max-height:67vh}.media-viewer-controls .btn{min-width:0;padding:10px 13px}.media-viewer-controls span{display:none}}

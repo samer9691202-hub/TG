@@ -32,6 +32,11 @@
   </main>
 </div>
 <div id="modal" class="modal hidden"><div class="modal-card"><button class="close" id="closeModal">×</button><h2 id="modalTitle">إضافة</h2><form id="itemForm"><div id="formFields"></div><div class="modal-actions"><button type="button" class="btn ghost" id="cancelModal">إلغاء</button><button class="btn primary" type="submit">حفظ</button></div></form></div></div>
+<div id="mediaViewer" class="media-viewer hidden" role="dialog" aria-modal="true" aria-label="مشغل الصور والفيديوهات">
+  <div class="media-viewer-panel"><div class="media-viewer-top"><div><strong id="mediaViewerTitle">المعرض</strong><small id="mediaViewerCount"></small></div><button id="closeMediaViewer" class="viewer-close" type="button" aria-label="إغلاق">×</button></div>
+  <div id="mediaViewerBody" class="media-viewer-body"></div>
+  <div class="media-viewer-controls"><button id="mediaPrev" class="btn ghost" type="button">→ السابق</button><span>مشغل Fayrouz</span><button id="mediaNext" class="btn ghost" type="button">التالي ←</button></div></div>
+</div>
 <div id="toast" class="toast"></div>
 <script src="app.js"></script>
 </body></html>

@@ -6,3 +6,30 @@ body.dark{--bg:#211c23;--surface:#2c2530;--surface2:#342c38;--text:#f2eaf2;--mut
 /* Functional UI refinements */
 .summary-chip{display:inline-flex;gap:8px;align-items:center;margin:0 0 16px;padding:10px 15px;border-radius:12px;background:var(--soft);color:var(--accent);font-size:13px}.summary-chip strong{font-size:15px}.photo-preview{width:100%;height:190px;object-fit:cover;border-radius:13px;margin-top:12px;background:var(--surface2)}.form-photo{display:block;max-width:100%;max-height:180px;object-fit:contain;margin-top:10px;border-radius:10px}.item-card.completed h3{text-decoration:line-through;opacity:.65}.done-label{display:flex;align-items:center;gap:5px;color:var(--accent);font-size:11px;white-space:nowrap}.done-label input{width:auto;accent-color:var(--accent)}.setting-value{color:var(--accent);font-weight:700}.field small{font-size:11px;color:var(--muted);font-weight:400}.clock{min-width:95px}.clock strong{font-size:20px}.clock small{text-transform:uppercase;letter-spacing:.3px}.swatch{padding:0}.swatch.selected{outline:2px solid var(--accent);outline-offset:3px}
 @media(max-width:650px){.clock{display:grid;gap:1px;text-align:left;min-width:76px}.clock strong{font-size:15px}.clock small{font-size:9px}.top-actions{gap:8px}.avatar{width:36px;height:36px}.photo-preview{height:210px}.setting-row{gap:12px}.setting-row>div:first-child{min-width:0}.setting-row small{display:block;line-height:1.5}}
+
+/* Fayrouz modern media gallery and privacy lock */
+.media-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px}
+.media-grid .item-card{overflow:hidden;padding:14px;border:1px solid var(--line,#eadfe9);border-radius:22px;box-shadow:0 12px 32px rgba(65,38,65,.06);transition:transform .2s,box-shadow .2s}
+.media-grid .item-card:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(65,38,65,.11)}
+.media-grid .item-top{padding:4px 3px 10px}
+.media-grid .photo-preview,.media-preview{display:block;width:100%;height:220px;object-fit:cover;border-radius:16px;background:#17131b;margin:8px 0;cursor:pointer}
+.media-grid .item-meta{padding:8px 3px 2px}
+.auth-screen{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 15% 15%,rgba(194,151,190,.35),transparent 34%),linear-gradient(135deg,#f8f1f7,#eee8f5 55%,#f8f4f1)}
+.auth-card{width:min(100%,430px);padding:36px 30px;border:1px solid rgba(255,255,255,.8);border-radius:30px;background:rgba(255,255,255,.9);box-shadow:0 24px 80px rgba(75,48,79,.17);text-align:center;backdrop-filter:blur(18px)}
+.auth-logo{width:62px;height:62px;margin:0 auto 14px;display:grid;place-items:center;border-radius:21px;background:var(--accent,#986b91);color:white;font-size:30px;font-weight:800;box-shadow:0 10px 24px rgba(120,82,118,.25)}
+.auth-kicker{margin:0;color:var(--accent,#986b91);font-size:13px;font-weight:700;letter-spacing:1px}
+.auth-card h1{margin:4px 0 8px;font-size:34px;letter-spacing:.3px;color:#453547}
+.auth-card>p:not(.auth-kicker){color:#796d7c;line-height:1.8;margin:0 0 22px}
+.auth-card form{text-align:right;display:grid;gap:13px}
+.auth-card label{display:grid;gap:7px;color:#625466;font-size:13px;font-weight:700}
+.auth-card input{width:100%;padding:13px 14px;border:1px solid #e8dce8;border-radius:13px;background:#fff;color:#392f3d;font:inherit;outline:none}
+.auth-card input:focus{border-color:var(--accent,#986b91);box-shadow:0 0 0 3px rgba(152,107,145,.12)}
+.auth-submit{width:100%;justify-content:center;margin-top:6px;padding:14px}
+.auth-forgot{margin:18px auto 0;display:block}
+.auth-note{display:block;margin-top:20px;color:#9a8e9c;font-size:11px}
+body.dark .auth-screen{background:radial-gradient(circle at 15% 15%,rgba(115,83,120,.35),transparent 34%),linear-gradient(135deg,#1c1920,#28212c)}
+body.dark .auth-card{background:rgba(42,35,46,.96);border-color:#514454}
+body.dark .auth-card h1{color:#f4eaf4}
+body.dark .auth-card>p:not(.auth-kicker),body.dark .auth-card label{color:#cbbdce}
+body.dark .auth-card input{background:#302936;border-color:#55475b;color:#fff}
+@media(max-width:640px){.media-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.media-grid .photo-preview,.media-preview{height:155px}.auth-card{padding:30px 22px}}

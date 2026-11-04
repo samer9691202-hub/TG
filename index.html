@@ -1,26 +1,41 @@
 <!doctype html>
-<html lang="ar" dir="rtl" data-theme="auto">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <meta name="referrer" content="no-referrer">
-  <meta name="theme-color" content="#14202E">
-  <title>Vaulty – خزنتي</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="css/styles.css">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#8054e9"><title>Fayrouz 1.1.0 | فيروز</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app"><div class="boot"><p>Vaulty – خزنتي … جارٍ التحميل / Loading…</p><p>إن بقيت هذه الرسالة: فُكَّ ضغط الملف أولاً ثم افتح index.html في Chrome أو Edge. / If this stays: unzip first, then open index.html in Chrome or Edge.</p></div></div>
-  <noscript>Vaulty needs JavaScript. / يتطلب Vaulty تفعيل JavaScript.</noscript>
-  <script src="js/diag.js"></script>
-  <script src="js/crypto.js"></script>
-  <script src="js/generator.js"></script>
-  <script src="js/vault.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/app.js"></script>
-</body>
-</html>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">F</div><div><strong>Fayrouz</strong><small>مساحتي الخاصة</small></div></div>
+    <div class="side-label">القائمة الرئيسية</div>
+    <nav id="nav">
+      <button class="nav-item active" data-page="home"><span>⌂</span>الرئيسية</button>
+      <button class="nav-item" data-page="tasks"><span>✓</span>مهامي</button>
+      <button class="nav-item" data-page="calendar"><span>▦</span>مواعيدي</button>
+      <button class="nav-item" data-page="notes"><span>✎</span>مذكراتي</button>
+      <button class="nav-item" data-page="photos"><span>♡</span>صوري</button>
+      <button class="nav-item" data-page="goals"><span>◎</span>أهدافي</button>
+      <button class="nav-item" data-page="habits"><span>✿</span>عاداتي</button>
+      <button class="nav-item" data-page="events"><span>✧</span>مناسباتي</button>
+    </nav>
+    <div class="sidebar-bottom"><button class="nav-item" data-page="settings"><span>⚙</span>الإعدادات</button><div class="side-quote">«الأشياء الجميلة تبدأ بخطوة صغيرة»</div></div>
+  </aside>
+  <main class="main-area">
+    <header class="topbar"><div><div class="eyebrow" id="todayLabel">مساحتكِ اليوم</div><h1 id="pageTitle">أهلاً بكِ في فيروز <span>✿</span></h1></div><div class="top-actions"><div class="clock"><strong id="clockTime">--:--</strong><small id="clockDate">---</small></div><button class="avatar" aria-label="فيروز">ف</button></div></header>
+    <section id="content" class="content"></section>
+    <footer>Fayrouz <span>•</span> مساحة صغيرة لكل ما يهمكِ</footer>
+  </main>
+</div>
+<div id="modal" class="modal hidden"><div class="modal-card"><button class="close" id="closeModal">×</button><h2 id="modalTitle">إضافة</h2><form id="itemForm"><div id="formFields"></div><div class="modal-actions"><button type="button" class="btn ghost" id="cancelModal">إلغاء</button><button class="btn primary" type="submit">حفظ</button></div></form></div></div>
+<div id="mediaViewer" class="media-viewer hidden" role="dialog" aria-modal="true" aria-label="مشغل الصور والفيديوهات">
+  <div class="media-viewer-panel"><div class="media-viewer-top"><div><strong id="mediaViewerTitle">المعرض</strong><small id="mediaViewerCount"></small></div><button id="closeMediaViewer" class="viewer-close" type="button" aria-label="إغلاق">×</button></div>
+  <div id="mediaViewerBody" class="media-viewer-body"></div>
+  <div class="media-viewer-controls"><button id="mediaPrev" class="btn ghost" type="button">→ السابق</button><button id="mediaViewerDownload" class="btn primary" type="button">⬇ تحميل الملف</button><button id="mediaNext" class="btn ghost" type="button">التالي ←</button></div></div>
+</div>
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
+</body></html>

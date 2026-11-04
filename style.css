@@ -267,3 +267,18 @@ body.dark .auth-card{background:color-mix(in srgb,var(--surface) 94%,transparent
 
 /* Fayrouz 1.1.7 — custom task date picker */
 .date-picker-wrap{position:relative}.date-picker-trigger{width:100%;display:flex;align-items:center;gap:11px;padding:13px 14px;border:1px solid var(--theme-border,var(--line));border-radius:13px;background:var(--surface2);color:var(--text);font:600 14px 'Tajawal';text-align:right;cursor:pointer}.date-picker-trigger>span{font-size:20px;color:var(--accent)}.date-picker-trigger strong{flex:1;font-weight:600}.date-picker-trigger i{font-style:normal;color:var(--accent);font-size:18px}.date-picker-host{display:none;margin-top:10px}.date-picker-host.is-open{display:block}.date-picker{padding:14px;border:1px solid var(--theme-border,var(--line));border-radius:17px;background:var(--surface);box-shadow:0 12px 28px rgba(40,25,60,.1)}.date-picker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.date-picker-head strong{font-size:15px;color:var(--text)}.date-picker-head button,.date-picker-foot button{border:0;border-radius:9px;background:var(--soft);color:var(--accent);padding:7px 12px;font:700 16px 'Tajawal';cursor:pointer}.date-picker-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.date-weekday{text-align:center;padding:6px 0;color:var(--muted);font-size:11px}.date-empty{min-height:39px}.date-day{min-height:39px;border:1px solid transparent;border-radius:10px;background:var(--surface2);color:var(--text);font:600 13px 'Tajawal';cursor:pointer}.date-day:hover{border-color:var(--accent)}.date-day.is-today{outline:1px solid var(--accent);color:var(--accent)}.date-day.is-selected{background:var(--accent);color:white;border-color:var(--accent)}.date-picker-foot{display:flex;justify-content:space-between;gap:8px;margin-top:12px}.date-picker-foot button{font-size:12px}.date-picker-foot button:last-child{background:transparent;color:var(--muted)}body.dark .date-picker{background:var(--surface)}@media(max-width:420px){.date-picker{padding:10px}.date-picker-grid{gap:3px}.date-day,.date-empty{min-height:35px}.date-weekday{font-size:10px}}
+
+/* Fayrouz 1.1.8 — collapsible color studio */
+.theme-studio-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px;border:0;background:transparent;color:inherit;text-align:right;cursor:pointer;font:inherit}
+.theme-studio-toggle .theme-studio-head{flex:1;margin:0;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.theme-studio-toggle .theme-studio-head>span:first-child{display:block}
+.theme-studio-toggle .theme-studio-head strong{display:block;font-size:19px;color:var(--text)}
+.theme-studio-toggle .theme-studio-head small{display:block;color:var(--muted);font-size:12px;margin-top:5px;line-height:1.7}
+.theme-toggle-arrow{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:12px;background:var(--soft);color:var(--accent);font-size:23px;transition:transform .2s}
+.theme-studio-options[hidden]{display:none}
+.theme-studio-options{padding-top:19px;animation:themeOptionsIn .22s ease}
+@keyframes themeOptionsIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.theme-studio-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:5px;border-radius:12px}
+@media(max-width:560px){.theme-studio-toggle .theme-studio-head{align-items:flex-start;flex-direction:row}.theme-studio-toggle .theme-studio-head strong{font-size:17px}}
+
+.original-file-name{font-size:11px!important;line-height:1.5;color:var(--muted);overflow-wrap:anywhere;margin:5px 0 3px!important;direction:ltr;text-align:right}

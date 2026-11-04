@@ -1,633 +1,106 @@
-/* ==========================================================================
-   Vaulty 1.0.0 — app.js
-   - تشفير الخزنة بالكامل: PBKDF2-SHA256 + AES-256-GCM (Web Crypto API)
-   - كلمة المرور الرئيسية لا تُخزَّن إطلاقاً؛ صحتها تُتحقق بفك التشفير
-   - لا توجد أي اتصالات شبكية؛ كل شيء يعمل محلياً
-   ========================================================================== */
-(() => {
-  'use strict';
+'use strict';
+const sections = {
+  tasks:{title:'مهامي',sub:'رتّبي يومكِ خطوة بخطوة',add:'إضافة مهمة',fields:[['title','الاسم (اختياري)','text'],['date','موعد المهمة','date'],['details','تفاصيل المهمة','textarea']]},
+  calendar:{title:'مواعيدي',sub:'كل مواعيدكِ المهمة في مكان واحد',add:'إضافة موعد',fields:[['title','الاسم (اختياري)','text'],['date','التاريخ','date',true],['time','الوقت','time'],['details','ملاحظات','textarea']]},
+  notes:{title:'مذكراتي',sub:'مساحة لأفكاركِ وذكرياتكِ',add:'كتابة مذكرة',fields:[['title','عنوان المذكرة','text'],['category','التصنيف','select',false,['شخصي','أفكار','ذكريات','عمل ودراسة','عام']],['details','اكتبي هنا...','textarea',true]]},
+  photos:{title:'معرضي',sub:'صوركِ وفيديوهاتكِ في مساحة واحدة',add:'إضافة صورة أو فيديو',fields:[['title','اسم الذكرى','text'],['category','اسم الألبوم','text'],['media','اختاري صورة أو فيديو','file'],['details','وصف الذكرى','textarea']]},
+  goals:{title:'أهدافي',sub:'كل إنجاز كبير يبدأ بهدف واضح',add:'إضافة هدف',fields:[['title','الاسم (اختياري)','text'],['date','الموعد المستهدف','date'],['progress','نسبة الإنجاز','number'],['details','تفاصيل الهدف','textarea']]},
+  habits:{title:'عاداتي',sub:'خطوات صغيرة تصنع فرقاً جميلاً كل يوم',add:'إضافة عادة',fields:[['title','الاسم (اختياري)','text'],['details','ملاحظات','textarea']]},
+  events:{title:'مناسباتي',sub:'لا تفوّتي اللحظات والتواريخ الجميلة',add:'إضافة مناسبة',fields:[['title','الاسم (اختياري)','text'],['date','التاريخ','date',true],['details','تفاصيل','textarea']]}
+};
+let page='home', editing=null, pendingMedia=[], mediaCache={}, mediaFilter='all', pendingPreviewUrls=[], calendarCursor=new Date(), noteQuery='';
+const $=s=>document.querySelector(s);
+// Encrypted local vault: user records are kept in memory only while unlocked.
+let vaultKey=null, vaultCache={}, vaultWriteQueue=Promise.resolve();
+const store={get(k){return Array.isArray(vaultCache[k])?vaultCache[k]:[]},set(k,v){vaultCache[k]=v;queueVaultSave();return true}};
+function bytesToB64(bytes){let s='';for(const b of new Uint8Array(bytes))s+=String.fromCharCode(b);return btoa(s)}
+function b64ToBytes(value){const s=atob(value);return Uint8Array.from(s,c=>c.charCodeAt(0))}
+function randomBytes(n=16){const b=new Uint8Array(n);crypto.getRandomValues(b);return b}
+// Founder access phrase requested by the project owner. Client-side-only caveat is documented in README.
+const FOUNDER_ACCESS_PHRASE='Fayrouz Master Key 2006';
+const normalizeFounderPhrase=value=>String(value??'').normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
+async function deriveWrapKey(secret,salt){if(!crypto?.subtle)throw new Error('Web Crypto غير متاح. افتحي التطبيق عبر Chrome أو Edge محدث.');const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function wrapVaultKey(secret,rawKey){const salt=randomBytes(16),iv=randomBytes(12),k=await deriveWrapKey(secret,salt),cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,rawKey);return {v:1,salt:bytesToB64(salt),iv:bytesToB64(iv),cipher:bytesToB64(cipher)}}
+async function unwrapVaultKey(secret,record){const k=await deriveWrapKey(secret,b64ToBytes(record.salt));const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(record.iv)},k,b64ToBytes(record.cipher));return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},true,['encrypt','decrypt'])}
+async function encryptBytes(data){const iv=randomBytes(12),plain=data instanceof ArrayBuffer?new Uint8Array(data):new Uint8Array(data);const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},vaultKey,plain);return {v:1,iv:new Uint8Array(iv),cipher}}
+async function decryptBytes(record){return crypto.subtle.decrypt({name:'AES-GCM',iv:record.iv},vaultKey,record.cipher)}
+async function persistVault(){if(!vaultKey)return;const iv=randomBytes(12),plain=new TextEncoder().encode(JSON.stringify({v:1,data:vaultCache}));const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},vaultKey,plain);localStorage.setItem('fayrouz_vault_v1',JSON.stringify({v:1,iv:bytesToB64(iv),cipher:bytesToB64(cipher)}))}
+function queueVaultSave(){vaultWriteQueue=vaultWriteQueue.then(persistVault).catch(e=>{console.error(e);toast('تعذر حفظ البيانات المشفّرة. تحققي من مساحة الجهاز.')});return vaultWriteQueue}
+async function loadVault(){const saved=localStorage.getItem('fayrouz_vault_v1');if(saved){const env=JSON.parse(saved),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(env.iv)},vaultKey,b64ToBytes(env.cipher));const parsed=JSON.parse(new TextDecoder().decode(plain));vaultCache=parsed.data||{};}else{vaultCache={};for(const key of Object.keys(sections)){try{vaultCache[key]=JSON.parse(localStorage.getItem('fayrouz_'+key)||'[]')}catch{vaultCache[key]=[]}}await persistVault();for(const key of Object.keys(sections))localStorage.removeItem('fayrouz_'+key)}}
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const dateText=d=>{if(!d)return '';const x=new Date(d+'T12:00:00');return isNaN(x)?'':x.toLocaleDateString('ar-QA',{year:'numeric',month:'long',day:'numeric'})};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>window.crypto?.randomUUID?crypto.randomUUID():`${Date.now()}_${Math.random().toString(16).slice(2)}`;
+function tick(){const d=new Date();$('#clockTime').textContent=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});$('#clockDate').textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});$('#todayLabel').textContent=d.toLocaleDateString('ar-QA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}tick();setInterval(tick,1000);
+function go(p){page=p;document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render();window.scrollTo({top:0,behavior:'smooth'})}
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)go(b.dataset.page)});
+$('.sidebar-bottom').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)go(b.dataset.page)});
+function pageHead(title,sub,add){return `<div class="page-head"><div><h2>${title}</h2><p>${sub}</p></div>${add?`<button class="btn primary" onclick="openForm()">＋ ${add}</button>`:''}</div>`}
+function itemCard(item,key){const meta=dateText(item.date);let extra='';if(key==='goals')extra=`<div class="progress"><i style="width:${Math.max(0,Math.min(100,Number(item.progress)||0))}%"></i></div>`;if(key==='photos'&&mediaCache[item.mediaId]){const src=mediaCache[item.mediaId];extra=item.mediaType==='video'?`<video class="media-preview" src="${src}" controls playsinline preload="metadata"></video>`:`<button class="media-thumb" type="button" onclick="viewMedia('${item.id}')" aria-label="عرض الصورة"><img class="photo-preview" src="${src}" alt="${esc(item.title||'صورة')}"><span>⌕ عرض الصورة</span></button>`;extra+=`<div class="media-card-actions"><button class="btn ghost" type="button" onclick="viewMedia('${item.id}')">${item.mediaType==='video'?'▶ فتح الفيديو':'⌕ عرض الصورة'}</button><button class="btn primary" type="button" onclick="downloadMedia('${item.id}')">⬇ تحميل</button></div>`;}let done=key==='tasks'&&item.done;return `<article class="item-card ${done?'completed':''}"><div class="item-top"><div><h3>${esc(item.title||'بدون اسم')}</h3><p>${esc(item.details||item.category||'')}</p></div><div class="actions">${key==='photos'?`<button class="icon-btn" title="مفضلة" onclick="togglePhotoFavorite('${item.id}')">${item.favorite?'★':'☆'}</button>`:''}<button class="icon-btn" title="تعديل" onclick="openForm('${item.id}')">✎</button><button class="icon-btn" title="حذف" onclick="removeItem('${item.id}')">×</button></div></div>${extra}<div class="item-meta"><span>${esc(meta||'')} ${key==='photos'&&item.category?'· '+esc(item.category):''}</span>${key==='goals'?`<span>${Number(item.progress)||0}%</span>`:''}${key==='tasks'?`<label class="done-label"><input type="checkbox" ${done?'checked':''} onchange="toggleTask('${item.id}',this.checked)"> ${done?'مكتملة':'إنجاز المهمة'}</label>`:''}${key==='habits'?`<span>أيام الإنجاز: ${(item.history||[]).length}</span><button class="text-link" onclick="toggleHabit('${item.id}')">${item.lastDone===today()?'✓ أُنجزت اليوم':'تسجيل إنجاز اليوم'}</button>`:''}</div></article>`}
+function listHTML(key){let items=store.get(key);if(key==='tasks')items.sort((a,b)=>(a.done===b.done?String(a.date||'').localeCompare(String(b.date||'')):a.done?1:-1));if(key==='photos'){const filtered=items.filter(x=>mediaFilter==='all'||x.mediaType===mediaFilter);return `<div class="cards media-grid">${filtered.length?filtered.map(x=>itemCard(x,key)).join(''):`<div class="empty"><b>♡</b>${items.length?'لا توجد ملفات في هذا التصنيف.':'لم تضيفي صوراً أو فيديوهات بعد.'}</div>`}</div>`;}return `<div class="cards">${items.length?items.map(x=>itemCard(x,key)).join(''):`<div class="empty"><b>✿</b>لا توجد عناصر بعد، ابدئي بإضافة أول عنصر جميل.</div>`}</div>`}
+function monthCalendarHTML(){
+ const y=calendarCursor.getFullYear(),m=calendarCursor.getMonth(),first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),offset=(first.getDay()+6)%7;
+ const all=[...store.get('calendar').map(x=>({...x,_kind:'موعد'})),...store.get('events').map(x=>({...x,_kind:'مناسبة'})),...store.get('tasks').filter(x=>x.date).map(x=>({...x,_kind:'مهمة'}))];
+ const cells=Array.from({length:offset},()=>'<span class="calendar-day blank"></span>');
+ for(let d=1;d<=days;d++){const key=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,count=all.filter(x=>x.date===key).length;cells.push(`<button class="calendar-day ${key===today()?'today':''} ${count?'has-items':''}" onclick="showCalendarDate('${key}')"><b>${d}</b>${count?`<i>${count}</i>`:''}</button>`)}
+ return `<section class="panel calendar-panel"><div class="calendar-toolbar"><button class="btn ghost" onclick="moveCalendar(-1)">‹ السابق</button><h3>${first.toLocaleDateString('ar-QA',{month:'long',year:'numeric'})}</h3><button class="btn ghost" onclick="moveCalendar(1)">التالي ›</button></div><div class="calendar-grid">${['الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت','الأحد'].map(x=>`<b class="calendar-weekday">${x}</b>`).join('')}${cells.join('')}</div><div class="calendar-legend"><span>● موعد</span><span>● مناسبة</span><span>● مهمة</span></div></section><section class="panel"><div class="panel-head"><h3>المواعيد القادمة</h3><button class="text-link" onclick="openForm()">＋ إضافة موعد</button></div>${all.filter(x=>x.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8).map(x=>`<div class="row"><span class="dot"></span><div class="row-main"><strong>${esc(x.title||x._kind)}</strong><small>${dateText(x.date)} ${esc(x.time||'')} · ${x._kind}</small></div></div>`).join('')||'<div class="empty">لا توجد مواعيد قادمة.</div>'}</section>`;
+}
+window.moveCalendar=delta=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+delta,1);render()};
+window.showCalendarDate=key=>{const all=[...store.get('calendar'),...store.get('events'),...store.get('tasks')].filter(x=>x.date===key);toast(all.length?`${dateText(key)}: ${all.map(x=>x.title||'بدون اسم').join('، ')}`:`لا توجد عناصر في ${dateText(key)}`)};
+function renderNotes(){const items=store.get('notes').filter(x=>`${x.title||''} ${x.details||''} ${x.category||''}`.toLowerCase().includes(noteQuery.toLowerCase()));return `<div class="note-tools"><input type="search" placeholder="ابحثي في مذكراتكِ..." value="${esc(noteQuery)}" oninput="setNoteQuery(this.value)"><button class="btn ghost" onclick="openForm()">＋ مذكرة</button></div><div class="cards">${items.length?items.map(x=>`<article class="item-card"><div class="item-top"><div><h3>${esc(x.title||'بدون عنوان')} ${x.favorite?'★':''}</h3><p>${esc(x.category||'عام')}</p></div><div class="actions"><button class="icon-btn" onclick="toggleFavoriteNote('${x.id}')">${x.favorite?'★':'☆'}</button><button class="icon-btn" onclick="openForm('${x.id}')">✎</button><button class="icon-btn" onclick="removeItem('${x.id}')">×</button></div></div><p class="note-body">${esc(x.details||'')}</p></article>`).join(''):'<div class="empty">لا توجد مذكرات مطابقة.</div>'}</div>`}
+window.setNoteQuery=v=>{noteQuery=v;const el=document.querySelector('.note-tools');if(el){const pos=el.querySelector('input').selectionStart;const c=$('#content');const old=c.querySelector('input');c.querySelector('.cards').outerHTML=renderNotes().match(/<div class="cards">[\s\S]*$/)[0];const inp=c.querySelector('.note-tools input');inp.focus();inp.setSelectionRange(pos,pos)}};
+window.toggleFavoriteNote=id=>{store.set('notes',store.get('notes').map(x=>x.id===id?{...x,favorite:!x.favorite}:x));render()};
+function render(){const c=$('#content');$('#pageTitle').innerHTML=page==='home'?'أهلاً بكِ في فيروز <span>✿</span>':page==='settings'?'الإعدادات':sections[page]?.title||'فيروز';
+ if(page==='home'){const tasks=store.get('tasks'),pending=tasks.filter(x=>!x.done),upcoming=[...store.get('calendar'),...store.get('events')].filter(x=>x.date&&x.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);c.innerHTML=`<div class="hero"><div><h2>مرحباً بكِ في مساحتكِ الجميلة ✨</h2><p>هنا تبدأ أيامكِ المرتبة، وأفكاركِ الصغيرة تصبح إنجازات.</p></div><div class="date-pill">${dateText(today())}</div></div><div class="stats"><div class="stat"><div class="icon">✓</div><strong>${pending.length}</strong><small>مهام بانتظاركِ</small></div><div class="stat"><div class="icon">✎</div><strong>${store.get('notes').length}</strong><small>مذكراتكِ</small></div><div class="stat"><div class="icon">◎</div><strong>${store.get('goals').length}</strong><small>أهدافكِ</small></div></div><div class="daily-focus panel"><div><h3>مساحة اليوم ✨</h3><p>أنجزي خطوة صغيرة اليوم، فهي بداية إنجاز كبير.</p></div><div class="daily-progress"><strong>${tasks.length?Math.round(tasks.filter(x=>x.done).length/tasks.length*100):0}%</strong><small>إنجاز المهام</small><div class="progress"><i style="width:${tasks.length?Math.round(tasks.filter(x=>x.done).length/tasks.length*100):0}%"></i></div></div><button class="btn ghost" onclick="openFutureLetter()">✉ رسالة إلى نفسي</button></div><div class="dashboard-grid"><section class="panel"><div class="panel-head"><h3>مساحاتكِ</h3></div><div class="quick-grid">${[['tasks','✓','مهامي'],['calendar','▦','مواعيدي'],['notes','✎','مذكراتي'],['photos','♡','صوري'],['goals','◎','أهدافي'],['habits','✿','عاداتي'],['events','✧','مناسباتي']].map(([p,i,t])=>`<button class="quick" onclick="go('${p}')"><span>${i}</span>${t}</button>`).join('')}</div></section><section class="panel"><div class="panel-head"><h3>مهامكِ القادمة</h3><button class="text-link" onclick="go('tasks')">عرض الكل</button></div><div class="list">${pending.slice(0,5).map(x=>`<div class="row"><span class="dot"></span><div class="row-main"><strong>${esc(x.title)}</strong><small>${dateText(x.date)||'بلا تاريخ'}</small></div><input class="check" aria-label="إنجاز المهمة" type="checkbox" onchange="toggleTask('${x.id}',this.checked)"></div>`).join('')||'<div class="empty">لا توجد مهام معلّقة 🌷</div>'}</div></section><section class="panel"><div class="panel-head"><h3>أقرب المواعيد والمناسبات</h3><button class="text-link" onclick="go('calendar')">عرض الكل</button></div><div class="list">${upcoming.map(x=>`<div class="row"><span class="dot"></span><div class="row-main"><strong>${esc(x.title)}</strong><small>${dateText(x.date)} · ${Math.max(0,Math.ceil((new Date(x.date+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000))} يوم متبقٍ</small></div></div>`).join('')||'<div class="empty">أضيفي موعدكِ أو مناسبتكِ القادمة.</div>'}</div></section></div>`;return;}
+ if(sections[page]){if(page==='photos'){renderMediaPage();return;}if(page==='calendar'){c.innerHTML=pageHead(sections.calendar.title,sections.calendar.sub,sections.calendar.add)+monthCalendarHTML();return;}if(page==='notes'){c.innerHTML=pageHead(sections.notes.title,sections.notes.sub,null)+renderNotes();return;}let summary='';c.innerHTML=pageHead(sections[page].title,sections[page].sub,sections[page].add)+summary+listHTML(page);return;}
+ if(page==='settings'){c.innerHTML=`${pageHead('الإعدادات','اجعلي التطبيق أقرب إلى ذوقكِ',null)}<section class="panel"><div class="setting-row"><div><strong>المظهر الليلي</strong><small>تغيير ألوان التطبيق إلى الوضع الداكن</small></div><input class="switch" type="checkbox" ${localStorage.getItem('fayrouz_dark')==='1'?'checked':''} onchange="setDark(this.checked)"></div><section class="theme-studio"><div class="theme-studio-head"><div><strong>استوديو الألوان</strong><small>اختاري لوحة متناسقة لتتغير أجواء فيروز بالكامل فوراً.</small></div><span class="live-badge"><i></i> مباشر</span></div><div class="theme-preview"><div class="preview-orb">✿</div><div class="preview-copy"><b>مساحتكِ، بطابعكِ</b><small id="themeName">لوحة الألوان الحالية</small></div><span class="preview-sample"><i></i><i></i><i></i></span></div><div class="theme-label">لوحات مختارة بعناية</div><div class="palette-grid">${[['#7656A8','#B79ACF','#F0EAF7','ليلكي هادئ'],['#B76E79','#D9A6A0','#F8ECEA','وردي كلاسيكي'],['#426D78','#8FB5B5','#E7F1EF','نسيم بحري'],['#B18A52','#D9BD8D','#F6F0E4','ذهبي دافئ'],['#58765F','#9DB49A','#EAF0E7','حديقة خضراء'],['#526A91','#9CAFD0','#E9EEF7','أزرق ملكي'],['#A76F55','#D7A88F','#F5EAE2','طيني أنيق'],['#756B80','#B7AEBF','#F0EDF2','رمادي بنفسجي'],['#A85F83','#D99AB8','#F7EAF1','توتي ناعم'],['#477F79','#91BDB2','#E7F3EF','زمردي']].map(([a,b,soft,n])=>`<button type="button" class="palette-card ${(localStorage.getItem('fayrouz_accent')||'#8054e9').toLowerCase()===a?'selected':''}" data-accent="${a}" onclick="setPalette('${a}','${b}','${soft}','${n}')"><span class="palette-colors"><i style="background:${a}"></i><i style="background:${b}"></i><i style="background:${soft}"></i></span><b>${n}</b><small>${a.toUpperCase()}</small><em>✓</em></button>`).join('')}</div><div class="custom-theme-row"><label class="custom-color"><span>لون مخصص</span><input type="color" value="${localStorage.getItem('fayrouz_accent')||'#8054e9'}" aria-label="اختيار لون مخصص" oninput="setAccent(this.value,false)" onchange="setAccent(this.value,true)"></label><label class="hex-color"><span>كود HEX</span><input id="accentHex" type="text" maxlength="7" value="${localStorage.getItem('fayrouz_accent')||'#8054e9'}" oninput="setAccentFromHex(this.value)"></label><button type="button" class="btn ghost reset-theme" onclick="setPalette('#7656A8','#B79ACF','#F0EAF7','ليلكي هادئ')">استعادة الافتراضي</button></div><small class="theme-hint">يتم حفظ اختيارك تلقائياً وتطبيقه على الأزرار والبطاقات والخلفيات دون إعادة تحميل.</small></section><div class="setting-row"><div><strong>الساعة</strong><small>تُعرض بنظام 12 ساعة باللغة الإنجليزية</small></div><span class="setting-value">12-hour · English</span></div><div class="setting-row"><div><strong>تشفير البيانات</strong><small>المذكرات والمهام والبيانات والصور والفيديوهات مشفّرة قبل حفظها محلياً.</small></div><span class="setting-value">AES-256</span></div><div class="setting-row"><div><strong>قفل التطبيق</strong><small>تغيير كلمة المرور ورمز الاستعادة</small></div><button class="btn ghost" onclick="changeCredentials()">إدارة الحماية</button></div><div class="setting-row"><div><strong>رمز الاستعادة</strong><small>لا يظهر حقل إدخاله في شاشة الدخول إلا بعد الضغط على «نسيت كلمة المرور؟ استخدم رمز الاستعادة».</small></div><button class="btn ghost" onclick="changeCredentials()">إدارة بيانات الدخول</button></div><div class="setting-row"><div><strong>التنبيهات والتذكير</strong><small>تنبيه قبل المواعيد والمهام عند السماح بإشعارات المتصفح.</small></div><button class="btn ghost" onclick="enableReminders()">تفعيل التنبيهات</button></div><div class="setting-row"><div><strong>النسخ الاحتياطي</strong><small>تصدير بياناتكِ واستعادتها على هذا الجهاز أو جهاز آخر. احتفظي بالملف في مكان آمن.</small></div><div class="backup-actions"><button class="btn ghost" onclick="exportBackup()">تصدير نسخة</button><button class="btn ghost" onclick="document.getElementById('restoreBackupFile').click()">استعادة نسخة</button><input id="restoreBackupFile" type="file" accept="application/json,.json" hidden onchange="importBackup(this)"></div></div><div class="setting-row"><div><strong>الخط والقراءة</strong><small>تكبير النصوص داخل التطبيق.</small></div><button class="btn ghost" onclick="toggleLargeText()">تبديل حجم الخط</button></div><div class="setting-row"><div><strong>الإصدار</strong><small>Fayrouz – Soft Glass Experience</small></div><span>1.1.4</span></div></section>`}}
+window.openFutureLetter=()=>{const text=prompt('اكتبي رسالة لطيفة إلى نفسكِ:');if(text&&text.trim()){const arr=store.get('notes');arr.unshift({id:uid(),title:'رسالة إلى نفسي',category:'رسائل مستقبلية',details:text.trim(),favorite:true,createdAt:new Date().toISOString()});store.set('notes',arr);toast('حُفظت رسالتكِ في المذكرات 💜')}};
+window.toggleLargeText=()=>{document.body.classList.toggle('large-text');localStorage.setItem('fayrouz_large_text',document.body.classList.contains('large-text')?'1':'0')};
+window.enableReminders=async()=>{if(!('Notification' in window)){toast('هذا المتصفح لا يدعم الإشعارات');return}const p=await Notification.requestPermission();localStorage.setItem('fayrouz_reminders',p==='granted'?'1':'0');toast(p==='granted'?'تم تفعيل التنبيهات. اتركي التطبيق مفتوحاً لاستلامها.':'لم يتم السماح بالإشعارات')};
+function checkReminders(){if(localStorage.getItem('fayrouz_reminders')!=='1'||!('Notification'in window)||Notification.permission!=='granted')return;const now=new Date(),stamp=now.toISOString().slice(0,16),items=[...store.get('tasks'),...store.get('calendar'),...store.get('events')];for(const x of items){if(!x.date||x.done&&store.get('tasks').some(t=>t.id===x.id))continue;const at=new Date(`${x.date}T${x.time||'09:00'}:00`);const diff=at-now;if(diff>=0&&diff<=60000){const key=`fayrouz_notice_${x.id}_${x.date}_${x.time||'09:00'}`;if(!localStorage.getItem(key)){new Notification('فيروز · تذكير',{body:x.title||'لديكِ موعد قادم'});localStorage.setItem(key,'1')}}}}
+setInterval(checkReminders,30000);
+window.exportBackup=async()=>{try{await vaultWriteQueue;const media=[];const db=await mediaDB();const keys=await new Promise((res,rej)=>{const r=db.transaction('media').objectStore('media').getAllKeys();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)});for(const key of keys){const blob=await getMedia(key);if(blob){const b64=bytesToB64(new Uint8Array(await blob.arrayBuffer()));media.push({id:key,type:blob.type,data:b64})}}const payload={format:'FayrouzBackup',version:'1.1.0',createdAt:new Date().toISOString(),data:vaultCache,media};const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Fayrouz-backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href);toast('تم إنشاء النسخة الاحتياطية. احفظيها بمكان آمن.')}catch(e){console.error(e);toast('تعذر إنشاء النسخة الاحتياطية')}};
+window.importBackup=async input=>{const f=input.files?.[0];if(!f)return;if(!confirm('ستُستبدل بيانات فيروز الحالية بمحتويات النسخة. هل تريدين المتابعة؟')){input.value='';return}try{const payload=JSON.parse(await f.text());if(payload.format!=='FayrouzBackup'||!payload.data)throw Error('invalid');vaultCache=payload.data;await persistVault();const db=await mediaDB();await new Promise((res,rej)=>{const tx=db.transaction('media','readwrite');tx.objectStore('media').clear();tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});for(const m of payload.media||[]){const bytes=b64ToBytes(m.data);await saveMedia(m.id,new Blob([bytes],{type:m.type||'application/octet-stream'}))}toast('تمت استعادة النسخة الاحتياطية');render()}catch(e){console.error(e);toast('الملف غير صالح أو تعذرت استعادته')}finally{input.value=''}};
+function openForm(id){editing=id||null;pendingMedia=[];clearPendingPreviews();const cfg=sections[page],item=id?store.get(page).find(x=>x.id===id)||{}:{};$('#modalTitle').textContent=id?'تعديل':'إضافة';$('#formFields').innerHTML=cfg.fields.map(([name,label,type,required,opts])=>{if(type==='textarea')return `<label class="field">${label}<textarea name="${name}" ${required?'required':''}>${esc(item[name]||'')}</textarea></label>`;if(type==='select')return `<label class="field">${label}<select name="${name}"><option value="">اختاري التصنيف</option>${opts.map(o=>`<option ${item[name]===o?'selected':''}>${o}</option>`).join('')}</select></label>`;if(type==='file')return `<label class="field">${label}<input name="${name}" type="file" accept="image/*,video/*" ${id?'':'multiple'} ${id?'':'required'}><small>يمكنكِ تحديد عدة صور وفيديوهات معاً. الحد الأقصى 100 ميغابايت للملف الواحد و10 ملفات في المرة الواحدة.</small><div id="mediaSelectionPreview" class="media-selection-preview"></div></label>`;return `<label class="field">${label}<input name="${name}" type="${type}" value="${esc(item[name]||'')}" ${required?'required':''} ${type==='number'?`min="0" ${page==='goals'?'max="100" step="1"':'step="0.01"'}`:''}></label>`}).join('');$('#modal').classList.remove('hidden');const file=$('#formFields input[type=file]');if(file)file.addEventListener('change',()=>{clearPendingPreviews();const chosen=Array.from(file.files||[]);if(chosen.length>10){toast('يمكنكِ اختيار 10 ملفات كحد أقصى في المرة الواحدة');file.value='';return}for(const f of chosen){if(f.size>100*1024*1024){toast(`الملف ${f.name} أكبر من 100 ميغابايت`);file.value='';pendingMedia=[];clearPendingPreviews();return}if(!f.type.startsWith('image/')&&!f.type.startsWith('video/')){toast('اختاري صوراً أو فيديوهات فقط');file.value='';pendingMedia=[];clearPendingPreviews();return}}pendingMedia=chosen;const preview=$('#mediaSelectionPreview');if(preview){preview.innerHTML=chosen.map((f,i)=>{const url=URL.createObjectURL(f);pendingPreviewUrls.push(url);return `<div class="media-selected-item">${f.type.startsWith('video/')?`<video src="${url}" muted playsinline></video>`:`<img src="${url}" alt="معاينة">`}<span>${esc(f.name)} · ${formatBytes(f.size)}</span></div>`}).join('')} });if(id&&item.mediaId){const note=document.createElement('small');note.className='field-note';note.textContent='اتركي اختيار الملف فارغاً للاحتفاظ بالملف الحالي، أو اختاري ملفاً جديداً لاستبداله.';$('#mediaSelectionPreview')?.append(note)}}
+function formatBytes(bytes){if(!bytes)return '0 بايت';const units=['بايت','KB','MB','GB'];let n=bytes,i=0;while(n>=1024&&i<units.length-1){n/=1024;i++}return `${n.toFixed(i?1:0)} ${units[i]}`}
+function clearPendingPreviews(){pendingPreviewUrls.forEach(u=>URL.revokeObjectURL(u));pendingPreviewUrls=[]}
+function closeForm(){$('#modal').classList.add('hidden');editing=null;pendingMedia=[];clearPendingPreviews()}$('#closeModal').onclick=closeForm;$('#cancelModal').onclick=closeForm;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeForm()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').classList.contains('hidden'))closeForm()});
+$('#itemForm').onsubmit=async e=>{e.preventDefault();const submit=e.target.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='جارٍ الحفظ…';try{const data=Object.fromEntries(new FormData(e.target).entries());delete data.media;let arr=store.get(page),old=editing?arr.find(x=>x.id===editing):null;if(page==='photos'){if(pendingMedia.length){if(editing){const f=pendingMedia[0],mediaId=uid();await saveMedia(mediaId,f);if(old?.mediaId)await deleteMedia(old.mediaId);arr=arr.map(x=>x.id===editing?{...x,...data,mediaId,mediaType:f.type.startsWith('video/')?'video':'image',fileName:f.name,fileSize:f.size}:x)}else{for(const f of pendingMedia){const mediaId=uid();await saveMedia(mediaId,f);arr.unshift({id:uid(),...data,mediaId,mediaType:f.type.startsWith('video/')?'video':'image',fileName:f.name,fileSize:f.size,createdAt:new Date().toISOString()})}}}else if(old){arr=arr.map(x=>x.id===editing?{...x,...data,mediaId:old.mediaId,mediaType:old.mediaType}:x)}else{toast('اختاري صورة أو فيديو أولاً');return}}else if(page==='goals')data.progress=Math.max(0,Math.min(100,Number(data.progress)||0));if(page!=='photos'){if(editing)arr=arr.map(x=>x.id===editing?{...x,...data}:x);else arr.unshift({id:uid(),...data,done:false})}if(store.set(page,arr)){const batchSaved=page==='photos'&&pendingMedia.length>1;closeForm();render();toast(batchSaved?'تمت إضافة الملفات بنجاح 🌷':'تم الحفظ بنجاح 🌷')}}catch(err){console.error(err);toast('تعذر حفظ الملف. تأكدي من مساحة الجهاز وحاولي مجدداً.')}finally{submit.disabled=false;submit.textContent='حفظ'}};
+window.openForm=openForm;
+let viewerIndex=0,viewerItems=[];
+window.viewMedia=id=>{viewerItems=store.get('photos').filter(x=>mediaCache[x.mediaId]);viewerIndex=viewerItems.findIndex(x=>x.id===id);if(viewerIndex<0)return;showMediaViewer()};
+function showMediaViewer(){const item=viewerItems[viewerIndex];if(!item)return;const body=$('#mediaViewerBody');body.innerHTML=item.mediaType==='video'?`<video class="viewer-video" src="${mediaCache[item.mediaId]}" controls autoplay playsinline preload="auto"></video>`:`<img class="viewer-image" src="${mediaCache[item.mediaId]}" alt="${esc(item.title||'صورة')}">`;$('#mediaViewerTitle').textContent=item.title||'بدون اسم';$('#mediaViewerCount').textContent=`${viewerIndex+1} / ${viewerItems.length}`;$('#mediaViewer').classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeMediaViewer(){const v=$('#mediaViewer');const video=v.querySelector('video');if(video)video.pause();v.classList.add('hidden');document.body.style.overflow=''}
+function stepMedia(delta){if(!viewerItems.length)return;viewerIndex=(viewerIndex+delta+viewerItems.length)%viewerItems.length;showMediaViewer()}
+$('#mediaViewerDownload').addEventListener('click',()=>{const item=viewerItems[viewerIndex];if(item)downloadMedia(item.id)});$('#closeMediaViewer').addEventListener('click',closeMediaViewer);$('#mediaPrev').addEventListener('click',()=>stepMedia(-1));$('#mediaNext').addEventListener('click',()=>stepMedia(1));$('#mediaViewer').addEventListener('click',e=>{if(e.target.id==='mediaViewer')closeMediaViewer()});document.addEventListener('keydown',e=>{if($('#mediaViewer')&&!$('#mediaViewer').classList.contains('hidden')){if(e.key==='Escape')closeMediaViewer();if(e.key==='ArrowLeft')stepMedia(1);if(e.key==='ArrowRight')stepMedia(-1)}});
+window.go=go;window.removeItem=id=>{if(!confirm('هل تريدين حذف هذا العنصر؟'))return;const found=store.get(page).find(x=>x.id===id);if(page==='photos'&&found?.mediaId)deleteMedia(found.mediaId);store.set(page,store.get(page).filter(x=>x.id!==id));render();toast('تم الحذف')};window.toggleTask=(id,v)=>{store.set('tasks',store.get('tasks').map(x=>x.id===id?{...x,done:v}:x));render()};window.toggleHabit=id=>{store.set('habits',store.get('habits').map(x=>{if(x.id!==id)return x;const history=Array.isArray(x.history)?x.history:[];const next=x.lastDone===today()?history.filter(d=>d!==today()):[...new Set([...history,today()])];return {...x,lastDone:x.lastDone===today()?'':today(),history:next}}));render();toast('تم تحديث العادة')};window.togglePhotoFavorite=id=>{store.set('photos',store.get('photos').map(x=>x.id===id?{...x,favorite:!x.favorite}:x));renderMediaPage()};window.setDark=v=>{document.body.classList.toggle('dark',v);localStorage.setItem('fayrouz_dark',v?'1':'0')};function applyAccent(a,s){if(!/^#[0-9a-f]{6}$/i.test(String(a||'')))return;const soft=s||`color-mix(in srgb, ${a} 14%, white)`;const root=document.documentElement;root.style.setProperty('--accent',a);root.style.setProperty('--accent2',localStorage.getItem('fayrouz_accent2')||`color-mix(in srgb, ${a} 68%, white)`);root.style.setProperty('--soft',soft);root.style.setProperty('--accent-rgb',`${parseInt(a.slice(1,3),16)},${parseInt(a.slice(3,5),16)},${parseInt(a.slice(5,7),16)}`);document.querySelectorAll('.swatch').forEach(b=>b.classList.toggle('selected',(b.dataset.accent||'').toLowerCase()===a.toLowerCase()));const picker=document.querySelector('.custom-color input[type=color]');if(picker&&picker.value.toLowerCase()!==a.toLowerCase())picker.value=a;const hex=document.querySelector('#accentHex');if(hex&&hex.value.toLowerCase()!==a.toLowerCase())hex.value=a;}
+window.setPalette=(a,b,soft,name)=>{if(!/^#[0-9a-f]{6}$/i.test(a)||!/^#[0-9a-f]{6}$/i.test(b))return;window.setAccent(a,soft,false);localStorage.setItem('fayrouz_accent2',b);localStorage.setItem('fayrouz_theme_name',name);document.documentElement.style.setProperty('--accent2',b);document.querySelectorAll('.palette-card').forEach(x=>x.classList.toggle('selected',x.dataset.accent.toLowerCase()===a.toLowerCase()));const n=document.querySelector('#themeName');if(n)n.textContent=name;toast('تم تطبيق لوحة '+name)};
+window.setAccent=(a,s,notify=true)=>{if(!/^#[0-9a-f]{6}$/i.test(String(a||'')))return;const soft=s||`color-mix(in srgb, ${a} 14%, white)`;if(!s)localStorage.removeItem('fayrouz_accent2');applyAccent(a,soft);localStorage.setItem('fayrouz_accent',a);localStorage.setItem('fayrouz_soft',soft);localStorage.setItem('fayrouz_theme_name','لون مخصص');const n=document.querySelector('#themeName');if(n)n.textContent='لون مخصص';document.querySelectorAll('.palette-card').forEach(x=>x.classList.toggle('selected',x.dataset.accent.toLowerCase()===a.toLowerCase()));if(notify)toast('تم تطبيق اللون وحفظه فوراً')};
+window.setAccentFromHex=value=>{let v=String(value||'').trim();if(!v.startsWith('#'))v='#'+v;if(/^#[0-9a-f]{6}$/i.test(v))window.setAccent(v,null,false)};
+window.addEventListener('storage',e=>{if(e.key==='fayrouz_accent'||e.key==='fayrouz_soft'){applyAccent(localStorage.getItem('fayrouz_accent'),localStorage.getItem('fayrouz_soft'))}});
+function toast(t){const x=$('#toast');x.textContent=t;x.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>x.classList.remove('show'),2400)}
 
-  /* ---------- الثوابت ---------- */
-  const VAULT_KEY = 'vaulty_vault_v2';      // الخزنة المشفّرة
-  const LEGACY_KEY = 'vaulty_items_v1';     // بيانات النسخة القديمة (نص صريح) — تُرحَّل ثم تُحذف
-  const PBKDF2_ITERATIONS = 250000;
-  const MIN_MASTER_LENGTH = 8;
-  const AUTO_LOCK_MS = 5 * 60 * 1000;       // قفل تلقائي بعد 5 دقائق خمول
-  const REVEAL_MS = 15 * 1000;              // إخفاء كلمة المرور المعروضة تلقائياً
-  const CATEGORIES = ['شخصي', 'عمل', 'تواصل اجتماعي', 'تسوق', 'مالي', 'أخرى'];
-  const MASK = '••••••••••••';
+// Encrypted media database: only ciphertext is written to IndexedDB.
+let mediaDBPromise;
+function mediaDB(){if(!mediaDBPromise)mediaDBPromise=new Promise((resolve,reject)=>{const req=indexedDB.open('FayrouzMedia',1);req.onupgradeneeded=()=>req.result.createObjectStore('media');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});return mediaDBPromise}
+async function saveMedia(id,blob){const encrypted=await encryptBytes(await blob.arrayBuffer());encrypted.type=blob.type||'application/octet-stream';const db=await mediaDB();return new Promise((resolve,reject)=>{const tx=db.transaction('media','readwrite');tx.objectStore('media').put(encrypted,id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
+async function getMedia(id){const db=await mediaDB();const value=await new Promise((resolve,reject)=>{const r=db.transaction('media').objectStore('media').get(id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)});if(!value)return null;if(value instanceof Blob){const legacy=value;await saveMedia(id,legacy);return legacy}const plain=await decryptBytes(value);return new Blob([plain],{type:value.type||'application/octet-stream'})}
+async function deleteMedia(id){try{const db=await mediaDB();db.transaction('media','readwrite').objectStore('media').delete(id)}catch{}}
+async function renderMediaPage(){const c=$('#content');const items=store.get('photos');for(const old of Object.values(mediaCache))URL.revokeObjectURL(old);mediaCache={};for(const item of items){try{const blob=await getMedia(item.mediaId);if(blob)mediaCache[item.mediaId]=URL.createObjectURL(blob)}catch(e){console.error(e);toast('تعذر فك تشفير أحد ملفات الوسائط.')} }const images=items.filter(x=>x.mediaType==='image').length,videos=items.filter(x=>x.mediaType==='video').length;c.innerHTML=pageHead(sections.photos.title,sections.photos.sub,sections.photos.add)+`<div class="media-library-summary"><span>كل الملفات: <b>${items.length}</b></span><span>الصور: <b>${images}</b></span><span>الفيديوهات: <b>${videos}</b></span></div><div class="media-filters"><button class="${mediaFilter==='all'?'active':''}" onclick="setMediaFilter('all')">الكل</button><button class="${mediaFilter==='image'?'active':''}" onclick="setMediaFilter('image')">الصور</button><button class="${mediaFilter==='video'?'active':''}" onclick="setMediaFilter('video')">الفيديوهات</button></div>`+listHTML('photos');} 
+window.setMediaFilter=f=>{mediaFilter=f;renderMediaPage()};
+function safeFileName(name,fallback){const clean=String(name||fallback||'fayrouz-media').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').trim().slice(0,100);return clean||fallback||'fayrouz-media'}
+window.downloadMedia=async id=>{try{const item=store.get('photos').find(x=>x.id===id);if(!item)return;const blob=await getMedia(item.mediaId);if(!blob){toast('الملف غير موجود');return}const url=URL.createObjectURL(blob),ext=(blob.type.split('/')[1]||'bin').split(';')[0].replace('jpeg','jpg');const name=safeFileName(item.fileName||item.title,`fayrouz-${item.mediaType}`);const a=document.createElement('a');a.href=url;a.download=name.includes('.')?name:`${name}.${ext}`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);toast('بدأ تحميل الملف')}catch(e){console.error(e);toast('تعذر تحميل الملف')}};
 
-  /* ---------- أدوات عامة ---------- */
-  const $ = s => document.querySelector(s);
-  const $$ = s => Array.from(document.querySelectorAll(s));
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
+// Password and recovery code independently unlock the same random AES-256 data key.
+const hashSecret=async value=>{const bytes=new TextEncoder().encode(value.trim().toLowerCase());const digest=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('')};
+async function saveFounderWrappers(rawKey){const exact=await wrapVaultKey(FOUNDER_ACCESS_PHRASE,rawKey);const normalized=await wrapVaultKey(normalizeFounderPhrase(FOUNDER_ACCESS_PHRASE),rawKey);localStorage.setItem('fayrouz_key_master',JSON.stringify(exact));localStorage.setItem('fayrouz_key_master_normalized',JSON.stringify(normalized))}
+async function setupVault(password,recovery){const raw=randomBytes(32);vaultKey=await crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},true,['encrypt','decrypt']);const p=await wrapVaultKey(password,raw),r=await wrapVaultKey(recovery,raw);localStorage.setItem('fayrouz_key_password',JSON.stringify(p));localStorage.setItem('fayrouz_key_recovery',JSON.stringify(r));await saveFounderWrappers(raw);await loadVault();localStorage.removeItem('fayrouz_auth_password');localStorage.removeItem('fayrouz_auth_recovery')}
+async function openVault(secret){const entered=String(secret??'');const records=[localStorage.getItem('fayrouz_key_password'),localStorage.getItem('fayrouz_key_recovery'),localStorage.getItem('fayrouz_key_master')].filter(Boolean);for(const raw of records){try{vaultKey=await unwrapVaultKey(entered,JSON.parse(raw));await loadVault();return true}catch{vaultKey=null}}if(normalizeFounderPhrase(entered)===normalizeFounderPhrase(FOUNDER_ACCESS_PHRASE)){const normalizedRecord=localStorage.getItem('fayrouz_key_master_normalized');if(normalizedRecord){try{vaultKey=await unwrapVaultKey(normalizeFounderPhrase(entered),JSON.parse(normalizedRecord));await loadVault();return true}catch{vaultKey=null}}}return false}
+async function ensureFounderAccess(){const raw=await crypto.subtle.exportKey('raw',vaultKey);await saveFounderWrappers(raw)}
+function authOverlay(){if(!globalThis.crypto?.subtle){document.body.insertAdjacentHTML('beforeend','<div class="auth-screen"><div class="auth-card"><h1>Fayrouz</h1><p>التشفير غير متاح في طريقة فتح التطبيق الحالية. افتحيه باستخدام متصفح Chrome أو Edge حديث ومن خلال HTTPS أو localhost.</p></div></div>');return}const encrypted=!!localStorage.getItem('fayrouz_key_password'),legacy=!!localStorage.getItem('fayrouz_auth_password');const configured=encrypted||legacy;document.body.insertAdjacentHTML('beforeend',`<div class="auth-screen" id="authScreen"><div class="auth-card"><div class="auth-logo">F</div><p class="auth-kicker">مساحتكِ الخاصة</p><h1>Fayrouz</h1><p id="authMessage">${encrypted?'أدخلي رمز الدخول لفتح مساحتكِ':'أنشئي بيانات الدخول لتشفير مساحتكِ'}</p><form id="authForm">${encrypted?'<label>رمز الدخول<input id="authPassword" type="password" required autocomplete="current-password" autofocus></label>':legacy?'<label>كلمة المرور أو رمز الاستعادة الحالية<input id="legacySecret" type="password" required></label><label>كلمة المرور الجديدة<input id="authPassword" type="password" minlength="8" required></label><label>رمز الاستعادة الجديد<input id="authRecovery" type="password" minlength="8" required></label>':'<label>كلمة المرور الجديدة<input id="authPassword" type="password" minlength="8" required autocomplete="new-password"></label><label>تأكيد كلمة المرور<input id="authConfirm" type="password" minlength="8" required></label><label>رمز الاستعادة (احفظيه في مكان آمن)<input id="authRecovery" type="password" minlength="8" required autocomplete="off"></label>'}<button class="btn primary auth-submit">${configured?'دخول':'تفعيل التشفير'}</button></form>${encrypted?'<button type="button" class="text-link auth-forgot" id="forgotAccess">نسيت كلمة المرور؟ استخدم رمز الاستعادة</button><form id="recoveryForm" class="hidden"><label>رمز الاستعادة<input id="recoveryInput" type="password" required autocomplete="off"></label><button class="btn primary auth-submit" type="submit">فتح باستخدام رمز الاستعادة</button></form>':''}<small class="auth-note">تُشفّر البيانات والوسائط على هذا الجهاز ولا تُرفع إلى أي خادم.</small></div></div>`);$('#authForm').onsubmit=async e=>{e.preventDefault();const btn=$('#authForm button');btn.disabled=true;try{if(encrypted){if(await openVault($('#authPassword').value)){await ensureFounderAccess();await finishUnlock()}else if(normalizeFounderPhrase($('#authPassword').value)===normalizeFounderPhrase(FOUNDER_ACCESS_PHRASE)&&!localStorage.getItem('fayrouz_key_master')){toast('هذا القفل أُنشئ في إصدار أقدم. افتحيه مرة واحدة بكلمة المرور أو رمز الاستعادة القديم لتفعيل الرمز الرئيسي على بياناتك الحالية.')}else toast('بيانات الدخول غير صحيحة');}else if(legacy){const entered=await hashSecret($('#legacySecret').value);if(entered!==localStorage.getItem('fayrouz_auth_password')&&entered!==localStorage.getItem('fayrouz_auth_recovery')){toast('بيانات الدخول الحالية غير صحيحة');return}const pw=$('#authPassword').value,rec=$('#authRecovery').value;if(pw.length<8||rec.length<8||pw===rec){toast('استخدمي كلمتين مختلفتين، كل منهما 8 أحرف على الأقل');return}await setupVault(pw,rec);await finishUnlock()}else{const pw=$('#authPassword').value,rec=$('#authRecovery').value;if(pw!==$('#authConfirm').value){toast('كلمتا المرور غير متطابقتين');return}if(pw.length<8||rec.length<8||pw===rec){toast('استخدمي كلمتين مختلفتين، كل منهما 8 أحرف على الأقل');return}await setupVault(pw,rec);await finishUnlock()}}catch(err){console.error(err);toast('تعذر فتح الخزنة المشفّرة. تأكدي من كلمة المرور أو رمز الاستعادة.')}finally{btn.disabled=false}};if(encrypted){$('#forgotAccess').onclick=()=>{$('#recoveryForm').classList.toggle('hidden');if(!$('#recoveryForm').classList.contains('hidden'))$('#recoveryInput').focus()};$('#recoveryForm').onsubmit=async e=>{e.preventDefault();const btn=$('#recoveryForm button');btn.disabled=true;try{if(await openVault($('#recoveryInput').value)){await ensureFounderAccess();await finishUnlock()}else if(normalizeFounderPhrase($('#recoveryInput').value)===normalizeFounderPhrase(FOUNDER_ACCESS_PHRASE)&&!localStorage.getItem('fayrouz_key_master')){toast('هذا القفل أُنشئ في إصدار أقدم. افتحيه مرة واحدة بكلمة المرور أو رمز الاستعادة القديم لتفعيل الرمز الرئيسي على بياناتك الحالية.')}else toast('رمز الاستعادة غير صحيح')}catch(err){console.error(err);toast('تعذر التحقق من رمز الاستعادة')}finally{btn.disabled=false}}}}
+async function migrateAllMedia(){const db=await mediaDB();const all=await new Promise((resolve,reject)=>{const tx=db.transaction('media','readonly'),req=tx.objectStore('media').getAll();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error)});const keys=await new Promise((resolve,reject)=>{const tx=db.transaction('media','readonly'),req=tx.objectStore('media').getAllKeys();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error)});for(let i=0;i<all.length;i++){if(all[i] instanceof Blob)await saveMedia(keys[i],all[i])}}
+async function finishUnlock(){await migrateAllMedia();$('#authScreen')?.remove();if(localStorage.getItem('fayrouz_dark')==='1')document.body.classList.add('dark');if(localStorage.getItem('fayrouz_large_text')==='1')document.body.classList.add('large-text');const a=localStorage.getItem('fayrouz_accent');if(a){document.documentElement.style.setProperty('--accent',a);document.documentElement.style.setProperty('--accent2',localStorage.getItem('fayrouz_accent2')||`color-mix(in srgb, ${a} 65%, white)`);document.documentElement.style.setProperty('--soft',localStorage.getItem('fayrouz_soft')||`color-mix(in srgb, ${a} 13%, white)`)}render();toast('تم فتح المساحة المشفّرة بنجاح')}
+// No logo-tap enrollment or visible founder controls.
+window.changeCredentials=async()=>{const pw=prompt('أدخلي كلمة المرور الجديدة (8 أحرف على الأقل):');if(!pw)return;if(pw.length<8){toast('كلمة المرور يجب أن تكون 8 أحرف على الأقل');return}const rec=prompt('أدخلي رمز استعادة جديداً مختلفاً:');if(!rec||rec.length<8||rec===pw){toast('رمز الاستعادة يجب أن يكون مختلفاً، 8 أحرف على الأقل');return}try{const raw=await crypto.subtle.exportKey('raw',vaultKey);localStorage.setItem('fayrouz_key_password',JSON.stringify(await wrapVaultKey(pw,raw)));localStorage.setItem('fayrouz_key_recovery',JSON.stringify(await wrapVaultKey(rec,raw)));toast('تم تحديث كلمة المرور ورمز الاستعادة')}catch(e){toast('تعذر تحديث بيانات الحماية')}};
 
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
-
-  const toB64 = buf => {
-    const bytes = new Uint8Array(buf);
-    let bin = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) {
-      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    }
-    return btoa(bin);
-  };
-  const fromB64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
-
-  // معرّف فريد (لا يعتمد على crypto.randomUUID المتوفر في السياقات الآمنة فقط)
-  const uid = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-
-  /* ---------- الحالة ---------- */
-  const state = {
-    items: [],
-    cryptoKey: null,
-    meta: null,            // { iter, salt }
-    activeCat: 'الكل',
-    locked: true,
-    mode: 'unlock',        // 'unlock' | 'setup'
-    busy: false,
-    failedAttempts: 0,
-    onConfirm: null,
-    saveQueue: Promise.resolve(),
-    idleTimer: null,
-    revealTimers: new Map()
-  };
-
-  /* ---------- التخزين ---------- */
-  function storageAvailable() {
-    try {
-      localStorage.setItem('__vaulty_test', '1');
-      localStorage.removeItem('__vaulty_test');
-      return true;
-    } catch { return false; }
-  }
-  const cryptoAvailable = () => !!(window.crypto && crypto.subtle && crypto.getRandomValues);
-
-  function readRecord() {
-    const raw = localStorage.getItem(VAULT_KEY);
-    return raw ? JSON.parse(raw) : null;
-  }
-
-  function validRecord(r) {
-    return !!r && r.v === 2 && typeof r.salt === 'string' && typeof r.iv === 'string' &&
-      typeof r.data === 'string' && Number.isInteger(r.iter) && r.iter >= 10000 && r.iter <= 1000000;
-  }
-
-  function readLegacyItems() {
-    try {
-      const arr = JSON.parse(localStorage.getItem(LEGACY_KEY) || '[]');
-      return sanitizeItems(arr);
-    } catch { return []; }
-  }
-
-  /* ---------- التشفير ---------- */
-  async function deriveKey(password, salt, iterations) {
-    const base = await crypto.subtle.importKey('raw', enc.encode(password.normalize('NFC')), 'PBKDF2', false, ['deriveKey']);
-    return crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
-      base,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt']
-    );
-  }
-
-  async function persist() {
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, state.cryptoKey, enc.encode(JSON.stringify(state.items)));
-    const record = { v: 2, kdf: 'PBKDF2-SHA256', iter: state.meta.iter, salt: state.meta.salt, iv: toB64(iv), data: toB64(ct) };
-    localStorage.setItem(VAULT_KEY, JSON.stringify(record));
-  }
-
-  // الحفظ يُنفَّذ بالتسلسل لمنع تداخل عمليات الكتابة
-  function queueSave() {
-    state.saveQueue = state.saveQueue.then(persist);
-    return state.saveQueue.catch(() => { toast('تعذر حفظ البيانات — تحقق من مساحة التخزين'); state.saveQueue = Promise.resolve(); });
-  }
-
-  function sanitizeItems(arr) {
-    if (!Array.isArray(arr)) return [];
-    const seen = new Set();
-    return arr
-      .filter(x => x && typeof x === 'object' && typeof x.password === 'string')
-      .map(x => {
-        let id = typeof x.id === 'string' && /^[\w-]{1,64}$/.test(x.id) ? x.id : uid();
-        if (seen.has(id)) id = uid();
-        seen.add(id);
-        return {
-          id,
-          name: String(x.name ?? '').slice(0, 60) || 'بدون اسم',
-          category: CATEGORIES.includes(x.category) ? x.category : 'أخرى',
-          website: String(x.website ?? '').slice(0, 200),
-          username: String(x.username ?? '').slice(0, 120),
-          password: x.password.slice(0, 256),
-          notes: String(x.notes ?? '').slice(0, 300)
-        };
-      });
-  }
-
-  /* ---------- واجهة: تنبيه ونسخ ---------- */
-  let toastTimer;
-  function toast(msg) {
-    const t = $('#toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
-  }
-
-  async function copyText(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      // بديل للمتصفحات/السياقات التي تمنع Clipboard API
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.setAttribute('readonly', '');
-      ta.style.cssText = 'position:fixed;top:0;opacity:0';
-      document.body.appendChild(ta);
-      ta.select();
-      let ok = false;
-      try { ok = document.execCommand('copy'); } catch { ok = false; }
-      ta.remove();
-      return ok;
-    }
-  }
-
-  /* ---------- قوة كلمة المرور (نفس المعيار الأصلي) ---------- */
-  function strength(p) {
-    let n = 0;
-    if (p.length >= 12) n++;
-    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) n++;
-    if (/\d/.test(p)) n++;
-    if (/[^a-zA-Z0-9]/.test(p)) n++;
-    return n;
-  }
-
-  /* ---------- مولّد كلمات المرور ---------- */
-  const SETS = {
-    lower: 'abcdefghijkmnopqrstuvwxyz',
-    upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
-    digit: '23456789',
-    symbol: '!@#$%&*+-_?'
-  };
-
-  // عدد عشوائي منتظم بدون انحياز (rejection sampling)
-  function randInt(max) {
-    const limit = Math.floor(0x100000000 / max) * max;
-    const a = new Uint32Array(1);
-    do { crypto.getRandomValues(a); } while (a[0] >= limit);
-    return a[0] % max;
-  }
-
-  function makePassword(len = 18) {
-    const sets = Object.values(SETS);
-    const all = sets.join('');
-    const out = sets.map(s => s[randInt(s.length)]);          // حرف واحد على الأقل من كل نوع
-    while (out.length < len) out.push(all[randInt(all.length)]);
-    for (let i = out.length - 1; i > 0; i--) {                // خلط Fisher–Yates
-      const j = randInt(i + 1);
-      [out[i], out[j]] = [out[j], out[i]];
-    }
-    return out.join('');
-  }
-
-  function generate() {
-    $('#generated').textContent = makePassword(+$('#lengthRange').value);
-  }
-
-  /* ---------- العرض ---------- */
-  function clearRevealTimers() {
-    state.revealTimers.forEach(t => clearTimeout(t));
-    state.revealTimers.clear();
-  }
-
-  function render() {
-    clearRevealTimers();
-    const q = $('#searchInput').value.trim().toLowerCase();
-    const items = state.items;
-    const shown = items.filter(x =>
-      (state.activeCat === 'الكل' || x.category === state.activeCat) &&
-      [x.name, x.website, x.username, x.notes].join(' ').toLowerCase().includes(q)
-    );
-
-    $('#totalCount').innerHTML = items.length + ' <small>عنصر</small>';
-    $('#strongCount').textContent = items.filter(x => strength(x.password) >= 3).length;
-    $('#categoryCount').textContent = new Set(items.map(x => x.category)).size;
-
-    $('#vaultGrid').innerHTML = shown.length ? shown.map(x => `<article class="item">
-  <div class="item-top"><div class="site-icon">${esc((x.name || '?').trim().slice(0, 1).toUpperCase())}</div><div class="item-title"><strong>${esc(x.name)}</strong><span>${esc(x.website || 'بدون موقع')}</span></div><button type="button" class="more" aria-label="تعديل العنصر" title="تعديل" data-edit="${x.id}">···</button></div>
-  <div class="item-meta"><span class="tag">${esc(x.category)}</span><span>${strength(x.password) >= 3 ? '● كلمة قوية' : '○ كلمة مرور'}</span></div>
-  <div class="credential"><span class="masked" id="pw-${x.id}">${MASK}</span><div class="mini-actions">
-    <button type="button" title="إظهار / إخفاء" aria-label="إظهار أو إخفاء كلمة المرور" data-reveal="${x.id}">◉</button>
-    <button type="button" title="نسخ كلمة المرور" aria-label="نسخ كلمة المرور" data-copy="${x.id}">▢</button>
-    ${x.username ? `<button type="button" title="نسخ اسم المستخدم" aria-label="نسخ اسم المستخدم" data-copyuser="${x.id}">@</button>` : ''}
-    <button type="button" title="حذف العنصر" aria-label="حذف العنصر" data-delete="${x.id}">⌫</button>
-  </div></div>
-</article>`).join('') : `<div class="empty"><div class="empty-icon">◇</div><b>${items.length ? 'لا توجد نتائج مطابقة' : 'خزنتك تبدأ من هنا'}</b><span>${items.length ? 'جرّب كلمة بحث أو فئة مختلفة.' : 'أضف أول حساب واحفظ بياناته في مكان مرتب.'}</span>${!items.length ? '<br><button type="button" class="primary-btn" data-action="add">＋ إضافة أول عنصر</button>' : ''}</div>`;
-  }
-
-  /* ---------- النوافذ ---------- */
-  const openOverlay = id => $('#' + id).classList.add('show');
-  const closeOverlay = id => $('#' + id).classList.remove('show');
-  const closeAllOverlays = () => $$('.overlay.show').forEach(o => o.classList.remove('show'));
-
-  function setPasswordVisible(visible) {
-    $('#password').type = visible ? 'text' : 'password';
-  }
-
-  function openForm(item) {
-    $('#itemForm').reset();
-    setPasswordVisible(false);
-    $('#itemId').value = item?.id || '';
-    $('#formTitle').textContent = item ? 'تعديل العنصر' : 'إضافة إلى الخزنة';
-    if (item) {
-      $('#name').value = item.name;
-      $('#category').value = item.category;
-      $('#website').value = item.website || '';
-      $('#username').value = item.username || '';
-      $('#password').value = item.password;
-      $('#notes').value = item.notes || '';
-    }
-    openOverlay('itemOverlay');
-    $('#name').focus();
-  }
-
-  function askConfirm({ title, text, label, danger = true, onConfirm }) {
-    $('#confirmTitle').textContent = title;
-    $('#confirmText').textContent = text;
-    const ok = $('#confirmOk');
-    ok.textContent = label;
-    ok.classList.toggle('btn-danger', danger);
-    state.onConfirm = onConfirm;
-    openOverlay('confirmOverlay');
-  }
-
-  /* ---------- عمليات العناصر ---------- */
-  async function onItemSubmit(e) {
-    e.preventDefault();
-    const name = $('#name').value.trim();
-    const password = $('#password').value;
-    if (!name || !password) { toast('الاسم وكلمة المرور مطلوبان'); return; }
-    const id = $('#itemId').value || uid();
-    const obj = {
-      id, name,
-      category: $('#category').value,
-      website: $('#website').value.trim(),
-      username: $('#username').value.trim(),
-      password,
-      notes: $('#notes').value.trim()
-    };
-    const i = state.items.findIndex(x => x.id === id);
-    if (i >= 0) state.items[i] = obj; else state.items.unshift(obj);
-    render();
-    closeOverlay('itemOverlay');
-    $('#itemForm').reset();
-    setPasswordVisible(false);
-    await queueSave();
-    toast('تم حفظ العنصر');
-  }
-
-  async function onGridClick(e) {
-    const b = e.target.closest('button');
-    if (!b) return;
-    if (b.dataset.action === 'add') { openForm(); return; }
-    const d = b.dataset;
-    const id = d.edit || d.reveal || d.copy || d.copyuser || d.delete;
-    const x = state.items.find(z => z.id === id);
-    if (!x) return;
-
-    if (d.edit) openForm(x);
-
-    if (d.reveal) {
-      const el = $('#pw-' + id);
-      const open = el.dataset.open === '1';
-      clearTimeout(state.revealTimers.get(id));
-      if (open) {
-        el.textContent = MASK; el.dataset.open = '0';
-      } else {
-        el.textContent = x.password; el.dataset.open = '1';
-        state.revealTimers.set(id, setTimeout(() => { el.textContent = MASK; el.dataset.open = '0'; }, REVEAL_MS));
-      }
-    }
-
-    if (d.copy) toast(await copyText(x.password) ? 'تم نسخ كلمة المرور' : 'تعذر النسخ في هذا المتصفح');
-    if (d.copyuser) toast(await copyText(x.username) ? 'تم نسخ اسم المستخدم' : 'تعذر النسخ في هذا المتصفح');
-
-    if (d.delete) {
-      askConfirm({
-        title: 'حذف العنصر؟',
-        text: 'سيتم حذف هذا العنصر من الخزنة. لا يمكن التراجع عن هذه الخطوة.',
-        label: 'حذف نهائياً',
-        onConfirm: async () => {
-          state.items = state.items.filter(z => z.id !== id);
-          render();
-          await queueSave();
-          toast('تم حذف العنصر');
-        }
-      });
-    }
-  }
-
-  /* ---------- النسخ الاحتياطي ---------- */
-  async function exportBackup() {
-    await state.saveQueue.catch(() => {});
-    const raw = localStorage.getItem(VAULT_KEY);
-    if (!raw) { toast('لا توجد بيانات للتصدير'); return; }
-    const name = `vaulty-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    const blob = new Blob([raw], { type: 'application/json' });
-    // على الجوال / داخل التطبيقات: نافذة المشاركة إن كانت مدعومة
-    try {
-      const file = new File([blob], name, { type: 'application/json' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Vaulty backup' });
-        toast('تم تصدير نسخة مشفّرة');
-        return;
-      }
-    } catch (err) {
-      if (err && err.name === 'AbortError') return;   // ألغى المستخدم المشاركة
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast('تم تصدير نسخة مشفّرة');
-  }
-
-  async function onImportFile(e) {
-    const file = e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) { toast('الملف كبير جداً'); return; }
-    let record;
-    try {
-      record = JSON.parse(await file.text());
-    } catch { toast('الملف غير صالح'); return; }
-    if (!validRecord(record)) { toast('هذا ليس ملف نسخة احتياطية صالحاً لـ Vaulty'); return; }
-    askConfirm({
-      title: 'استبدال الخزنة الحالية؟',
-      text: 'سيتم استبدال جميع بيانات الخزنة الحالية بمحتوى النسخة الاحتياطية، وستحتاج إلى كلمة المرور الرئيسية الخاصة بتلك النسخة. صدّر نسخة من خزنتك الحالية أولاً إن كنت تريد الاحتفاظ بها.',
-      label: 'استبدال',
-      onConfirm: async () => {
-        await state.saveQueue.catch(() => {});
-        try {
-          const clean = { v: 2, kdf: 'PBKDF2-SHA256', iter: record.iter, salt: record.salt, iv: record.iv, data: record.data };
-          localStorage.setItem(VAULT_KEY, JSON.stringify(clean));
-        } catch { toast('تعذر حفظ النسخة المستوردة'); return; }
-        lockVault('تم استيراد النسخة. أدخل كلمة المرور الرئيسية الخاصة بها لفتحها.');
-      }
-    });
-  }
-
-  /* ---------- القفل وإنشاء الخزنة ---------- */
-  function setLockError(msg) { $('#lockError').textContent = msg || ''; }
-
-  function setBusy(b) {
-    state.busy = b;
-    $('#unlockBtn').disabled = b;
-    $('#unlockBtn').textContent = b ? 'جارٍ المعالجة…' : (state.mode === 'setup' ? 'إنشاء الخزنة' : 'فتح الخزنة');
-  }
-
-  function refreshLockMode() {
-    const hasVault = !!localStorage.getItem(VAULT_KEY);
-    state.mode = hasVault ? 'unlock' : 'setup';
-    const legacyCount = hasVault ? 0 : readLegacyItems().length;
-    $('#confirmPassword').hidden = hasVault;
-    $('#resetVaultBtn').hidden = !hasVault;
-    $('#unlockPassword').autocomplete = hasVault ? 'current-password' : 'new-password';
-    if (hasVault) {
-      $('#lockTitle').textContent = 'خزنتك مقفلة';
-      $('#lockText').innerHTML = 'أدخل كلمة المرور الرئيسية للمتابعة.<br>ستبقى بياناتك على هذا الجهاز.';
-    } else {
-      $('#lockTitle').textContent = 'إنشاء خزنتك';
-      $('#lockText').innerHTML = 'اختر كلمة مرور رئيسية قوية (8 أحرف على الأقل). ستُشفَّر بها كل بياناتك.<br><b>لا يمكن استعادتها إذا نسيتها.</b>' +
-        (legacyCount ? `<br>تم العثور على ${legacyCount} عنصر محفوظ سابقاً وسيتم تشفيرها ونقلها تلقائياً.` : '');
-    }
-    setBusy(false);
-  }
-
-  function showLockScreen() {
-    $('#lockScreen').classList.add('show');
-    $('#app').classList.add('is-locked');
-    refreshLockMode();
-    setTimeout(() => $('#unlockPassword').focus(), 0);
-  }
-
-  function lockVault(message) {
-    state.locked = true;
-    state.items = [];
-    state.cryptoKey = null;
-    state.meta = null;
-    state.onConfirm = null;
-    clearTimeout(state.idleTimer);
-    clearRevealTimers();
-    closeAllOverlays();
-    $('#itemForm').reset();
-    setPasswordVisible(false);
-    $('#itemId').value = '';
-    $('#generated').textContent = '—';
-    $('#searchInput').value = '';
-    $('#vaultGrid').innerHTML = '';
-    $('#unlockPassword').value = '';
-    $('#confirmPassword').value = '';
-    setLockError('');
-    showLockScreen();
-    if (message) setLockError(message);
-  }
-
-  function enterApp() {
-    state.locked = false;
-    state.failedAttempts = 0;
-    $('#unlockPassword').value = '';
-    $('#confirmPassword').value = '';
-    setLockError('');
-    $('#lockScreen').classList.remove('show');
-    $('#app').classList.remove('is-locked');
-    render();
-    resetIdle();
-  }
-
-  async function createVault(password) {
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    state.cryptoKey = await deriveKey(password, salt, PBKDF2_ITERATIONS);
-    state.meta = { iter: PBKDF2_ITERATIONS, salt: toB64(salt) };
-    state.items = readLegacyItems();                 // ترحيل البيانات القديمة إن وُجدت
-    await persist();
-    localStorage.removeItem(LEGACY_KEY);             // حذف النسخة النصية بعد نجاح التشفير
-  }
-
-  async function openVault(password) {
-    let rec;
-    try { rec = readRecord(); } catch { rec = null; }
-    if (!validRecord(rec)) throw new Error('corrupt');
-    const key = await deriveKey(password, fromB64(rec.salt), rec.iter);
-    let plain;
-    try {
-      plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.iv) }, key, fromB64(rec.data));
-    } catch { throw new Error('wrong'); }
-    state.items = sanitizeItems(JSON.parse(dec.decode(plain)));
-    state.cryptoKey = key;
-    state.meta = { iter: rec.iter, salt: rec.salt };
-  }
-
-  async function onLockSubmit(e) {
-    e.preventDefault();
-    if (state.busy) return;
-    const pw = $('#unlockPassword').value;
-    setLockError('');
-
-    if (state.mode === 'setup') {
-      if (pw.length < MIN_MASTER_LENGTH) { setLockError(`كلمة المرور الرئيسية يجب ألا تقل عن ${MIN_MASTER_LENGTH} أحرف.`); return; }
-      if (pw !== $('#confirmPassword').value) { setLockError('كلمتا المرور غير متطابقتين.'); return; }
-      setBusy(true);
-      try {
-        await createVault(pw);
-        enterApp();
-        toast('تم إنشاء الخزنة وتشفيرها');
-      } catch {
-        state.cryptoKey = null; state.items = [];
-        setLockError('تعذر إنشاء الخزنة. تأكد من أن التخزين المحلي متاح في المتصفح.');
-        setBusy(false);
-      }
-      return;
-    }
-
-    if (!pw) { setLockError('أدخل كلمة المرور الرئيسية.'); return; }
-    setBusy(true);
-    try {
-      await openVault(pw);
-      enterApp();
-      toast('تم فتح الخزنة');
-    } catch (err) {
-      state.failedAttempts++;
-      await sleep(Math.min(state.failedAttempts * 400, 4000));   // إبطاء المحاولات المتكررة
-      setLockError(err.message === 'corrupt'
-        ? 'بيانات الخزنة تالفة. يمكنك استيراد نسخة احتياطية أو مسح الخزنة.'
-        : 'كلمة المرور الرئيسية غير صحيحة.');
-      $('#unlockPassword').select();
-      setBusy(false);
-    }
-  }
-
-  function onResetVault() {
-    askConfirm({
-      title: 'مسح الخزنة بالكامل؟',
-      text: 'سيتم حذف جميع البيانات المخزنة نهائياً لأن كلمة المرور الرئيسية لا يمكن استعادتها. لا يمكن التراجع عن هذه الخطوة.',
-      label: 'مسح كل شيء',
-      onConfirm: () => {
-        localStorage.removeItem(VAULT_KEY);
-        localStorage.removeItem(LEGACY_KEY);
-        $('#unlockPassword').value = '';
-        setLockError('');
-        refreshLockMode();
-        toast('تم مسح الخزنة. أنشئ خزنة جديدة.');
-      }
-    });
-  }
-
-  /* ---------- القفل التلقائي ---------- */
-  function resetIdle() {
-    clearTimeout(state.idleTimer);
-    if (state.locked) return;
-    state.idleTimer = setTimeout(() => lockVault('تم قفل الخزنة تلقائياً بسبب عدم النشاط.'), AUTO_LOCK_MS);
-  }
-
-  /* ---------- ربط الأحداث ---------- */
-  function bindEvents() {
-    $('#addBtn').addEventListener('click', () => openForm());
-    $('#makePassword').addEventListener('click', () => { $('#password').value = makePassword(); setPasswordVisible(true); });
-    $('#togglePassword').addEventListener('click', () => setPasswordVisible($('#password').type === 'password'));
-    $('#itemForm').addEventListener('submit', onItemSubmit);
-
-    $('#vaultGrid').addEventListener('click', onGridClick);
-    $('#vaultGrid').addEventListener('dblclick', e => {
-      if (e.target.closest('button')) return;
-      const card = e.target.closest('.item');
-      const editBtn = card && card.querySelector('[data-edit]');
-      const x = editBtn && state.items.find(z => z.id === editBtn.dataset.edit);
-      if (x) openForm(x);
-    });
-
-    $('#searchInput').addEventListener('input', render);
-    $('#filters').addEventListener('click', e => {
-      const b = e.target.closest('[data-cat]');
-      if (!b) return;
-      state.activeCat = b.dataset.cat;
-      $$('.filter').forEach(x => x.classList.toggle('active', x === b));
-      render();
-    });
-
-    $$('[data-close]').forEach(b => b.addEventListener('click', () => closeOverlay(b.dataset.close)));
-    $$('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); }));
-    document.addEventListener('keydown', e => {
-      if (e.key !== 'Escape') return;
-      const open = $$('.overlay.show');
-      if (open.length) open[open.length - 1].classList.remove('show');
-    });
-
-    $('#generatorBtn').addEventListener('click', () => { openOverlay('generatorOverlay'); generate(); });
-    $('#lengthRange').addEventListener('input', e => { $('#lengthValue').textContent = e.target.value; generate(); });
-    $('#regenerate').addEventListener('click', generate);
-    $('#copyGenerated').addEventListener('click', async () => {
-      toast(await copyText($('#generated').textContent) ? 'تم نسخ كلمة المرور' : 'تعذر النسخ');
-    });
-
-    $('#confirmOk').addEventListener('click', () => {
-      const fn = state.onConfirm;
-      state.onConfirm = null;
-      closeOverlay('confirmOverlay');
-      if (fn) fn();
-    });
-
-    $('#lockBtn').addEventListener('click', () => lockVault());
-    $('#lockForm').addEventListener('submit', onLockSubmit);
-    $('#resetVaultBtn').addEventListener('click', onResetVault);
-
-    $('#exportBtn').addEventListener('click', exportBackup);
-    $('#importBtn').addEventListener('click', () => $('#importFile').click());
-    $('#importFile').addEventListener('change', onImportFile);
-
-    ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(ev =>
-      document.addEventListener(ev, resetIdle, { passive: true, capture: true }));
-
-    // تعديل الخزنة من تبويب آخر: قفل هذا التبويب لتجنب الكتابة فوق البيانات
-    window.addEventListener('storage', e => {
-      if (e.key !== VAULT_KEY && e.key !== null) return;
-      if (state.locked) refreshLockMode();
-      else lockVault('تم تعديل الخزنة من نافذة أخرى. أعد إدخال كلمة المرور.');
-    });
-  }
-
-  /* ---------- التشغيل ---------- */
-  function init() {
-    bindEvents();
-    if (!cryptoAvailable()) {
-      setLockError('المتصفح لا يدعم التشفير المطلوب. افتح Vaulty في متصفح حديث (عبر https أو من ملف محلي).');
-      $('#unlockBtn').disabled = true;
-      return;
-    }
-    if (!storageAvailable()) {
-      setLockError('التخزين المحلي غير متاح (ربما بسبب التصفح الخاص أو إعدادات المتصفح)، لذا لا يمكن استخدام الخزنة.');
-      $('#unlockBtn').disabled = true;
-      return;
-    }
-    refreshLockMode();
-    $('#unlockPassword').focus();
-  }
-
-  init();
-
-  // تسجيل عامل الخدمة (يعمل على http/https فقط، ويُتجاهل عند الفتح كملف محلي)
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-  }
-})();
+if(localStorage.getItem('fayrouz_dark')==='1')document.body.classList.add('dark');if(localStorage.getItem('fayrouz_large_text')==='1')document.body.classList.add('large-text');authOverlay();

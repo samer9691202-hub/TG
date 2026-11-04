@@ -200,3 +200,54 @@ body.dark .nav-item.active{color:var(--accent2);background:linear-gradient(100de
 body.dark .nav-item.active span{background:color-mix(in srgb,var(--surface) 82%,var(--soft));color:var(--accent2)}
 body.dark .side-quote{background:linear-gradient(135deg,color-mix(in srgb,var(--soft) 80%,var(--surface)),color-mix(in srgb,var(--accent) 12%,var(--surface)));border-color:color-mix(in srgb,var(--accent) 20%,var(--line));color:color-mix(in srgb,var(--muted) 70%,var(--accent2) 30%)}
 @media(max-width:650px){.sidebar{background:color-mix(in srgb,var(--surface) 88%,var(--accent) 12%);border-color:color-mix(in srgb,var(--accent) 20%,transparent);box-shadow:0 10px 35px color-mix(in srgb,var(--accent) 18%,transparent)}body.dark .sidebar{background:color-mix(in srgb,var(--surface) 90%,var(--accent) 10%);border-color:color-mix(in srgb,var(--accent) 24%,var(--line))}.nav-item.active:after{background:var(--accent)}}
+
+/* Fayrouz 1.1.4 — Complete live palette synchronization across the interface */
+:root{--theme-wash:color-mix(in srgb,var(--accent) 7%,var(--bg));--theme-border:color-mix(in srgb,var(--accent) 19%,var(--line));--theme-shadow:color-mix(in srgb,var(--accent) 13%,transparent)}
+body{background:radial-gradient(ellipse at 8% 0%,color-mix(in srgb,var(--accent2) 13%,transparent),transparent 34%),radial-gradient(ellipse at 95% 15%,color-mix(in srgb,var(--accent) 8%,transparent),transparent 30%),var(--bg);transition:background .25s,color .2s}
+/* Headings and secondary labels */
+.topbar h1,.page-head h2,.panel h3,.item-card h3,.modal-card h2{color:color-mix(in srgb,var(--text) 84%,var(--accent) 16%)}
+.page-head p,.eyebrow,.side-label,.brand small{color:color-mix(in srgb,var(--muted) 82%,var(--accent) 18%)}
+.item-card p,.row-main small,.stat small,.setting-row small,.item-meta{color:var(--muted)}
+/* Buttons, quick actions, chips and progress */
+.primary,.auth-submit{background:linear-gradient(120deg,var(--accent),var(--accent2));box-shadow:0 8px 20px var(--theme-shadow)}
+.ghost,.text-link,.summary-chip,.done-label,.setting-value{color:var(--accent)}
+.ghost{background:color-mix(in srgb,var(--soft) 82%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 12%,transparent)}
+.quick{background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 90%,var(--accent) 10%),var(--surface2));border-color:var(--theme-border);color:var(--text)}
+.quick:hover,.icon-btn:hover,.text-link:hover{border-color:var(--accent2);color:var(--accent)}
+.quick span,.stat .icon,.icon-btn{color:var(--accent)}
+.stat .icon{background:color-mix(in srgb,var(--soft) 82%,var(--accent) 18%)}
+.progress{background:color-mix(in srgb,var(--soft) 75%,var(--surface))}.progress i{background:linear-gradient(90deg,var(--accent2),var(--accent))}
+/* Cards, panels and separators */
+.stat,.panel,.item-card,.empty{border-color:var(--theme-border)}
+.panel,.stat,.item-card{background:color-mix(in srgb,var(--surface) 96%,var(--accent) 4%)}
+.row,.setting-row{border-color:color-mix(in srgb,var(--line) 76%,var(--accent) 24%)}
+/* Forms and dialogs */
+input,textarea,select{background:color-mix(in srgb,var(--surface2) 92%,var(--accent) 8%);border-color:var(--theme-border);color:var(--text)}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent)}
+label.field{color:color-mix(in srgb,var(--text) 75%,var(--accent) 25%)}
+.modal-card{background:color-mix(in srgb,var(--surface) 96%,var(--accent) 4%);border-color:var(--theme-border)}
+.close{background:var(--soft);color:var(--accent)}
+/* Theme studio */
+.theme-studio{border-color:var(--theme-border)!important;background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 96%,var(--accent) 4%),color-mix(in srgb,var(--surface2) 88%,var(--accent2) 12%))!important}
+.theme-preview{background:linear-gradient(115deg,var(--accent),var(--accent2))!important;box-shadow:0 12px 28px var(--theme-shadow)}
+.live-badge{color:var(--accent)!important;background:var(--soft)!important}
+.palette-card{border-color:var(--theme-border)!important;background:var(--surface)!important;color:var(--text)!important}
+.palette-card.selected{border-color:var(--accent)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent),0 8px 20px var(--theme-shadow)!important}
+.theme-label,.theme-hint,.custom-color span,.hex-color span{color:var(--muted)!important}
+.reset-theme{color:var(--accent)!important}
+/* Media controls and authentication screen also follow the selected palette */
+.media-filters button.active{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+.media-filters button{border-color:var(--theme-border)!important;color:var(--accent)!important}
+.media-library-summary{border-color:var(--theme-border)!important;background:var(--soft)!important;color:var(--text)!important}
+.auth-screen{background:radial-gradient(circle at 15% 15%,color-mix(in srgb,var(--accent2) 25%,transparent),transparent 35%),radial-gradient(circle at 85% 85%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 35%),linear-gradient(135deg,var(--bg),var(--theme-wash))}
+.auth-card{background:color-mix(in srgb,var(--surface) 91%,transparent);border-color:color-mix(in srgb,var(--accent) 18%,white);box-shadow:0 24px 80px var(--theme-shadow)}
+.auth-logo{background:linear-gradient(145deg,var(--accent2),var(--accent));box-shadow:0 10px 24px var(--theme-shadow)}
+.auth-kicker{color:var(--accent)}
+footer,footer span{color:var(--accent2)}
+body.dark{background:radial-gradient(ellipse at 8% 5%,color-mix(in srgb,var(--accent) 19%,transparent),transparent 34%),radial-gradient(ellipse at 92% 18%,color-mix(in srgb,var(--accent2) 14%,transparent),transparent 30%),linear-gradient(135deg,#191622,#211b2b 60%,#251c2a)}
+body.dark .stat,body.dark .panel,body.dark .item-card,body.dark .empty,body.dark .modal-card{background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);border-color:color-mix(in srgb,var(--line) 72%,var(--accent) 28%)}
+body.dark .quick{background:color-mix(in srgb,var(--surface2) 88%,var(--accent) 12%);border-color:color-mix(in srgb,var(--line) 72%,var(--accent) 28%)}
+body.dark .topbar h1,body.dark .page-head h2,body.dark .panel h3,body.dark .item-card h3,body.dark .modal-card h2{color:var(--text)}
+body.dark input,body.dark textarea,body.dark select{background:color-mix(in srgb,var(--surface2) 90%,var(--accent) 10%);border-color:color-mix(in srgb,var(--line) 70%,var(--accent) 30%);color:var(--text)}
+body.dark .auth-card{background:color-mix(in srgb,var(--surface) 94%,transparent);border-color:color-mix(in srgb,var(--accent) 24%,var(--line))}
+@media(max-width:650px){.sidebar{background:color-mix(in srgb,var(--surface) 84%,var(--accent) 16%)!important;border-color:color-mix(in srgb,var(--accent) 25%,var(--line))!important;box-shadow:0 10px 35px color-mix(in srgb,var(--accent) 20%,transparent)!important}.nav-item{color:color-mix(in srgb,var(--text) 68%,var(--muted) 32%)}.nav-item span{color:var(--accent2)}.nav-item.active{background:color-mix(in srgb,var(--soft) 78%,var(--surface))!important;color:var(--accent)!important}.nav-item.active span{color:var(--accent)!important}body.dark .sidebar{background:color-mix(in srgb,var(--surface) 86%,var(--accent) 14%)!important}}

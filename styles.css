@@ -234,3 +234,7 @@ select.input { padding-inline-end: 8px; }
 /* compact icon buttons on cards so actions stay on one row when possible */
 .card-actions { gap: 4px; }
 .card-actions .iconbtn { width: 40px; height: 40px; }
+
+.boot, .bootfail { max-width: 560px; margin: 20vh auto 0; padding: 16px; text-align: center; color: var(--muted); }
+.bootfail p { margin: 8px 0; } .bootfail p:first-child { color: var(--danger); font-weight: 700; font-size: 1.2rem; }
+.bootfail .tech { font-size: .8rem; word-break: break-word; direction: ltr; }

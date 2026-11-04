@@ -1,6 +1,6 @@
 /* Vaulty service worker – caches the app shell so it works fully offline. Caches no user data. */
-const CACHE = 'vaulty-v1.0.0';
-const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'css/styles.css', 'js/crypto.js', 'js/generator.js', 'js/vault.js',
+const CACHE = 'vaulty-v1.0.1';
+const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'css/styles.css', 'js/diag.js', 'js/crypto.js', 'js/generator.js', 'js/vault.js',
   'js/storage.js', 'js/i18n.js', 'js/app.js', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {

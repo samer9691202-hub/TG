@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101a2d">
+<title>Vaulty — خزنتك الرقمية</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{--bg:#0b1220;--panel:#111d31;--panel2:#172640;--line:#263650;--text:#f4f1e8;--muted:#9ba9bd;--gold:#d9b66f;--gold2:#f0d69a;--red:#ff7777;--green:#72d6a0;--shadow:0 22px 60px #02071166}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 82% -15%,#263958 0,transparent 42%),var(--bg);color:var(--text);font-family:"IBM Plex Sans Arabic",Manrope,system-ui,sans-serif;min-height:100vh}
+button,input,select{font:inherit}button{cursor:pointer}
+.app{max-width:1240px;margin:auto;padding:28px 34px 110px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:30px}
+.brand{display:flex;align-items:center;gap:13px}.logo{width:48px;height:48px;border-radius:16px;background:linear-gradient(145deg,#f0d69a,#b58b43);display:grid;place-items:center;color:#111b2c;box-shadow:0 8px 28px #d9b66f35}.logo svg{width:27px}
+.brand-name{font:800 25px Manrope,sans-serif;letter-spacing:.3px}.brand-name span{color:var(--gold)}.brand-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.head-actions{display:flex;gap:10px;align-items:center}.icon-btn,.ghost-btn{border:1px solid var(--line);background:#ffffff08;color:var(--text);border-radius:13px;padding:10px 13px;display:inline-flex;align-items:center;gap:8px}.icon-btn{width:43px;height:43px;justify-content:center;padding:0}.ghost-btn:hover,.icon-btn:hover{border-color:var(--gold);color:var(--gold2)}
+.primary-btn{border:0;background:linear-gradient(135deg,#e6c77f,#bd9149);color:#172033;font-weight:700;border-radius:13px;padding:12px 18px;box-shadow:0 8px 22px #d9b66f20}.primary-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.welcome{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:26px 0 20px}.eyebrow{color:var(--gold);font-size:12px;font-weight:700;letter-spacing:1.5px}.welcome h1{font-size:clamp(25px,4vw,35px);margin:8px 0 5px;font-weight:600}.welcome p{color:var(--muted);margin:0;font-size:14px}
+.status{display:flex;align-items:center;gap:8px;color:#a9d8bd;font-size:12px;background:#72d6a012;border:1px solid #72d6a02b;border-radius:30px;padding:8px 12px;white-space:nowrap}.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px #72d6a0}
+.stats{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:14px;margin:22px 0 30px}.stat{background:linear-gradient(145deg,#172640,#111c2e);border:1px solid #2a3a55;border-radius:20px;padding:19px 21px;position:relative;overflow:hidden}.stat:first-child{background:linear-gradient(115deg,#293b57,#17263e 70%);border-color:#53617a}.stat:first-child:after{content:"";position:absolute;width:150px;height:150px;border:1px solid #d9b66f35;border-radius:50%;left:-35px;top:-75px;box-shadow:0 0 0 17px #d9b66f0b,0 0 0 34px #d9b66f08}.stat-label{color:var(--muted);font-size:13px}.stat-number{font:800 34px Manrope,sans-serif;margin-top:9px;position:relative;z-index:1}.stat-number small{font:500 13px "IBM Plex Sans Arabic";color:var(--muted);margin-right:5px}.stat-icon{position:absolute;left:19px;top:20px;color:var(--gold);opacity:.85}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:0 0 15px}.section-head h2{font-size:19px;margin:0;font-weight:600}.section-head p{font-size:12px;color:var(--muted);margin:4px 0 0}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:15px}.search{position:relative;flex:1}.search input{width:100%;height:47px;padding:0 43px 0 14px;background:#111d30;border:1px solid var(--line);border-radius:13px;color:var(--text);outline:none}.search input:focus,.field input:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px #d9b66f15}.search svg{position:absolute;right:14px;top:14px;color:var(--muted)}
+.filters{display:flex;gap:7px;overflow:auto;padding:2px 0 13px;scrollbar-width:none}.filter{border:1px solid var(--line);background:#ffffff06;color:var(--muted);padding:8px 14px;border-radius:30px;white-space:nowrap;font-size:12px}.filter.active,.filter:hover{background:#d9b66f18;color:var(--gold2);border-color:#d9b66f77}
+.vault-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.item{background:linear-gradient(145deg,#15243a,#101b2d);border:1px solid #263750;border-radius:18px;padding:17px;transition:.2s;min-width:0}.item:hover{transform:translateY(-3px);border-color:#66718a;box-shadow:var(--shadow)}.item-top{display:flex;align-items:center;gap:12px}.site-icon{width:43px;height:43px;border-radius:14px;background:#d9b66f16;color:var(--gold2);display:grid;place-items:center;font:700 17px Manrope,sans-serif;border:1px solid #d9b66f2a}.item-title{min-width:0;flex:1}.item-title strong{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item-title span{display:block;color:var(--muted);font-size:11px;direction:ltr;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}.more{border:0;background:transparent;color:var(--muted);font-size:20px;padding:4px}.item-meta{display:flex;justify-content:space-between;align-items:center;margin:17px 0 12px;color:var(--muted);font-size:11px}.tag{border-radius:30px;padding:4px 9px;background:#ffffff0a;color:#c7d0dd}.credential{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #ffffff0d;padding-top:12px}.masked{font:500 13px Manrope,sans-serif;letter-spacing:2px;color:#c7d0dd;direction:ltr}.mini-actions{display:flex;gap:4px}.mini-actions button{border:0;background:transparent;color:var(--muted);padding:5px}.mini-actions button:hover{color:var(--gold2)}
+.empty{grid-column:1/-1;text-align:center;padding:60px 20px;border:1px dashed #33435d;border-radius:18px;color:var(--muted)}.empty b{display:block;color:var(--text);font-size:17px;margin:12px 0 5px}
+.bottom-note{color:#718098;text-align:center;font-size:11px;margin:28px 0 0}
+.overlay{position:fixed;inset:0;background:#050a13c9;backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.overlay.show{display:flex}.modal{width:min(100%,500px);max-height:92vh;overflow:auto;background:#142239;border:1px solid #40516b;border-radius:22px;box-shadow:0 30px 90px #0009;padding:23px}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.modal-head h3{font-size:20px;margin:0}.close{border:0;background:#ffffff0d;color:var(--muted);width:35px;height:35px;border-radius:10px;font-size:20px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:12px;color:#b5c0d0}.field input,.field select{height:45px;border:1px solid #344660;border-radius:11px;background:#0d192b;color:var(--text);padding:0 12px;outline:none;width:100%}.field select{color-scheme:dark}.modal-actions{display:flex;justify-content:flex-start;gap:9px;margin-top:22px}.secondary{border:1px solid #3a4c67;background:transparent;color:var(--text);padding:11px 17px;border-radius:12px}.danger{color:var(--red);border-color:#8a454d}.password-wrap{display:flex;gap:7px}.password-wrap input{flex:1;min-width:0}.hint{font-size:11px;color:var(--muted);line-height:1.7}
+.generator-output{font:600 19px Manrope,sans-serif;direction:ltr;text-align:left;background:#0b1728;border:1px solid #344660;border-radius:12px;padding:14px;overflow-wrap:anywhere;margin:15px 0}
+.toast{position:fixed;bottom:25px;left:50%;transform:translate(-50%,20px);opacity:0;background:#e5c77f;color:#172033;border-radius:12px;padding:11px 17px;font-size:13px;font-weight:700;z-index:40;transition:.25s;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
+.lock-screen{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 15%,#283b59,#0b1220 65%);display:none;align-items:center;justify-content:center;padding:20px}.lock-screen.show{display:flex}.lock-box{width:min(100%,410px);text-align:center;background:#142239;border:1px solid #40516b;border-radius:25px;padding:30px;box-shadow:var(--shadow)}.lock-box .logo{margin:0 auto 17px}.lock-box h2{margin:0 0 8px}.lock-box p{color:var(--muted);font-size:13px;line-height:1.8}.lock-box input{width:100%;height:48px;background:#0d192b;border:1px solid #344660;color:white;border-radius:12px;padding:0 14px;margin:14px 0;outline:none;text-align:center}
+@media(max-width:900px){.vault-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.app{padding:23px 22px 100px}}
+@media(max-width:620px){.app{padding:18px 15px 100px}.header{margin-bottom:22px}.brand-name{font-size:22px}.head-actions .ghost-btn span{display:none}.welcome{align-items:flex-start;flex-direction:column}.stats{grid-template-columns:1fr 1fr;gap:9px}.stat{padding:15px}.stat:first-child{grid-column:1/-1}.stat-number{font-size:29px}.toolbar{flex-wrap:wrap}.toolbar .primary-btn{white-space:nowrap}.vault-grid{grid-template-columns:1fr}.item{padding:15px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.section-head{align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<header class="header">
+ <div class="brand"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></div><div><div class="brand-name">vault<span>y.</span></div><div class="brand-sub">مساحتك الآمنة لكل ما يهمك</div></div></div>
+ <div class="head-actions"><button class="ghost-btn" id="generatorBtn">✧ <span>مولّد كلمات المرور</span></button><button class="icon-btn" id="lockBtn" title="قفل الخزنة">⌑</button></div>
+</header>
+<section class="welcome"><div><div class="eyebrow">مساحة خاصة · تخزين محلي على الجهاز</div><h1>أهلاً بعودتك 👋</h1><p>كل بياناتك المهمة، مرتبة في مكان واحد.</p></div><div class="status"><i class="dot"></i> الخزنة مفتوحة</div></section>
+<section class="stats">
+ <div class="stat"><div class="stat-label">إجمالي العناصر المحفوظة</div><div class="stat-number" id="totalCount">0 <small>عنصر</small></div><div class="stat-icon">✧</div></div>
+ <div class="stat"><div class="stat-label">كلمات مرور قوية</div><div class="stat-number" id="strongCount">0</div></div>
+ <div class="stat"><div class="stat-label">الفئات المستخدمة</div><div class="stat-number" id="categoryCount">0</div></div>
+</section>
+<section>
+ <div class="section-head"><div><h2>خزنتك</h2><p>إدارة حساباتك وبيانات الدخول بسهولة</p></div><button class="primary-btn" id="addBtn">＋ إضافة عنصر</button></div>
+ <div class="toolbar"><div class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg><input id="searchInput" placeholder="ابحث عن حساب أو موقع..."></div></div>
+ <div class="filters" id="filters"><button class="filter active" data-cat="الكل">الكل</button><button class="filter" data-cat="شخصي">شخصي</button><button class="filter" data-cat="عمل">عمل</button><button class="filter" data-cat="تواصل اجتماعي">تواصل اجتماعي</button><button class="filter" data-cat="تسوق">تسوق</button><button class="filter" data-cat="مالي">مالي</button><button class="filter" data-cat="أخرى">أخرى</button></div>
+ <div class="vault-grid" id="vaultGrid"></div>
+</section>
+<p class="bottom-note">Vaulty · بياناتك تبقى على هذا الجهاز · لا تشارك كلمة مرورك الرئيسية مع أي شخص</p>
+</div>
+
+<div class="overlay" id="itemOverlay"><div class="modal">
+ <div class="modal-head"><h3 id="formTitle">إضافة إلى الخزنة</h3><button class="close" data-close="itemOverlay">×</button></div>
+ <form id="itemForm"><input type="hidden" id="itemId"><div class="form-grid">
+ <div class="field"><label for="name">اسم الحساب / الخدمة *</label><input id="name" required maxlength="60" placeholder="مثلاً: Google"></div>
+ <div class="field"><label for="category">الفئة</label><select id="category"><option>شخصي</option><option>عمل</option><option>تواصل اجتماعي</option><option>تسوق</option><option>مالي</option><option>أخرى</option></select></div>
+ <div class="field full"><label for="website">الموقع الإلكتروني</label><input id="website" placeholder="example.com" dir="ltr"></div>
+ <div class="field full"><label for="username">اسم المستخدم / البريد</label><input id="username" dir="ltr" placeholder="name@example.com"></div>
+ <div class="field full"><label for="password">كلمة المرور *</label><div class="password-wrap"><input id="password" required dir="ltr" autocomplete="new-password"><button type="button" class="secondary" id="makePassword">توليد</button></div></div>
+ <div class="field full"><label for="notes">ملاحظات</label><input id="notes" placeholder="ملاحظات اختيارية"></div>
+ </div><div class="modal-actions"><button class="primary-btn" type="submit">حفظ العنصر</button><button class="secondary" type="button" data-close="itemOverlay">إلغاء</button></div></form>
+ </div></div>
+<div class="overlay" id="generatorOverlay"><div class="modal">
+ <div class="modal-head"><h3>مولّد كلمات مرور قوية</h3><button class="close" data-close="generatorOverlay">×</button></div>
+ <p class="hint">أنشئ كلمة مرور عشوائية باستخدام مولّد آمن من المتصفح.</p>
+ <div class="generator-output" id="generated">Vaulty#2026!Secure</div>
+ <div class="field"><label>طول كلمة المرور: <b id="lengthValue">18</b></label><input type="range" id="lengthRange" min="8" max="40" value="18" style="accent-color:#d9b66f"></div>
+ <div class="modal-actions"><button class="primary-btn" id="regenerate">توليد من جديد</button><button class="secondary" id="copyGenerated">نسخ</button></div>
+ </div></div>
+<div class="overlay" id="confirmOverlay"><div class="modal" style="max-width:390px">
+ <div class="modal-head"><h3>حذف العنصر؟</h3><button class="close" data-close="confirmOverlay">×</button></div><p class="hint">سيتم حذف هذا العنصر من الخزنة. لا يمكن التراجع عن هذه الخطوة.</p><div class="modal-actions"><button class="primary-btn" style="background:#c65e64;color:white" id="confirmDelete">حذف نهائياً</button><button class="secondary" data-close="confirmOverlay">إلغاء</button></div>
+ </div></div>
+<div class="lock-screen" id="lockScreen"><div class="lock-box"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></div><h2>خزنتك مقفلة</h2><p>أدخل كلمة المرور الرئيسية للمتابعة.<br>ستبقى بياناتك على هذا الجهاز.</p><input id="unlockPassword" type="password" placeholder="كلمة المرور الرئيسية"><button class="primary-btn" id="unlockBtn" style="width:100%">فتح الخزنة</button></div></div>
+<div class="toast" id="toast"></div>
+<script>
+const $=s=>document.querySelector(s);
+const STORE='vaulty_items_v1';
+let items=JSON.parse(localStorage.getItem(STORE)||'[]'),activeCat='الكل',deleteId=null,locked=false;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function save(){localStorage.setItem(STORE,JSON.stringify(items));render()}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2100)}
+function strength(p){let n=0;if(p.length>=12)n++;if(/[a-z]/.test(p)&&/[A-Z]/.test(p))n++;if(/\d/.test(p))n++;if(/[^a-zA-Z0-9]/.test(p))n++;return n}
+function render(){
+ const q=$('#searchInput').value.trim().toLowerCase();
+ const shown=items.filter(x=>(activeCat==='الكل'||x.category===activeCat)&&[x.name,x.website,x.username,x.notes].join(' ').toLowerCase().includes(q));
+ $('#totalCount').innerHTML=items.length+' <small>عنصر</small>';
+ $('#strongCount').textContent=items.filter(x=>strength(x.password)>=3).length;
+ $('#categoryCount').textContent=new Set(items.map(x=>x.category)).size;
+ $('#vaultGrid').innerHTML=shown.length?shown.map(x=>`<article class="item">
+ <div class="item-top"><div class="site-icon">${esc((x.name||'?').trim().slice(0,1).toUpperCase())}</div><div class="item-title"><strong>${esc(x.name)}</strong><span>${esc(x.website||'بدون موقع')}</span></div><button class="more" aria-label="تعديل" data-edit="${x.id}">···</button></div>
+ <div class="item-meta"><span class="tag">${esc(x.category)}</span><span>${strength(x.password)>=3?'● كلمة قوية':'○ كلمة مرور'}</span></div>
+ <div class="credential"><span class="masked" id="pw-${x.id}">••••••••••••</span><div class="mini-actions"><button title="إظهار / إخفاء" data-reveal="${x.id}">◉</button><button title="نسخ كلمة المرور" data-copy="${x.id}">▢</button><button title="حذف العنصر" data-delete="${x.id}">⌫</button></div></div>
+ </article>`).join(''):`<div class="empty"><div style="font-size:30px">◇</div><b>${items.length?'لا توجد نتائج مطابقة':'خزنتك تبدأ من هنا'}</b><span>${items.length?'جرّب كلمة بحث أو فئة مختلفة.':'أضف أول حساب واحفظ بياناته في مكان مرتب.'}</span>${!items.length?'<br><button class="primary-btn" onclick="$(\'#addBtn\').click()">＋ إضافة أول عنصر</button>':''}</div>`;
+}
+function openForm(item){$('#itemForm').reset();$('#itemId').value=item?.id||'';$('#formTitle').textContent=item?'تعديل العنصر':'إضافة إلى الخزنة';if(item){$('#name').value=item.name;$('#category').value=item.category;$('#website').value=item.website||'';$('#username').value=item.username||'';$('#password').value=item.password;$('#notes').value=item.notes||''}$('#itemOverlay').classList.add('show')}
+function makePassword(len=18){const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*+-_?';const a=new Uint32Array(len);crypto.getRandomValues(a);return Array.from(a,n=>chars[n%chars.length]).join('')}
+$('#addBtn').onclick=()=>openForm();$('#makePassword').onclick=()=>$('#password').value=makePassword();
+$('#itemForm').onsubmit=e=>{e.preventDefault();const id=$('#itemId').value||crypto.randomUUID();const obj={id,name:$('#name').value.trim(),category:$('#category').value,website:$('#website').value.trim(),username:$('#username').value.trim(),password:$('#password').value,notes:$('#notes').value.trim()};const i=items.findIndex(x=>x.id===id);if(i>=0)items[i]=obj;else items.unshift(obj);save();$('#itemOverlay').classList.remove('show');toast('تم حفظ العنصر')};
+$('#vaultGrid').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const id=b.dataset.edit||b.dataset.reveal||b.dataset.copy||b.dataset.delete;const x=items.find(z=>z.id===id);if(!x)return;if(b.dataset.edit)openForm(x);if(b.dataset.reveal){const el=$('#pw-'+id);const open=el.dataset.open==='1';el.textContent=open?'••••••••••••':x.password;el.dataset.open=open?'0':'1';}if(b.dataset.copy){try{await navigator.clipboard.writeText(x.password);toast('تم نسخ كلمة المرور')}catch{toast('تعذر النسخ في هذا المتصفح')}}if(b.dataset.delete){deleteId=id;$('#confirmOverlay').classList.add('show')}});
+$('#vaultGrid').addEventListener('contextmenu',e=>e.preventDefault());
+$('#vaultGrid').addEventListener('dblclick',e=>{const card=e.target.closest('.item');if(card){const id=card.querySelector('[data-edit]').dataset.edit;const x=items.find(z=>z.id===id);if(x)openForm(x)}});
+$('#searchInput').oninput=render;
+$('#filters').onclick=e=>{const b=e.target.closest('[data-cat]');if(!b)return;activeCat=b.dataset.cat;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render()};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.remove('show'));
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show')}));
+$('#generatorBtn').onclick=()=>{$('#generatorOverlay').classList.add('show');generate()};
+function generate(){$('#generated').textContent=makePassword(+$ ('#lengthRange').value)}
+$('#lengthRange').oninput=e=>{$('#lengthValue').textContent=e.target.value;generate()};
+$('#regenerate').onclick=generate;$('#copyGenerated').onclick=async()=>{try{await navigator.clipboard.writeText($('#generated').textContent);toast('تم نسخ كلمة المرور')}catch{toast('تعذر النسخ')}};
+$('#lockBtn').onclick=()=>{locked=true;$('#lockScreen').classList.add('show');$('#unlockPassword').focus()};
+$('#unlockBtn').onclick=()=>{if(!$('#unlockPassword').value){toast('أدخل كلمة المرور');return}$('#unlockPassword').value='';$('#lockScreen').classList.remove('show');locked=false;toast('تم فتح الواجهة')};
+$('#unlockPassword').onkeydown=e=>{if(e.key==='Enter')$('#unlockBtn').click()};
+$('#confirmDelete').onclick=()=>{items=items.filter(x=>x.id!==deleteId);save();$('#confirmOverlay').classList.remove('show');toast('تم حذف العنصر')};
+render();
+</script>
+</body></html>

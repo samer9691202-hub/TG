@@ -1,12 +1,44 @@
-/* Vaulty service worker – caches the app shell so it works fully offline. Caches no user data. */
-const CACHE = 'vaulty-v1.0.1';
-const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'css/styles.css', 'js/diag.js', 'js/crypto.js', 'js/generator.js', 'js/vault.js',
-  'js/storage.js', 'js/i18n.js', 'js/app.js', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
-self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+/* Vaulty — Service Worker: يتيح العمل بدون إنترنت */
+const CACHE = 'vaulty-1.0.0';
+const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.webmanifest',
+  './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png', './icons/icon.svg'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
-self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
-  e.respondWith(caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request)));
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // ملفات التطبيق: من الذاكرة أولاً ثم الشبكة
+  if (url.origin === location.origin) {
+    e.respondWith(
+      caches.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(req, copy));
+        return res;
+      }).catch(() => caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // الخطوط الخارجية: تُخزَّن عند أول تحميل ثم تعمل بلا إنترنت
+  if (/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
+    e.respondWith(
+      caches.match(req).then(hit => hit || fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(req, copy));
+        return res;
+      }).catch(() => new Response('', { status: 504 })))
+    );
+  }
 });

@@ -1,15 +1,19 @@
 {
-  "name": "Vaulty – خزنتي",
+  "name": "Vaulty — خزنتك الرقمية",
   "short_name": "Vaulty",
-  "description": "Offline, encrypted password vault / خزنة كلمات مرور مشفّرة تعمل دون إنترنت",
+  "description": "خزنة رقمية مشفّرة لكلمات المرور تعمل محلياً على جهازك.",
+  "lang": "ar",
+  "dir": "rtl",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#14202E",
-  "theme_color": "#14202E",
+  "orientation": "portrait",
+  "background_color": "#0b1220",
+  "theme_color": "#101a2d",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
   ]
 }

@@ -339,11 +339,23 @@
     await state.saveQueue.catch(() => {});
     const raw = localStorage.getItem(VAULT_KEY);
     if (!raw) { toast('لا توجد بيانات للتصدير'); return; }
+    const name = `vaulty-backup-${new Date().toISOString().slice(0, 10)}.json`;
     const blob = new Blob([raw], { type: 'application/json' });
+    // على الجوال / داخل التطبيقات: نافذة المشاركة إن كانت مدعومة
+    try {
+      const file = new File([blob], name, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Vaulty backup' });
+        toast('تم تصدير نسخة مشفّرة');
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;   // ألغى المستخدم المشاركة
+    }
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `vaulty-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = name;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -613,4 +625,9 @@
   }
 
   init();
+
+  // تسجيل عامل الخدمة (يعمل على http/https فقط، ويُتجاهل عند الفتح كملف محلي)
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
 })();

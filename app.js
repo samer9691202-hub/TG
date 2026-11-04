@@ -1,687 +1,83 @@
-/* Vaulty – UI. Builds the DOM with createElement/textContent only (no innerHTML),
- * so stored data can never be interpreted as markup. */
-(function () {
-  'use strict';
+'use strict';
+const sections = {
+  tasks:{title:'مهامي',sub:'رتّبي يومكِ خطوة بخطوة',add:'إضافة مهمة',fields:[['title','الاسم (اختياري)','text'],['date','موعد المهمة','date'],['details','تفاصيل المهمة','textarea']]},
+  calendar:{title:'مواعيدي',sub:'كل مواعيدكِ المهمة في مكان واحد',add:'إضافة موعد',fields:[['title','الاسم (اختياري)','text'],['date','التاريخ','date',true],['time','الوقت','time'],['details','ملاحظات','textarea']]},
+  notes:{title:'مذكراتي',sub:'مساحة لأفكاركِ وذكرياتكِ',add:'كتابة مذكرة',fields:[['title','الاسم (اختياري)','text'],['details','اكتبي هنا...','textarea',true]]},
+  photos:{title:'معرضي',sub:'صوركِ وفيديوهاتكِ في مساحة واحدة',add:'إضافة صورة أو فيديو',fields:[['title','الاسم (اختياري)','text'],['media','اختاري صورة أو فيديو','file'],['details','ملاحظة (اختياري)','textarea']]},
+  goals:{title:'أهدافي',sub:'كل إنجاز كبير يبدأ بهدف واضح',add:'إضافة هدف',fields:[['title','الاسم (اختياري)','text'],['date','الموعد المستهدف','date'],['progress','نسبة الإنجاز','number'],['details','تفاصيل الهدف','textarea']]},
+  habits:{title:'عاداتي',sub:'خطوات صغيرة تصنع فرقاً جميلاً كل يوم',add:'إضافة عادة',fields:[['title','الاسم (اختياري)','text'],['details','ملاحظات','textarea']]},
+  expenses:{title:'مصروفاتي',sub:'تابعي مصروفاتكِ ببساطة',add:'إضافة مصروف',fields:[['title','الاسم (اختياري)','text'],['amount','المبلغ (ر.ق)','number',true],['date','التاريخ','date'],['category','التصنيف','select',false,['طعام','تسوق','مواصلات','فواتير','ترفيه','صحة','أخرى']]]},
+  events:{title:'مناسباتي',sub:'لا تفوّتي اللحظات والتواريخ الجميلة',add:'إضافة مناسبة',fields:[['title','الاسم (اختياري)','text'],['date','التاريخ','date',true],['details','تفاصيل','textarea']]}
+};
+let page='home', editing=null, pendingMedia=[], mediaCache={}, mediaFilter='all', pendingPreviewUrls=[];
+const $=s=>document.querySelector(s);
+// Encrypted local vault: user records are kept in memory only while unlocked.
+let vaultKey=null, vaultCache={}, vaultWriteQueue=Promise.resolve();
+const store={get(k){return Array.isArray(vaultCache[k])?vaultCache[k]:[]},set(k,v){vaultCache[k]=v;queueVaultSave();return true}};
+function bytesToB64(bytes){let s='';for(const b of new Uint8Array(bytes))s+=String.fromCharCode(b);return btoa(s)}
+function b64ToBytes(value){const s=atob(value);return Uint8Array.from(s,c=>c.charCodeAt(0))}
+function randomBytes(n=16){const b=new Uint8Array(n);crypto.getRandomValues(b);return b}
+// Founder access phrase requested by the project owner. Client-side-only caveat is documented in README.
+const FOUNDER_ACCESS_PHRASE='Fayrouz Master Key 2006';
+const normalizeFounderPhrase=value=>String(value??'').normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
+async function deriveWrapKey(secret,salt){if(!crypto?.subtle)throw new Error('Web Crypto غير متاح. افتحي التطبيق عبر Chrome أو Edge محدث.');const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function wrapVaultKey(secret,rawKey){const salt=randomBytes(16),iv=randomBytes(12),k=await deriveWrapKey(secret,salt),cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,rawKey);return {v:1,salt:bytesToB64(salt),iv:bytesToB64(iv),cipher:bytesToB64(cipher)}}
+async function unwrapVaultKey(secret,record){const k=await deriveWrapKey(secret,b64ToBytes(record.salt));const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(record.iv)},k,b64ToBytes(record.cipher));return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},true,['encrypt','decrypt'])}
+async function encryptBytes(data){const iv=randomBytes(12),plain=data instanceof ArrayBuffer?new Uint8Array(data):new Uint8Array(data);const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},vaultKey,plain);return {v:1,iv:new Uint8Array(iv),cipher}}
+async function decryptBytes(record){return crypto.subtle.decrypt({name:'AES-GCM',iv:record.iv},vaultKey,record.cipher)}
+async function persistVault(){if(!vaultKey)return;const iv=randomBytes(12),plain=new TextEncoder().encode(JSON.stringify({v:1,data:vaultCache}));const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},vaultKey,plain);localStorage.setItem('fayrouz_vault_v1',JSON.stringify({v:1,iv:bytesToB64(iv),cipher:bytesToB64(cipher)}))}
+function queueVaultSave(){vaultWriteQueue=vaultWriteQueue.then(persistVault).catch(e=>{console.error(e);toast('تعذر حفظ البيانات المشفّرة. تحققي من مساحة الجهاز.')});return vaultWriteQueue}
+async function loadVault(){const saved=localStorage.getItem('fayrouz_vault_v1');if(saved){const env=JSON.parse(saved),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(env.iv)},vaultKey,b64ToBytes(env.cipher));const parsed=JSON.parse(new TextDecoder().decode(plain));vaultCache=parsed.data||{};}else{vaultCache={};for(const key of Object.keys(sections)){try{vaultCache[key]=JSON.parse(localStorage.getItem('fayrouz_'+key)||'[]')}catch{vaultCache[key]=[]}}await persistVault();for(const key of Object.keys(sections))localStorage.removeItem('fayrouz_'+key)}}
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const dateText=d=>{if(!d)return '';const x=new Date(d+'T12:00:00');return isNaN(x)?'':x.toLocaleDateString('ar-QA',{year:'numeric',month:'long',day:'numeric'})};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>window.crypto?.randomUUID?crypto.randomUUID():`${Date.now()}_${Math.random().toString(16).slice(2)}`;
+function tick(){const d=new Date();$('#clockTime').textContent=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});$('#clockDate').textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});$('#todayLabel').textContent=d.toLocaleDateString('ar-QA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}tick();setInterval(tick,1000);
+function go(p){page=p;document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render();window.scrollTo({top:0,behavior:'smooth'})}
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)go(b.dataset.page)});
+$('.sidebar-bottom').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)go(b.dataset.page)});
+function pageHead(title,sub,add){return `<div class="page-head"><div><h2>${title}</h2><p>${sub}</p></div>${add?`<button class="btn primary" onclick="openForm()">＋ ${add}</button>`:''}</div>`}
+function itemCard(item,key){const meta=key==='expenses'?`${Number(item.amount||0).toFixed(2)} ر.ق`:dateText(item.date);let extra='';if(key==='goals')extra=`<div class="progress"><i style="width:${Math.max(0,Math.min(100,Number(item.progress)||0))}%"></i></div>`;if(key==='photos'&&mediaCache[item.mediaId]){const src=mediaCache[item.mediaId];extra=item.mediaType==='video'?`<video class="media-preview" src="${src}" controls playsinline preload="metadata"></video>`:`<button class="media-thumb" type="button" onclick="viewMedia('${item.id}')" aria-label="عرض الصورة"><img class="photo-preview" src="${src}" alt="${esc(item.title||'صورة')}"><span>⌕ عرض الصورة</span></button>`;extra+=`<div class="media-card-actions"><button class="btn ghost" type="button" onclick="viewMedia('${item.id}')">${item.mediaType==='video'?'▶ فتح الفيديو':'⌕ عرض الصورة'}</button><button class="btn primary" type="button" onclick="downloadMedia('${item.id}')">⬇ تحميل</button></div>`;}let done=key==='tasks'&&item.done;return `<article class="item-card ${done?'completed':''}"><div class="item-top"><div><h3>${esc(item.title||'بدون اسم')}</h3><p>${esc(item.details||item.category||'')}</p></div><div class="actions"><button class="icon-btn" title="تعديل" onclick="openForm('${item.id}')">✎</button><button class="icon-btn" title="حذف" onclick="removeItem('${item.id}')">×</button></div></div>${extra}<div class="item-meta"><span>${esc(meta||'')}</span>${key==='goals'?`<span>${Number(item.progress)||0}%</span>`:''}${key==='tasks'?`<label class="done-label"><input type="checkbox" ${done?'checked':''} onchange="toggleTask('${item.id}',this.checked)"> ${done?'مكتملة':'إنجاز المهمة'}</label>`:''}${key==='habits'?`<button class="text-link" onclick="toggleHabit('${item.id}')">${item.lastDone===today()?'✓ أُنجزت اليوم':'تسجيل إنجاز اليوم'}</button>`:''}</div></article>`}
+function listHTML(key){let items=store.get(key);if(key==='tasks')items.sort((a,b)=>(a.done===b.done?String(a.date||'').localeCompare(String(b.date||'')):a.done?1:-1));if(key==='photos'){const filtered=items.filter(x=>mediaFilter==='all'||x.mediaType===mediaFilter);return `<div class="cards media-grid">${filtered.length?filtered.map(x=>itemCard(x,key)).join(''):`<div class="empty"><b>♡</b>${items.length?'لا توجد ملفات في هذا التصنيف.':'لم تضيفي صوراً أو فيديوهات بعد.'}</div>`}</div>`;}return `<div class="cards">${items.length?items.map(x=>itemCard(x,key)).join(''):`<div class="empty"><b>✿</b>لا توجد عناصر بعد، ابدئي بإضافة أول عنصر جميل.</div>`}</div>`}
+function render(){const c=$('#content');$('#pageTitle').innerHTML=page==='home'?'أهلاً بكِ في فيروز <span>✿</span>':page==='settings'?'الإعدادات':sections[page]?.title||'فيروز';
+ if(page==='home'){const tasks=store.get('tasks'),pending=tasks.filter(x=>!x.done),upcoming=[...store.get('calendar'),...store.get('events')].filter(x=>x.date&&x.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5),spent=store.get('expenses').reduce((s,x)=>s+(Number(x.amount)||0),0);c.innerHTML=`<div class="hero"><div><h2>مرحباً بكِ في مساحتكِ الجميلة ✨</h2><p>هنا تبدأ أيامكِ المرتبة، وأفكاركِ الصغيرة تصبح إنجازات.</p></div><div class="date-pill">${dateText(today())}</div></div><div class="stats"><div class="stat"><div class="icon">✓</div><strong>${pending.length}</strong><small>مهام بانتظاركِ</small></div><div class="stat"><div class="icon">✎</div><strong>${store.get('notes').length}</strong><small>مذكراتكِ</small></div><div class="stat"><div class="icon">◎</div><strong>${store.get('goals').length}</strong><small>أهدافكِ</small></div><div class="stat"><div class="icon">◈</div><strong>${spent.toFixed(2)} ر.ق</strong><small>إجمالي المصروفات</small></div></div><div class="dashboard-grid"><section class="panel"><div class="panel-head"><h3>مساحاتكِ</h3></div><div class="quick-grid">${[['tasks','✓','مهامي'],['calendar','▦','مواعيدي'],['notes','✎','مذكراتي'],['photos','♡','صوري'],['goals','◎','أهدافي'],['habits','✿','عاداتي'],['expenses','◈','مصروفاتي'],['events','✧','مناسباتي']].map(([p,i,t])=>`<button class="quick" onclick="go('${p}')"><span>${i}</span>${t}</button>`).join('')}</div></section><section class="panel"><div class="panel-head"><h3>مهامكِ القادمة</h3><button class="text-link" onclick="go('tasks')">عرض الكل</button></div><div class="list">${pending.slice(0,5).map(x=>`<div class="row"><span class="dot"></span><div class="row-main"><strong>${esc(x.title)}</strong><small>${dateText(x.date)||'بلا تاريخ'}</small></div><input class="check" aria-label="إنجاز المهمة" type="checkbox" onchange="toggleTask('${x.id}',this.checked)"></div>`).join('')||'<div class="empty">لا توجد مهام معلّقة 🌷</div>'}</div></section><section class="panel"><div class="panel-head"><h3>أقرب المواعيد والمناسبات</h3><button class="text-link" onclick="go('calendar')">عرض الكل</button></div><div class="list">${upcoming.map(x=>`<div class="row"><span class="dot"></span><div class="row-main"><strong>${esc(x.title)}</strong><small>${dateText(x.date)}</small></div></div>`).join('')||'<div class="empty">أضيفي موعدكِ أو مناسبتكِ القادمة.</div>'}</div></section></div>`;return;}
+ if(sections[page]){if(page==='photos'){renderMediaPage();return;}let summary='';if(page==='expenses'){const sum=store.get('expenses').reduce((s,x)=>s+(Number(x.amount)||0),0);summary=`<div class="summary-chip">إجمالي المصروفات المسجلة: <strong>${sum.toFixed(2)} ر.ق</strong></div>`}c.innerHTML=pageHead(sections[page].title,sections[page].sub,sections[page].add)+summary+listHTML(page);return;}
+ if(page==='settings'){c.innerHTML=`${pageHead('الإعدادات','اجعلي التطبيق أقرب إلى ذوقكِ',null)}<section class="panel"><div class="setting-row"><div><strong>المظهر الليلي</strong><small>تغيير ألوان التطبيق إلى الوضع الداكن</small></div><input class="switch" type="checkbox" ${localStorage.getItem('fayrouz_dark')==='1'?'checked':''} onchange="setDark(this.checked)"></div><div class="setting-row theme-row"><div><strong>لون الواجهة</strong><small>اختاري لوناً جاهزاً أو حددي لونكِ المفضل</small></div><div class="theme-picker"><div class="color-options">${[['#8b5cf6','#f0eaff'],['#d96bb8','#fbeaf5'],['#5b8def','#eaf1ff'],['#20b8b0','#e5f7f5'],['#f08a9d','#fff0f2'],['#8b79c8','#f0edfb'],['#6b9ed6','#eaf3fb'],['#e5a4c8','#faedf4'],['#a28ad7','#f2edfb'],['#6c879f','#edf2f7']].map(([a,s])=>`<button class="swatch ${localStorage.getItem('fayrouz_accent')===a?'selected':''}" data-accent="${a}" style="background:${a}" aria-label="اختيار اللون ${a}" title="${a}" onclick="setAccent('${a}','${s}')"></button>`).join('')}</div><label class="custom-color">لون مخصص <input type="color" value="${localStorage.getItem('fayrouz_accent')||'#246b68'}" aria-label="اختيار لون مخصص" oninput="setAccent(this.value)"></label></div></div><div class="setting-row"><div><strong>الساعة</strong><small>تُعرض بنظام 12 ساعة باللغة الإنجليزية</small></div><span class="setting-value">12-hour · English</span></div><div class="setting-row"><div><strong>تشفير البيانات</strong><small>المذكرات والمهام والبيانات والصور والفيديوهات مشفّرة قبل حفظها محلياً.</small></div><span class="setting-value">AES-256</span></div><div class="setting-row"><div><strong>قفل التطبيق</strong><small>تغيير كلمة المرور ورمز الاستعادة</small></div><button class="btn ghost" onclick="changeCredentials()">إدارة الحماية</button></div><div class="setting-row"><div><strong>رمز الاستعادة</strong><small>لا يظهر حقل إدخاله في شاشة الدخول إلا بعد الضغط على «نسيت كلمة المرور؟ استخدم رمز الاستعادة».</small></div><button class="btn ghost" onclick="changeCredentials()">إدارة بيانات الدخول</button></div><div class="setting-row"><div><strong>الإصدار</strong><small>Fayrouz – Soft Glass Experience</small></div><span>1.0.16</span></div></section>`}}
+function openForm(id){editing=id||null;pendingMedia=[];clearPendingPreviews();const cfg=sections[page],item=id?store.get(page).find(x=>x.id===id)||{}:{};$('#modalTitle').textContent=id?'تعديل':'إضافة';$('#formFields').innerHTML=cfg.fields.map(([name,label,type,required,opts])=>{if(type==='textarea')return `<label class="field">${label}<textarea name="${name}" ${required?'required':''}>${esc(item[name]||'')}</textarea></label>`;if(type==='select')return `<label class="field">${label}<select name="${name}"><option value="">اختاري التصنيف</option>${opts.map(o=>`<option ${item[name]===o?'selected':''}>${o}</option>`).join('')}</select></label>`;if(type==='file')return `<label class="field">${label}<input name="${name}" type="file" accept="image/*,video/*" ${id?'':'multiple'} ${id?'':'required'}><small>يمكنكِ تحديد عدة صور وفيديوهات معاً. الحد الأقصى 100 ميغابايت للملف الواحد و10 ملفات في المرة الواحدة.</small><div id="mediaSelectionPreview" class="media-selection-preview"></div></label>`;return `<label class="field">${label}<input name="${name}" type="${type}" value="${esc(item[name]||'')}" ${required?'required':''} ${type==='number'?`min="0" ${page==='goals'?'max="100" step="1"':'step="0.01"'}`:''}></label>`}).join('');$('#modal').classList.remove('hidden');const file=$('#formFields input[type=file]');if(file)file.addEventListener('change',()=>{clearPendingPreviews();const chosen=Array.from(file.files||[]);if(chosen.length>10){toast('يمكنكِ اختيار 10 ملفات كحد أقصى في المرة الواحدة');file.value='';return}for(const f of chosen){if(f.size>100*1024*1024){toast(`الملف ${f.name} أكبر من 100 ميغابايت`);file.value='';pendingMedia=[];clearPendingPreviews();return}if(!f.type.startsWith('image/')&&!f.type.startsWith('video/')){toast('اختاري صوراً أو فيديوهات فقط');file.value='';pendingMedia=[];clearPendingPreviews();return}}pendingMedia=chosen;const preview=$('#mediaSelectionPreview');if(preview){preview.innerHTML=chosen.map((f,i)=>{const url=URL.createObjectURL(f);pendingPreviewUrls.push(url);return `<div class="media-selected-item">${f.type.startsWith('video/')?`<video src="${url}" muted playsinline></video>`:`<img src="${url}" alt="معاينة">`}<span>${esc(f.name)} · ${formatBytes(f.size)}</span></div>`}).join('')} });if(id&&item.mediaId){const note=document.createElement('small');note.className='field-note';note.textContent='اتركي اختيار الملف فارغاً للاحتفاظ بالملف الحالي، أو اختاري ملفاً جديداً لاستبداله.';$('#mediaSelectionPreview')?.append(note)}}
+function formatBytes(bytes){if(!bytes)return '0 بايت';const units=['بايت','KB','MB','GB'];let n=bytes,i=0;while(n>=1024&&i<units.length-1){n/=1024;i++}return `${n.toFixed(i?1:0)} ${units[i]}`}
+function clearPendingPreviews(){pendingPreviewUrls.forEach(u=>URL.revokeObjectURL(u));pendingPreviewUrls=[]}
+function closeForm(){$('#modal').classList.add('hidden');editing=null;pendingMedia=[];clearPendingPreviews()}$('#closeModal').onclick=closeForm;$('#cancelModal').onclick=closeForm;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeForm()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').classList.contains('hidden'))closeForm()});
+$('#itemForm').onsubmit=async e=>{e.preventDefault();const submit=e.target.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='جارٍ الحفظ…';try{const data=Object.fromEntries(new FormData(e.target).entries());delete data.media;let arr=store.get(page),old=editing?arr.find(x=>x.id===editing):null;if(page==='photos'){if(pendingMedia.length){if(editing){const f=pendingMedia[0],mediaId=uid();await saveMedia(mediaId,f);if(old?.mediaId)await deleteMedia(old.mediaId);arr=arr.map(x=>x.id===editing?{...x,...data,mediaId,mediaType:f.type.startsWith('video/')?'video':'image',fileName:f.name,fileSize:f.size}:x)}else{for(const f of pendingMedia){const mediaId=uid();await saveMedia(mediaId,f);arr.unshift({id:uid(),...data,mediaId,mediaType:f.type.startsWith('video/')?'video':'image',fileName:f.name,fileSize:f.size,createdAt:new Date().toISOString()})}}}else if(old){arr=arr.map(x=>x.id===editing?{...x,...data,mediaId:old.mediaId,mediaType:old.mediaType}:x)}else{toast('اختاري صورة أو فيديو أولاً');return}}else if(page==='expenses'&&Number(data.amount)<0){toast('أدخلي مبلغاً صحيحاً');return}else if(page==='goals')data.progress=Math.max(0,Math.min(100,Number(data.progress)||0));if(page!=='photos'){if(editing)arr=arr.map(x=>x.id===editing?{...x,...data}:x);else arr.unshift({id:uid(),...data,done:false})}if(store.set(page,arr)){const batchSaved=page==='photos'&&pendingMedia.length>1;closeForm();render();toast(batchSaved?'تمت إضافة الملفات بنجاح 🌷':'تم الحفظ بنجاح 🌷')}}catch(err){console.error(err);toast('تعذر حفظ الملف. تأكدي من مساحة الجهاز وحاولي مجدداً.')}finally{submit.disabled=false;submit.textContent='حفظ'}};
+window.openForm=openForm;
+let viewerIndex=0,viewerItems=[];
+window.viewMedia=id=>{viewerItems=store.get('photos').filter(x=>mediaCache[x.mediaId]);viewerIndex=viewerItems.findIndex(x=>x.id===id);if(viewerIndex<0)return;showMediaViewer()};
+function showMediaViewer(){const item=viewerItems[viewerIndex];if(!item)return;const body=$('#mediaViewerBody');body.innerHTML=item.mediaType==='video'?`<video class="viewer-video" src="${mediaCache[item.mediaId]}" controls autoplay playsinline preload="auto"></video>`:`<img class="viewer-image" src="${mediaCache[item.mediaId]}" alt="${esc(item.title||'صورة')}">`;$('#mediaViewerTitle').textContent=item.title||'بدون اسم';$('#mediaViewerCount').textContent=`${viewerIndex+1} / ${viewerItems.length}`;$('#mediaViewer').classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeMediaViewer(){const v=$('#mediaViewer');const video=v.querySelector('video');if(video)video.pause();v.classList.add('hidden');document.body.style.overflow=''}
+function stepMedia(delta){if(!viewerItems.length)return;viewerIndex=(viewerIndex+delta+viewerItems.length)%viewerItems.length;showMediaViewer()}
+$('#mediaViewerDownload').addEventListener('click',()=>{const item=viewerItems[viewerIndex];if(item)downloadMedia(item.id)});$('#closeMediaViewer').addEventListener('click',closeMediaViewer);$('#mediaPrev').addEventListener('click',()=>stepMedia(-1));$('#mediaNext').addEventListener('click',()=>stepMedia(1));$('#mediaViewer').addEventListener('click',e=>{if(e.target.id==='mediaViewer')closeMediaViewer()});document.addEventListener('keydown',e=>{if($('#mediaViewer')&&!$('#mediaViewer').classList.contains('hidden')){if(e.key==='Escape')closeMediaViewer();if(e.key==='ArrowLeft')stepMedia(1);if(e.key==='ArrowRight')stepMedia(-1)}});
+window.go=go;window.removeItem=id=>{if(!confirm('هل تريدين حذف هذا العنصر؟'))return;const found=store.get(page).find(x=>x.id===id);if(page==='photos'&&found?.mediaId)deleteMedia(found.mediaId);store.set(page,store.get(page).filter(x=>x.id!==id));render();toast('تم الحذف')};window.toggleTask=(id,v)=>{store.set('tasks',store.get('tasks').map(x=>x.id===id?{...x,done:v}:x));render()};window.toggleHabit=id=>{store.set('habits',store.get('habits').map(x=>x.id===id?{...x,lastDone:x.lastDone===today()?'':today()}:x));render();toast('تم تحديث العادة')};window.setDark=v=>{document.body.classList.toggle('dark',v);localStorage.setItem('fayrouz_dark',v?'1':'0')};window.setAccent=(a,s)=>{if(!/^#[0-9a-f]{6}$/i.test(String(a)))return; s=s||`color-mix(in srgb, ${a} 13%, white)`;document.documentElement.style.setProperty('--accent',a);document.documentElement.style.setProperty('--accent2',`color-mix(in srgb, ${a} 65%, white)`);document.documentElement.style.setProperty('--soft',s);localStorage.setItem('fayrouz_accent',a);localStorage.setItem('fayrouz_soft',s);document.querySelectorAll('.swatch').forEach(b=>b.classList.toggle('selected',(b.dataset.accent||'').toLowerCase()===a.toLowerCase()));const picker=document.querySelector('.custom-color input[type=color]');if(picker&&picker.value.toLowerCase()!==a.toLowerCase())picker.value=a;toast('تم تغيير لون الواجهة وحفظ اختياركِ') };function toast(t){const x=$('#toast');x.textContent=t;x.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>x.classList.remove('show'),2400)}
 
-  const VC = window.VaultyCrypto, VG = window.VaultyGen, VS = window.VaultyStorage, I = window.VaultyI18n;
-  const { Vault, BUILTIN } = window.VaultyVault;
-  const t = (k, v) => I.t(k, v);
+// Encrypted media database: only ciphertext is written to IndexedDB.
+let mediaDBPromise;
+function mediaDB(){if(!mediaDBPromise)mediaDBPromise=new Promise((resolve,reject)=>{const req=indexedDB.open('FayrouzMedia',1);req.onupgradeneeded=()=>req.result.createObjectStore('media');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});return mediaDBPromise}
+async function saveMedia(id,blob){const encrypted=await encryptBytes(await blob.arrayBuffer());encrypted.type=blob.type||'application/octet-stream';const db=await mediaDB();return new Promise((resolve,reject)=>{const tx=db.transaction('media','readwrite');tx.objectStore('media').put(encrypted,id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
+async function getMedia(id){const db=await mediaDB();const value=await new Promise((resolve,reject)=>{const r=db.transaction('media').objectStore('media').get(id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)});if(!value)return null;if(value instanceof Blob){const legacy=value;await saveMedia(id,legacy);return legacy}const plain=await decryptBytes(value);return new Blob([plain],{type:value.type||'application/octet-stream'})}
+async function deleteMedia(id){try{const db=await mediaDB();db.transaction('media','readwrite').objectStore('media').delete(id)}catch{}}
+async function renderMediaPage(){const c=$('#content');const items=store.get('photos');for(const old of Object.values(mediaCache))URL.revokeObjectURL(old);mediaCache={};for(const item of items){try{const blob=await getMedia(item.mediaId);if(blob)mediaCache[item.mediaId]=URL.createObjectURL(blob)}catch(e){console.error(e);toast('تعذر فك تشفير أحد ملفات الوسائط.')} }const images=items.filter(x=>x.mediaType==='image').length,videos=items.filter(x=>x.mediaType==='video').length;c.innerHTML=pageHead(sections.photos.title,sections.photos.sub,sections.photos.add)+`<div class="media-library-summary"><span>كل الملفات: <b>${items.length}</b></span><span>الصور: <b>${images}</b></span><span>الفيديوهات: <b>${videos}</b></span></div><div class="media-filters"><button class="${mediaFilter==='all'?'active':''}" onclick="setMediaFilter('all')">الكل</button><button class="${mediaFilter==='image'?'active':''}" onclick="setMediaFilter('image')">الصور</button><button class="${mediaFilter==='video'?'active':''}" onclick="setMediaFilter('video')">الفيديوهات</button></div>`+listHTML('photos');} 
+window.setMediaFilter=f=>{mediaFilter=f;renderMediaPage()};
+function safeFileName(name,fallback){const clean=String(name||fallback||'fayrouz-media').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').trim().slice(0,100);return clean||fallback||'fayrouz-media'}
+window.downloadMedia=async id=>{try{const item=store.get('photos').find(x=>x.id===id);if(!item)return;const blob=await getMedia(item.mediaId);if(!blob){toast('الملف غير موجود');return}const url=URL.createObjectURL(blob),ext=(blob.type.split('/')[1]||'bin').split(';')[0].replace('jpeg','jpg');const name=safeFileName(item.fileName||item.title,`fayrouz-${item.mediaType}`);const a=document.createElement('a');a.href=url;a.download=name.includes('.')?name:`${name}.${ext}`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);toast('بدأ تحميل الملف')}catch(e){console.error(e);toast('تعذر تحميل الملف')}};
 
-  const VERSION = '1.0.0';
-  const PREF_KEY = 'vaulty.prefs';
-  const FAIL_KEY = 'vaulty.fails';
-  const LOCK_OPTIONS = [1, 2, 5, 10, 15, 30, 60];
-  const CLIP_OPTIONS = [10, 20, 30, 60];
-  const REVEAL_MS = 30000;
-  const MIN_MASTER = 10;
+// Password and recovery code independently unlock the same random AES-256 data key.
+const hashSecret=async value=>{const bytes=new TextEncoder().encode(value.trim().toLowerCase());const digest=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('')};
+async function saveFounderWrappers(rawKey){const exact=await wrapVaultKey(FOUNDER_ACCESS_PHRASE,rawKey);const normalized=await wrapVaultKey(normalizeFounderPhrase(FOUNDER_ACCESS_PHRASE),rawKey);localStorage.setItem('fayrouz_key_master',JSON.stringify(exact));localStorage.setItem('fayrouz_key_master_normalized',JSON.stringify(normalized))}
+async function setupVault(password,recovery){const raw=randomBytes(32);vaultKey=await crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},true,['encrypt','decrypt']);const p=await wrapVaultKey(password,raw),r=await wrapVaultKey(recovery,raw);localStorage.setItem('fayrouz_key_password',JSON.stringify(p));localStorage.setItem('fayrouz_key_recovery',JSON.stringify(r));await saveFounderWrappers(raw);await loadVault();localStorage.removeItem('fayrouz_auth_password');localStorage.removeItem('fayrouz_auth_recovery')}
+async function openVault(secret){const entered=String(secret??'');const records=[localStorage.getItem('fayrouz_key_password'),localStorage.getItem('fayrouz_key_recovery'),localStorage.getItem('fayrouz_key_master')].filter(Boolean);for(const raw of records){try{vaultKey=await unwrapVaultKey(entered,JSON.parse(raw));await loadVault();return true}catch{vaultKey=null}}if(normalizeFounderPhrase(entered)===normalizeFounderPhrase(FOUNDER_ACCESS_PHRASE)){const normalizedRecord=localStorage.getItem('fayrouz_key_master_normalized');if(normalizedRecord){try{vaultKey=await unwrapVaultKey(normalizeFounderPhrase(entered),JSON.parse(normalizedRecord));await loadVault();return true}catch{vaultKey=null}}}return false}
+async function ensureFounderAccess(){const raw=await crypto.subtle.exportKey('raw',vaultKey);await saveFounderWrappers(raw)}
+function authOverlay(){if(!globalThis.crypto?.subtle){document.body.insertAdjacentHTML('beforeend','<div class="auth-screen"><div class="auth-card"><h1>Fayrouz</h1><p>التشفير غير متاح في طريقة فتح التطبيق الحالية. افتحيه باستخدام متصفح Chrome أو Edge حديث ومن خلال HTTPS أو localhost.</p></div></div>');return}const encrypted=!!localStorage.getItem('fayrouz_key_password'),legacy=!!localStorage.getItem('fayrouz_auth_password');const configured=encrypted||legacy;document.body.insertAdjacentHTML('beforeend',`<div class="auth-screen" id="authScreen"><div class="auth-card"><div class="auth-logo">F</div><p class="auth-kicker">مساحتكِ الخاصة</p><h1>Fayrouz</h1><p id="authMessage">${encrypted?'أدخلي رمز الدخول لفتح مساحتكِ':'أنشئي بيانات الدخول لتشفير مساحتكِ'}</p><form id="authForm">${encrypted?'<label>رمز الدخول<input id="authPassword" type="password" required autocomplete="current-password" autofocus></label>':legacy?'<label>كلمة المرور أو رمز الاستعادة الحالية<input id="legacySecret" type="password" required></label><label>كلمة المرور الجديدة<input id="authPassword" type="password" minlength="8" required></label><label>رمز الاستعادة الجديد<input id="authRecovery" type="password" minlength="8" required></label>':'<label>كلمة المرور الجديدة<input id="authPassword" type="password" minlength="8" required autocomplete="new-password"></label><label>تأكيد كلمة المرور<input id="authConfirm" type="password" minlength="8" required></label><label>رمز الاستعادة (احفظيه في مكان آمن)<input id="authRecovery" type="password" minlength="8" required autocomplete="off"></label>'}<button class="btn primary auth-submit">${configured?'دخول':'تفعيل التشفير'}</button></form>${encrypted?'<button type="button" class="text-link auth-forgot" id="forgotAccess">نسيت كلمة المرور؟ استخدم رمز الاستعادة</button><form id="recoveryForm" class="hidden"><label>رمز الاستعادة<input id="recoveryInput" type="password" required autocomplete="off"></label><button class="btn primary auth-submit" type="submit">فتح باستخدام رمز الاستعادة</button></form>':''}<small class="auth-note">تُشفّر البيانات والوسائط على هذا الجهاز ولا تُرفع إلى أي خادم.</small></div></div>`);$('#authForm').onsubmit=async e=>{e.preventDefault();const btn=$('#authForm button');btn.disabled=true;try{if(encrypted){if(await openVault($('#authPassword').value)){await ensureFounderAccess();await finishUnlock()}else if(normalizeFounderPhrase($('#authPassword').value)===normalizeFounderPhrase(FOUNDER_ACCESS_PHRASE)&&!localStorage.getItem('fayrouz_key_master')){toast('هذا القفل أُنشئ في إصدار أقدم. افتحيه مرة واحدة بكلمة المرور أو رمز الاستعادة القديم لتفعيل الرمز الرئيسي على بياناتك الحالية.')}else toast('بيانات الدخول غير صحيحة');}else if(legacy){const entered=await hashSecret($('#legacySecret').value);if(entered!==localStorage.getItem('fayrouz_auth_password')&&entered!==localStorage.getItem('fayrouz_auth_recovery')){toast('بيانات الدخول الحالية غير صحيحة');return}const pw=$('#authPassword').value,rec=$('#authRecovery').value;if(pw.length<8||rec.length<8||pw===rec){toast('استخدمي كلمتين مختلفتين، كل منهما 8 أحرف على الأقل');return}await setupVault(pw,rec);await finishUnlock()}else{const pw=$('#authPassword').value,rec=$('#authRecovery').value;if(pw!==$('#authConfirm').value){toast('كلمتا المرور غير متطابقتين');return}if(pw.length<8||rec.length<8||pw===rec){toast('استخدمي كلمتين مختلفتين، كل منهما 8 أحرف على الأقل');return}await setupVault(pw,rec);await finishUnlock()}}catch(err){console.error(err);toast('تعذر فتح الخزنة المشفّرة. تأكدي من كلمة المرور أو رمز الاستعادة.')}finally{btn.disabled=false}};if(encrypted){$('#forgotAccess').onclick=()=>{$('#recoveryForm').classList.toggle('hidden');if(!$('#recoveryForm').classList.contains('hidden'))$('#recoveryInput').focus()};$('#recoveryForm').onsubmit=async e=>{e.preventDefault();const btn=$('#recoveryForm button');btn.disabled=true;try{if(await openVault($('#recoveryInput').value)){await ensureFounderAccess();await finishUnlock()}else if(normalizeFounderPhrase($('#recoveryInput').value)===normalizeFounderPhrase(FOUNDER_ACCESS_PHRASE)&&!localStorage.getItem('fayrouz_key_master')){toast('هذا القفل أُنشئ في إصدار أقدم. افتحيه مرة واحدة بكلمة المرور أو رمز الاستعادة القديم لتفعيل الرمز الرئيسي على بياناتك الحالية.')}else toast('رمز الاستعادة غير صحيح')}catch(err){console.error(err);toast('تعذر التحقق من رمز الاستعادة')}finally{btn.disabled=false}}}}
+async function migrateAllMedia(){const db=await mediaDB();const all=await new Promise((resolve,reject)=>{const tx=db.transaction('media','readonly'),req=tx.objectStore('media').getAll();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error)});const keys=await new Promise((resolve,reject)=>{const tx=db.transaction('media','readonly'),req=tx.objectStore('media').getAllKeys();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error)});for(let i=0;i<all.length;i++){if(all[i] instanceof Blob)await saveMedia(keys[i],all[i])}}
+async function finishUnlock(){await migrateAllMedia();$('#authScreen')?.remove();if(localStorage.getItem('fayrouz_dark')==='1')document.body.classList.add('dark');const a=localStorage.getItem('fayrouz_accent');if(a){document.documentElement.style.setProperty('--accent',a);document.documentElement.style.setProperty('--accent2',`color-mix(in srgb, ${a} 65%, white)`);document.documentElement.style.setProperty('--soft',localStorage.getItem('fayrouz_soft')||`color-mix(in srgb, ${a} 13%, white)`)}render();toast('تم فتح المساحة المشفّرة بنجاح')}
+// No logo-tap enrollment or visible founder controls.
+window.changeCredentials=async()=>{const pw=prompt('أدخلي كلمة المرور الجديدة (8 أحرف على الأقل):');if(!pw)return;if(pw.length<8){toast('كلمة المرور يجب أن تكون 8 أحرف على الأقل');return}const rec=prompt('أدخلي رمز استعادة جديداً مختلفاً:');if(!rec||rec.length<8||rec===pw){toast('رمز الاستعادة يجب أن يكون مختلفاً، 8 أحرف على الأقل');return}try{const raw=await crypto.subtle.exportKey('raw',vaultKey);localStorage.setItem('fayrouz_key_password',JSON.stringify(await wrapVaultKey(pw,raw)));localStorage.setItem('fayrouz_key_recovery',JSON.stringify(await wrapVaultKey(rec,raw)));toast('تم تحديث كلمة المرور ورمز الاستعادة')}catch(e){toast('تعذر تحديث بيانات الحماية')}};
 
-  // ------------------------------------------------------------------ prefs
-  function loadPrefs() {
-    let p = {};
-    try { p = JSON.parse(localStorage.getItem(PREF_KEY) || '{}') || {}; } catch (e) { p = {}; }
-    const o = Object.assign({
-      lang: (navigator.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en',
-      theme: 'auto', autoLockMin: 5, clipboardSec: 20, lastBackup: null
-    }, p);
-    if (o.lang !== 'ar' && o.lang !== 'en') o.lang = 'en';
-    if (!['auto', 'light', 'dark'].includes(o.theme)) o.theme = 'auto';
-    if (!LOCK_OPTIONS.includes(o.autoLockMin)) o.autoLockMin = 5;
-    if (!CLIP_OPTIONS.includes(o.clipboardSec)) o.clipboardSec = 20;
-    return o;
-  }
-  let prefs = loadPrefs();
-  function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
-  function applyPrefs() {
-    I.setLang(prefs.lang);
-    const de = document.documentElement;
-    de.lang = prefs.lang;
-    de.dir = prefs.lang === 'ar' ? 'rtl' : 'ltr';
-    de.dataset.theme = prefs.theme;
-    document.title = prefs.lang === 'ar' ? 'Vaulty – خزنتي' : 'Vaulty';
-  }
-
-  // ------------------------------------------------------------------ DOM helpers
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-  const SVG_TAGS = new Set(['svg', 'g', 'path', 'circle', 'line', 'rect']);
-
-  function h(tag, attrs) {
-    const el = SVG_TAGS.has(tag) ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
-    let value;
-    if (attrs) {
-      for (const k of Object.keys(attrs)) {
-        const v = attrs[k];
-        if (v == null || v === false) continue;
-        if (k === 'value') value = v;
-        else if (k === 'checked' || k === 'disabled' || k === 'selected') el[k] = !!v;
-        else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
-        else el.setAttribute(k, v === true ? '' : String(v));
-      }
-    }
-    for (let i = 2; i < arguments.length; i++) append(el, arguments[i]);
-    if (value !== undefined) el.value = value;
-    return el;
-  }
-  function append(el, kid) {
-    if (kid == null || kid === false) return;
-    if (Array.isArray(kid)) kid.forEach((k) => append(el, k));
-    else el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
-  }
-
-  const ICONS = {
-    eye: ['M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z', ['circle', { cx: 12, cy: 12, r: 3 }]],
-    eyeOff: ['M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z', ['circle', { cx: 12, cy: 12, r: 3 }], 'M3 3l18 18'],
-    copy: [['rect', { x: 9, y: 9, width: 12, height: 12, rx: 2 }], 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'],
-    link: ['M14 4h6v6', 'M20 4l-9 9', 'M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'],
-    edit: ['M4 20h4L19 9l-4-4L4 16v4z', 'M13 7l4 4'],
-    trash: ['M4 7h16', 'M10 11v6', 'M14 11v6', 'M6 7l1 13h10l1-13', 'M9 7V4h6v3'],
-    star: ['M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9L12 3z'],
-    plus: ['M12 5v14', 'M5 12h14'],
-    search: [['circle', { cx: 11, cy: 11, r: 7 }], 'M21 21l-4.3-4.3'],
-    lock: [['rect', { x: 5, y: 11, width: 14, height: 9, rx: 2 }], 'M8 11V8a4 4 0 0 1 8 0v3'],
-    vault: [['rect', { x: 3, y: 4, width: 18, height: 16, rx: 3 }], ['circle', { cx: 12, cy: 12, r: 4 }], 'M12 8v1.5', 'M12 14.5V16', 'M8 12h1.5', 'M14.5 12H16'],
-    key: [['circle', { cx: 8, cy: 15, r: 4 }], 'M11 12l9-9', 'M16 7l3 3'],
-    sliders: ['M4 6h9', 'M17 6h3', 'M4 12h3', 'M11 12h9', 'M4 18h11', 'M19 18h1', ['circle', { cx: 15, cy: 6, r: 2 }], ['circle', { cx: 9, cy: 12, r: 2 }], ['circle', { cx: 17, cy: 18, r: 2 }]],
-    refresh: ['M20 11a8 8 0 0 0-14.9-3', 'M4 4v4h4', 'M4 13a8 8 0 0 0 14.9 3', 'M20 20v-4h-4'],
-    download: ['M12 4v11', 'M7 11l5 5 5-5', 'M5 20h14'],
-    upload: ['M12 16V5', 'M7 9l5-5 5 5', 'M5 20h14'],
-    x: ['M6 6l12 12', 'M18 6L6 18'],
-    alert: ['M12 3l10 18H2L12 3z', 'M12 10v5', 'M12 18h.01']
-  };
-  function icon(name, extra) {
-    const svg = h('svg', { viewBox: '0 0 24 24', class: 'icon' + (extra ? ' ' + extra : ''), 'aria-hidden': 'true', width: 20, height: 20 });
-    for (const part of ICONS[name]) {
-      if (typeof part === 'string') svg.append(h('path', { d: part }));
-      else svg.append(h(part[0], part[1]));
-    }
-    return svg;
-  }
-  const iconBtn = (name, label, onClick, cls) =>
-    h('button', { type: 'button', class: 'iconbtn' + (cls ? ' ' + cls : ''), 'aria-label': label, title: label, onClick }, icon(name));
-
-  // ------------------------------------------------------------------ toast + clipboard
-  let toastBox;
-  function toast(msg, kind) {
-    if (!toastBox) { toastBox = h('div', { class: 'toasts', role: 'status', 'aria-live': 'polite' }); document.body.append(toastBox); }
-    const el = h('div', { class: 'toast' + (kind ? ' ' + kind : '') }, msg);
-    toastBox.append(el);
-    setTimeout(() => el.remove(), kind === 'error' ? 5000 : 3200);
-  }
-
-  let clipTimer = null;
-  async function writeClipboard(text) {
-    try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
-    try {
-      const ta = h('textarea', { class: 'offscreen', readonly: '' });
-      ta.value = text; document.body.append(ta); ta.select();
-      const ok = document.execCommand('copy'); ta.remove(); return ok;
-    } catch (e) { return false; }
-  }
-  async function clearClipboardNow() {
-    if (clipTimer) { clearTimeout(clipTimer); clipTimer = null; }
-    try { await navigator.clipboard.writeText(''); } catch (e) { /* may be unfocused */ }
-  }
-  async function copySecret(text, whatKey) {
-    if (!text) { toast(t('acc.nothingToCopy')); return; }
-    if (!(await writeClipboard(text))) { toast(t('acc.nothingToCopy'), 'error'); return; }
-    toast(t('acc.copied', { what: t(whatKey), s: prefs.clipboardSec }));
-    if (clipTimer) clearTimeout(clipTimer);
-    clipTimer = setTimeout(() => { clipTimer = null; navigator.clipboard.writeText('').catch(() => {}); }, prefs.clipboardSec * 1000);
-  }
-
-  const fmtDate = (ts) => new Intl.DateTimeFormat(prefs.lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB', { dateStyle: 'medium' }).format(new Date(ts));
-
-  function safeUrl(u) {
-    if (!u) return null;
-    const s = /^[a-z][a-z0-9+.-]*:/i.test(u.trim()) ? u.trim() : 'https://' + u.trim();
-    try { const x = new URL(s); return x.protocol === 'https:' || x.protocol === 'http:' ? x.href : null; } catch (e) { return null; }
-  }
-  function hostOf(u) { const s = safeUrl(u); try { return s ? new URL(s).hostname : ''; } catch (e) { return ''; } }
-
-  // ------------------------------------------------------------------ state
-  const root = document.getElementById('app');
-  let vault = null;
-  let hasVault = false;
-  const S = { tab: 'home', q: '', filter: 'all', cat: 'all', revealed: new Map() };
-  let listEl = null;
-  let lastActivity = Date.now();
-
-  const catName = (id) => {
-    if (BUILTIN.includes(id)) return t('cat.' + id);
-    const c = vault.categories.find((x) => x.id === id);
-    return c ? c.name : t('cat.other');
-  };
-  const allCats = () => BUILTIN.map((id) => ({ id, name: t('cat.' + id) })).concat(vault.categories);
-  const hueOf = (s) => { let n = 0; for (const ch of s) n = (n * 31 + ch.charCodeAt(0)) >>> 0; return n % 6; };
-
-  // ------------------------------------------------------------------ strength meter
-  function meter() {
-    const bars = [0, 1, 2, 3, 4].map(() => h('i'));
-    const label = h('span', { class: 'meter-label' });
-    const el = h('div', { class: 'meter', 'aria-live': 'polite' }, h('div', { class: 'bars' }, bars), label);
-    return {
-      el,
-      update(pw) {
-        const r = VG.strength(pw);
-        bars.forEach((b, i) => { b.className = pw && i <= r.score ? 's' + r.score : ''; });
-        label.textContent = pw ? t('str.' + r.score) : t('str.none');
-        return r;
-      }
-    };
-  }
-
-  // password input with a show/hide toggle
-  function passwordInput(opts) {
-    const input = h('input', Object.assign({ type: 'password', class: 'input ltr', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' }, opts));
-    const btn = h('button', { type: 'button', class: 'iconbtn inside', 'aria-label': t('g.show'), title: t('g.show') }, icon('eye'));
-    btn.addEventListener('click', () => {
-      const show = input.type === 'password';
-      input.type = show ? 'text' : 'password';
-      btn.replaceChildren(icon(show ? 'eyeOff' : 'eye'));
-      const l = t(show ? 'g.hide' : 'g.show');
-      btn.setAttribute('aria-label', l); btn.title = l;
-    });
-    return { input, wrap: h('div', { class: 'pwwrap' }, input, btn) };
-  }
-  const field = (label, control, extra) => h('label', { class: 'field' }, h('span', { class: 'label' }, label), control, extra);
-
-  // ------------------------------------------------------------------ modals
-  const modals = [];
-  function openModal(title, body, actions) {
-    const prev = document.activeElement;
-    const overlay = h('div', { class: 'overlay' });
-    const box = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
-      h('header', { class: 'modal-head' }, h('h2', {}, title), iconBtn('x', t('g.close'), () => m.close())),
-      h('div', { class: 'modal-body' }, body),
-      actions && actions.length ? h('footer', { class: 'modal-foot' }, actions) : null);
-    overlay.append(box);
-    document.body.append(overlay);
-    document.body.classList.add('modal-open');
-    const m = {
-      box,
-      close() {
-        overlay.remove();
-        const i = modals.indexOf(m); if (i >= 0) modals.splice(i, 1);
-        if (!modals.length) document.body.classList.remove('modal-open');
-        if (prev && prev.isConnected && prev.focus) prev.focus();
-      }
-    };
-    modals.push(m);
-    const first = box.querySelector('input:not([type=file]),select,textarea');
-    (first || box.querySelector('.modal-foot button') || box).focus();
-    return m;
-  }
-  function closeAllModals() { modals.slice().forEach((m) => m.close()); }
-
-  // One document-level handler so Escape and Tab-trapping keep working even if focus was lost
-  // (e.g. a button was disabled while an async action ran).
-  document.addEventListener('keydown', (e) => {
-    const top = modals[modals.length - 1];
-    if (!top) return;
-    if (e.key === 'Escape') { e.preventDefault(); top.close(); return; }
-    if (e.key === 'Tab') {
-      const f = Array.from(top.box.querySelectorAll('button,input,select,textarea,a[href]')).filter((x) => !x.disabled && x.offsetParent !== null);
-      if (!f.length) return;
-      const first = f[0], last = f[f.length - 1], active = document.activeElement;
-      if (!top.box.contains(active)) { e.preventDefault(); first.focus(); }
-      else if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
-    }
-  });
-
-  function confirmDialog(title, text, okLabel, danger) {
-    return new Promise((resolve) => {
-      let done = false;
-      const finish = (v) => { if (!done) { done = true; resolve(v); } m.close(); };
-      const ok = h('button', { type: 'button', class: 'btn ' + (danger ? 'danger-fill' : 'primary'), onClick: () => finish(true) }, okLabel);
-      const no = h('button', { type: 'button', class: 'btn', onClick: () => finish(false) }, t('acc.cancel'));
-      const m = openModal(title, h('p', {}, text), [no, ok]);
-      m.box.parentElement.addEventListener('click', (e) => { if (e.target === m.box.parentElement) finish(false); });
-      no.focus();
-    });
-  }
-
-  // ------------------------------------------------------------------ lock / unlock
-  function lockVault(auto) {
-    vault.lock();
-    S.revealed.forEach((tm) => clearTimeout(tm));
-    S.revealed.clear();
-    S.q = ''; S.filter = 'all'; S.cat = 'all'; S.tab = 'home';
-    closeAllModals();
-    clearClipboardNow();
-    render();
-    if (auto) toast(t('lock.autoLocked'));
-  }
-
-  function failState() { try { return JSON.parse(localStorage.getItem(FAIL_KEY) || '{}') || {}; } catch (e) { return {}; } }
-  function setFailState(o) { try { localStorage.setItem(FAIL_KEY, JSON.stringify(o)); } catch (e) { /* ignore */ } }
-
-  function dial() {
-    const ring = h('g', { class: 'dial-ring' });
-    for (let i = 0; i < 60; i++) {
-      const a = (i * 6 * Math.PI) / 180, major = i % 5 === 0, r1 = major ? 45 : 49, r2 = 55;
-      ring.append(h('line', { x1: (60 + r1 * Math.sin(a)).toFixed(2), y1: (60 - r1 * Math.cos(a)).toFixed(2), x2: (60 + r2 * Math.sin(a)).toFixed(2), y2: (60 - r2 * Math.cos(a)).toFixed(2), class: major ? 'tick major' : 'tick' }));
-    }
-    const svg = h('svg', { viewBox: '0 0 120 120', class: 'dial', 'aria-hidden': 'true' },
-      ring, h('circle', { cx: 60, cy: 60, r: 38, class: 'dial-face' }), h('path', { d: 'M60 2l5 9H55z', class: 'dial-pointer' }),
-      h('rect', { x: 50, y: 56, width: 20, height: 15, rx: 3, class: 'dial-lock' }),
-      h('path', { d: 'M54 56v-4a6 6 0 0 1 12 0v4', class: 'dial-shackle' }));
-    return { svg, ring };
-  }
-
-  function renderLock() {
-    const setup = !hasVault;
-    const d = dial();
-    const pw = passwordInput({ placeholder: t('lock.master'), 'aria-label': t('lock.master'), autocomplete: 'off' });
-    const pw2 = setup ? passwordInput({ placeholder: t('lock.confirm'), 'aria-label': t('lock.confirm') }) : null;
-    const m = setup ? meter() : null;
-    const err = h('p', { class: 'error', role: 'alert' });
-    const btn = h('button', { type: 'button', class: 'btn primary wide' }, setup ? t('lock.create') : t('lock.unlock'));
-    let busy = false;
-
-    const turn = () => { d.ring.style.transform = 'rotate(' + (pw.input.value.length * 6) + 'deg)'; };
-    pw.input.addEventListener('input', () => { turn(); if (m) m.update(pw.input.value); err.textContent = ''; });
-    if (m) m.update('');
-
-    async function submit() {
-      if (busy) return;
-      err.textContent = '';
-      const v = pw.input.value;
-      if (setup) {
-        if (v.length < MIN_MASTER) { err.textContent = t('lock.errShort'); return; }
-        if (VG.strength(v).score < 2) { err.textContent = t('lock.errWeak'); return; }
-        if (v !== pw2.input.value) { err.textContent = t('lock.errMatch'); return; }
-      } else {
-        const fs = failState();
-        const wait = Math.ceil(((fs.until || 0) - Date.now()) / 1000);
-        if (wait > 0) { err.textContent = t('lock.errWait', { s: wait }); return; }
-      }
-      busy = true; btn.disabled = true; btn.textContent = t('lock.working');
-      try {
-        if (setup) { await vault.create(v); hasVault = true; }
-        else { await vault.unlock(v); setFailState({}); }
-        pw.input.value = ''; if (pw2) pw2.input.value = '';
-        d.ring.style.transform = 'rotate(300deg)';
-        d.svg.classList.add('open');
-        await new Promise((r) => setTimeout(r, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450));
-        lastActivity = Date.now();
-        render();
-        if (vault.corrupt) toast(t('lock.errCorrupt', { n: vault.corrupt }), 'error');
-      } catch (e) {
-        busy = false; btn.disabled = false; btn.textContent = setup ? t('lock.create') : t('lock.unlock');
-        if (e && e.code === 'BAD_PASSWORD') {
-          const fs = failState(); const n = (fs.n || 0) + 1;
-          setFailState({ n, until: n >= 3 ? Date.now() + Math.min(30, Math.pow(2, n - 3)) * 1000 : 0 });
-          err.textContent = t('lock.errWrong');
-          d.svg.classList.remove('shake'); void d.svg.getBoundingClientRect(); d.svg.classList.add('shake');
-        } else { err.textContent = t('lock.noDb'); }
-      }
-    }
-    btn.addEventListener('click', submit);
-    [pw.input, pw2 && pw2.input].forEach((i) => i && i.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); }));
-
-    root.append(h('main', { class: 'lockscreen' },
-      h('div', { class: 'lock-tools' }, langButton(), themeButton()),
-      h('section', { class: 'lock-card' },
-        d.svg,
-        h('h1', {}, 'Vaulty', h('span', { class: 'sub' }, ' ' + (prefs.lang === 'ar' ? 'خزنتي' : ''))),
-        h('p', { class: 'tagline' }, t('app.tagline')),
-        h('h2', {}, setup ? t('lock.setupTitle') : t('lock.unlockTitle')),
-        setup ? h('p', { class: 'hint' }, t('lock.setupHint')) : null,
-        pw.wrap, pw2 ? pw2.wrap : null, m ? m.el : null, err, btn)));
-    setTimeout(() => pw.input.focus(), 0);
-  }
-
-  function langButton() {
-    return h('button', { type: 'button', class: 'btn small', onClick: () => { prefs.lang = prefs.lang === 'ar' ? 'en' : 'ar'; savePrefs(); render(); } }, prefs.lang === 'ar' ? 'English' : 'العربية');
-  }
-  function themeButton() {
-    const order = ['auto', 'light', 'dark'];
-    return h('button', { type: 'button', class: 'btn small', onClick: () => { prefs.theme = order[(order.indexOf(prefs.theme) + 1) % 3]; savePrefs(); render(); } }, t('theme.' + prefs.theme));
-  }
-
-  // ------------------------------------------------------------------ main shell
-  function render() {
-    applyPrefs();
-    root.replaceChildren();
-    listEl = null;
-    if (!VC.available) { root.append(h('main', { class: 'lockscreen' }, h('section', { class: 'lock-card' }, h('h1', {}, 'Vaulty'), h('p', { class: 'error' }, t('lock.noCrypto'))))); return; }
-    if (!vault.isUnlocked()) renderLock(); else renderMain();
-  }
-
-  function renderMain() {
-    const tabs = [['home', 'vault', 'nav.home'], ['generator', 'key', 'nav.generator'], ['settings', 'sliders', 'nav.settings']];
-    const navBtn = (cls) => ([id, ic, key]) => h('button', { type: 'button', class: cls + (S.tab === id ? ' active' : ''), 'aria-current': S.tab === id ? 'page' : null, onClick: () => { S.tab = id; renderMain2(); } }, icon(ic), h('span', {}, t(key)));
-    const view = h('section', { class: 'view' });
-    root.replaceChildren(h('div', { class: 'shell' },
-      h('aside', { class: 'rail' },
-        h('div', { class: 'brand' }, icon('vault', 'brand-icon'), h('strong', {}, 'Vaulty'), h('span', {}, prefs.lang === 'ar' ? 'خزنتي' : '')),
-        h('nav', { class: 'rail-nav', 'aria-label': 'Main' }, tabs.map(navBtn('railbtn'))),
-        h('button', { type: 'button', class: 'btn wide', onClick: () => lockVault(false) }, icon('lock'), t('act.lock'))),
-      h('main', { class: 'main' },
-        h('header', { class: 'top' },
-          h('h1', {}, t(tabs.find((x) => x[0] === S.tab)[2])),
-          h('div', { class: 'top-actions' },
-            S.tab === 'home' ? iconBtn('eyeOff', t('act.hideAll'), hideAll) : null,
-            iconBtn('lock', t('act.lock'), () => lockVault(false), 'mobile-only'))),
-        view),
-      h('nav', { class: 'tabbar', 'aria-label': 'Main' }, tabs.map(navBtn('tab'))),
-      S.tab === 'home' ? h('button', { type: 'button', class: 'fab', 'aria-label': t('act.add'), title: t('act.add'), onClick: () => openAccountForm(null) }, icon('plus')) : null));
-    if (S.tab === 'home') viewHome(view);
-    else if (S.tab === 'generator') viewGenerator(view);
-    else viewSettings(view);
-  }
-  const renderMain2 = renderMain;
-
-  function hideAll() {
-    S.revealed.forEach((tm) => clearTimeout(tm));
-    S.revealed.clear();
-    refreshList();
-  }
-
-  // ------------------------------------------------------------------ home
-  function viewHome(view) {
-    const accounts = vault.list();
-    const info = VG.analyze(accounts);
-    const tile = (id, label, n) => h('button', { type: 'button', class: 'tile' + (S.filter === id ? ' active' : '') + (id === 'weak' && n ? ' warn' : ''), 'aria-pressed': S.filter === id ? 'true' : 'false',
-      onClick: () => { S.filter = S.filter === id && id !== 'all' ? 'all' : id; renderMain(); } },
-      h('strong', {}, n), h('span', {}, label));
-    const search = h('input', { type: 'search', class: 'input search', placeholder: t('home.search'), 'aria-label': t('home.search'), value: S.q, autocomplete: 'off' });
-    search.addEventListener('input', () => { S.q = search.value; refreshList(); });
-    const cats = [{ id: 'all', name: t('home.catAll') }].concat(allCats());
-    const chips = h('div', { class: 'chips', role: 'group', 'aria-label': t('f.category') },
-      cats.map((c) => h('button', { type: 'button', class: 'chip' + (S.cat === c.id ? ' active' : ''), 'aria-pressed': S.cat === c.id ? 'true' : 'false', onClick: () => { S.cat = c.id; renderMain(); } }, c.name)));
-    const recent = accounts.slice().sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
-
-    view.append(
-      h('div', { class: 'tiles' }, tile('all', t('home.all'), accounts.length), tile('fav', t('home.fav'), accounts.filter((a) => a.favorite).length),
-        tile('weak', t('home.weak'), info.weak.size), tile('reused', t('home.reused'), info.reused.size)),
-      h('div', { class: 'searchwrap' }, icon('search', 'search-icon'), search),
-      chips,
-      accounts.length > 1 && !S.q && S.filter === 'all' && S.cat === 'all'
-        ? h('div', { class: 'recent' }, h('h2', {}, t('home.recent')), h('div', { class: 'recent-row' },
-          recent.map((a) => h('button', { type: 'button', class: 'recent-item', onClick: () => openAccountForm(a) },
-            h('span', { class: 'avatar sm hue' + hueOf(a.name) }, Array.from(a.name)[0].toUpperCase()), h('span', { class: 'rname' }, a.name), h('time', {}, fmtDate(a.createdAt)))))) : null);
-    listEl = h('div', { class: 'cards' });
-    view.append(listEl);
-    refreshList();
-  }
-
-  function refreshList() {
-    if (!listEl) return;
-    const accounts = vault.list();
-    const info = VG.analyze(accounts);
-    const q = S.q.trim().toLowerCase();
-    let items = accounts.filter((a) => {
-      if (S.cat !== 'all' && a.category !== S.cat) return false;
-      if (S.filter === 'fav' && !a.favorite) return false;
-      if (S.filter === 'weak' && !info.weak.has(a.id)) return false;
-      if (S.filter === 'reused' && !info.reused.has(a.id)) return false;
-      if (!q) return true;
-      return [a.name, a.email, a.username, a.url].some((s) => s && s.toLowerCase().includes(q));
-    });
-    const cmp = new Intl.Collator(prefs.lang === 'ar' ? 'ar' : 'en', { sensitivity: 'base' }).compare;
-    items.sort((a, b) => (b.favorite - a.favorite) || cmp(a.name, b.name));
-    listEl.replaceChildren();
-    if (!accounts.length) {
-      listEl.append(h('div', { class: 'empty' }, icon('vault', 'empty-icon'), h('h2', {}, t('home.emptyTitle')), h('p', {}, t('home.emptyText')),
-        h('button', { type: 'button', class: 'btn primary', onClick: () => openAccountForm(null) }, icon('plus'), t('act.add'))));
-      return;
-    }
-    if (!items.length) { listEl.append(h('p', { class: 'empty-line' }, t('home.noResults'))); return; }
-    items.forEach((a) => listEl.append(accountCard(a, info)));
-  }
-
-  function setRevealed(id, on) {
-    if (S.revealed.has(id)) { clearTimeout(S.revealed.get(id)); S.revealed.delete(id); }
-    if (on) S.revealed.set(id, setTimeout(() => { S.revealed.delete(id); refreshList(); }, REVEAL_MS));
-    refreshList();
-  }
-
-  function accountCard(a, info) {
-    const shown = S.revealed.has(a.id);
-    const ident = a.username || a.email;
-    const url = safeUrl(a.url);
-    return h('article', { class: 'card' },
-      h('div', { class: 'card-head' },
-        h('div', { class: 'avatar hue' + hueOf(a.name), 'aria-hidden': 'true' }, Array.from(a.name)[0].toUpperCase()),
-        h('div', { class: 'card-title' }, h('h3', { dir: 'auto' }, a.name), h('p', { class: 'ident', dir: 'auto' }, ident || t('acc.noUser'))),
-        iconBtn('star', t(a.favorite ? 'acc.unfav' : 'acc.fav'), async () => { await vault.saveAccount(Object.assign({}, a, { favorite: !a.favorite })); refreshList(); }, a.favorite ? 'fav on' : 'fav')),
-      h('div', { class: 'badges' },
-        h('span', { class: 'badge cat' }, catName(a.category)),
-        info.weak.has(a.id) ? h('span', { class: 'badge warn' }, icon('alert'), t('acc.weakBadge')) : null,
-        info.reused.has(a.id) ? h('span', { class: 'badge warn' }, icon('alert'), t('acc.reusedBadge')) : null,
-        url ? h('span', { class: 'badge host', dir: 'ltr' }, hostOf(a.url)) : null),
-      h('div', { class: 'pw-row' },
-        h('span', { class: 'pw-text ltr', 'aria-live': 'off' }, a.password ? (shown ? a.password : '••••••••••') : '—'),
-        a.password ? iconBtn(shown ? 'eyeOff' : 'eye', t(shown ? 'acc.hide' : 'acc.show'), () => setRevealed(a.id, !shown)) : null),
-      h('div', { class: 'card-actions' },
-        h('button', { type: 'button', class: 'btn small', onClick: () => copySecret(a.username || a.email, 'acc.whatUser') }, icon('copy'), t('acc.copyUser')),
-        h('button', { type: 'button', class: 'btn small', onClick: () => copySecret(a.password, 'acc.whatPass') }, icon('copy'), t('acc.copyPass')),
-        a.url ? iconBtn('link', t('acc.open'), () => { const u = safeUrl(a.url); if (u) window.open(u, '_blank', 'noopener,noreferrer'); else toast(t('acc.badUrl'), 'error'); }) : null,
-        iconBtn('edit', t('acc.edit1'), () => openAccountForm(a)),
-        iconBtn('trash', t('acc.delete'), async () => {
-          if (await confirmDialog(t('acc.deleteTitle'), t('acc.deleteText', { name: a.name }), t('acc.delete'), true)) {
-            await vault.deleteAccount(a.id); setRevealed(a.id, false); toast(t('acc.deleted')); renderMain();
-          }
-        }, 'danger-text')));
-  }
-
-  // ------------------------------------------------------------------ account form
-  function openAccountForm(existing) {
-    const a = existing ? Object.assign({}, existing) : { name: '', username: '', email: '', password: '', url: '', category: 'other', notes: '', favorite: false };
-    const name = h('input', { type: 'text', class: 'input', value: a.name, maxlength: 200, autocomplete: 'off', dir: 'auto' });
-    const username = h('input', { type: 'text', class: 'input ltr', value: a.username, maxlength: 200, autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
-    const email = h('input', { type: 'email', class: 'input ltr', value: a.email, maxlength: 254, autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
-    const pw = passwordInput({ value: a.password, maxlength: 1024 });
-    const url = h('input', { type: 'text', class: 'input ltr', value: a.url, maxlength: 2048, autocomplete: 'off', autocapitalize: 'off', inputmode: 'url', placeholder: 'example.com' });
-    const cat = h('select', { class: 'input' }, allCats().map((c) => h('option', { value: c.id }, c.name)));
-    cat.value = allCats().some((c) => c.id === a.category) ? a.category : 'other';
-    const notes = h('textarea', { class: 'input', rows: 4, maxlength: 10000, dir: 'auto' }); notes.value = a.notes;
-    const m = meter(); m.update(a.password);
-    pw.input.addEventListener('input', () => m.update(pw.input.value));
-    const gen = h('button', { type: 'button', class: 'btn small', onClick: () => {
-      pw.input.value = VG.generate({ length: 20 }); pw.input.type = 'text'; m.update(pw.input.value);
-    } }, icon('refresh'), t('acc.generate'));
-    const err = h('p', { class: 'error', role: 'alert' });
-
-    const save = h('button', { type: 'button', class: 'btn primary', onClick: async () => {
-      err.textContent = '';
-      if (!name.value.trim()) { err.textContent = t('acc.nameRequired'); name.focus(); return; }
-      if (url.value.trim() && !safeUrl(url.value)) { err.textContent = t('acc.badUrl'); url.focus(); return; }
-      save.disabled = true;
-      try {
-        await vault.saveAccount(Object.assign({}, a, { name: name.value.trim(), username: username.value.trim(), email: email.value.trim(), password: pw.input.value,
-          url: url.value.trim(), category: cat.value, notes: notes.value }));
-        mod.close(); toast(t('acc.saved')); renderMain();
-      } catch (e) { save.disabled = false; err.textContent = t('acc.saveFailed'); }
-    } }, t('acc.save'));
-    const cancel = h('button', { type: 'button', class: 'btn', onClick: () => mod.close() }, t('acc.cancel'));
-
-    const body = h('div', { class: 'form' },
-      field(t('f.name'), name), field(t('f.username'), username), field(t('f.email'), email),
-      field(t('f.password'), pw.wrap, h('div', { class: 'pw-tools' }, m.el, gen)),
-      field(t('f.url'), url), field(t('f.category'), cat), field(t('f.notes'), notes),
-      existing ? h('p', { class: 'meta' }, t('f.created', { d: fmtDate(a.createdAt) })) : null, err);
-    const mod = openModal(existing ? t('acc.edit') : t('acc.add'), body, [cancel, save]);
-    if (existing) name.blur();
-  }
-
-  // ------------------------------------------------------------------ generator
-  function viewGenerator(view) {
-    const o = { length: 20, lower: true, upper: true, digits: true, symbols: true, avoidAmbiguous: false };
-    const out = h('output', { class: 'gen-out ltr', 'aria-label': t('gen.output') });
-    const m = meter();
-    const err = h('p', { class: 'error', role: 'alert' });
-    const lenLabel = h('span', { class: 'label' });
-    const range = h('input', { type: 'range', min: 8, max: 64, value: o.length, class: 'range', 'aria-label': t('gen.length', { n: '' }) });
-    let current = '';
-    function make() {
-      err.textContent = '';
-      try { current = VG.generate(o); } catch (e) { current = ''; err.textContent = t('gen.needOne'); }
-      out.textContent = current; m.update(current);
-      lenLabel.textContent = t('gen.length', { n: o.length });
-    }
-    range.addEventListener('input', () => { o.length = +range.value; make(); });
-    const check = (key, label) => {
-      const cb = h('input', { type: 'checkbox', checked: o[key] });
-      cb.addEventListener('change', () => { o[key] = cb.checked; make(); });
-      return h('label', { class: 'check' }, cb, h('span', {}, label));
-    };
-    view.append(h('div', { class: 'panel gen' },
-      out, m.el,
-      h('div', { class: 'row' },
-        h('button', { type: 'button', class: 'btn primary', onClick: make }, icon('refresh'), t('gen.new')),
-        h('button', { type: 'button', class: 'btn', onClick: () => copySecret(current, 'acc.whatGen') }, icon('copy'), t('gen.copy'))),
-      h('div', { class: 'range-row' }, lenLabel, range),
-      h('div', { class: 'checks' }, check('lower', t('gen.lower')), check('upper', t('gen.upper')), check('digits', t('gen.digits')), check('symbols', t('gen.symbols')), check('avoidAmbiguous', t('gen.ambiguous'))),
-      err));
-    make();
-  }
-
-  // ------------------------------------------------------------------ settings
-  function select(options, value, onChange, label) {
-    const s = h('select', { class: 'input', 'aria-label': label }, options.map(([v, l]) => h('option', { value: v }, l)));
-    s.value = String(value);
-    s.addEventListener('change', () => onChange(s.value));
-    return s;
-  }
-  const row = (label, control) => h('div', { class: 'setrow' }, h('span', {}, label), control);
-
-  function viewSettings(view) {
-    const catInput = h('input', { type: 'text', class: 'input', maxlength: 40, placeholder: t('set.catName'), 'aria-label': t('set.catName') });
-    const addCat = async () => { const n = catInput.value.trim(); if (!n) return; await vault.addCategory(n); renderMain(); };
-    catInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addCat(); });
-
-    view.append(
-      h('section', { class: 'panel' }, h('h2', {}, t('set.appearance')),
-        row(t('set.theme'), select([['auto', t('theme.auto')], ['light', t('theme.light')], ['dark', t('theme.dark')]], prefs.theme, (v) => { prefs.theme = v; savePrefs(); applyPrefs(); }, t('set.theme'))),
-        row(t('set.language'), select([['ar', 'العربية'], ['en', 'English']], prefs.lang, (v) => { prefs.lang = v; savePrefs(); render(); }, t('set.language')))),
-      h('section', { class: 'panel' }, h('h2', {}, t('set.security')),
-        row(t('set.autolock'), select(LOCK_OPTIONS.map((n) => [n, t('set.minutes', { n })]), prefs.autoLockMin, (v) => { prefs.autoLockMin = +v; savePrefs(); }, t('set.autolock'))),
-        row(t('set.clip'), select(CLIP_OPTIONS.map((n) => [n, t('set.seconds', { n })]), prefs.clipboardSec, (v) => { prefs.clipboardSec = +v; savePrefs(); }, t('set.clip'))),
-        h('button', { type: 'button', class: 'btn', onClick: openChangeMaster }, icon('key'), t('set.changeMaster'))),
-      h('section', { class: 'panel' }, h('h2', {}, t('set.categories')),
-        vault.categories.length ? h('ul', { class: 'catlist' }, vault.categories.map((c) => h('li', {}, h('span', { dir: 'auto' }, c.name),
-          iconBtn('trash', t('set.catDelete'), async () => {
-            if (await confirmDialog(t('set.catDeleteTitle'), t('set.catDeleteText', { name: c.name }), t('acc.delete'), true)) { await vault.deleteCategory(c.id); if (S.cat === c.id) S.cat = 'all'; renderMain(); }
-          }, 'danger-text')))) : h('p', { class: 'meta' }, t('set.catNone')),
-        h('div', { class: 'row' }, catInput, h('button', { type: 'button', class: 'btn', onClick: addCat }, icon('plus'), t('set.catAdd')))),
-      h('section', { class: 'panel' }, h('h2', {}, t('set.backup')),
-        h('p', { class: 'meta' }, prefs.lastBackup ? t('set.lastBackup', { d: fmtDate(prefs.lastBackup) }) : t('set.noBackup')),
-        h('div', { class: 'row' },
-          h('button', { type: 'button', class: 'btn primary', onClick: openExport }, icon('download'), t('set.export')),
-          h('button', { type: 'button', class: 'btn', onClick: openImport }, icon('upload'), t('set.import')))),
-      h('section', { class: 'panel danger' }, h('h2', {}, t('set.danger')),
-        h('button', { type: 'button', class: 'btn danger', onClick: openWipe }, icon('trash'), t('set.wipe'))),
-      h('section', { class: 'panel' }, h('h2', {}, t('set.about')),
-        h('p', {}, 'Vaulty – خزنتي · ' + t('set.version', { v: VERSION })), h('p', { class: 'meta' }, t('set.aboutText'))));
-  }
-
-  function openChangeMaster() {
-    const cur = passwordInput({ 'aria-label': t('mm.current') });
-    const nw = passwordInput({ 'aria-label': t('mm.new') });
-    const nw2 = passwordInput({ 'aria-label': t('mm.confirm') });
-    const m = meter(); m.update('');
-    nw.input.addEventListener('input', () => m.update(nw.input.value));
-    const err = h('p', { class: 'error', role: 'alert' });
-    const go = h('button', { type: 'button', class: 'btn primary', onClick: async () => {
-      err.textContent = '';
-      if (nw.input.value.length < MIN_MASTER) { err.textContent = t('lock.errShort'); return; }
-      if (VG.strength(nw.input.value).score < 2) { err.textContent = t('lock.errWeak'); return; }
-      if (nw.input.value !== nw2.input.value) { err.textContent = t('lock.errMatch'); return; }
-      go.disabled = true; go.textContent = t('g.working');
-      try { await vault.changeMaster(cur.input.value, nw.input.value); mod.close(); toast(t('mm.changed')); }
-      catch (e) { go.disabled = false; go.textContent = t('mm.change'); err.textContent = e.code === 'BAD_PASSWORD' ? t('lock.errWrong') : t('acc.saveFailed'); }
-    } }, t('mm.change'));
-    const mod = openModal(t('mm.title'), h('div', { class: 'form' }, field(t('mm.current'), cur.wrap), field(t('mm.new'), nw.wrap, m.el), field(t('mm.confirm'), nw2.wrap), err),
-      [h('button', { type: 'button', class: 'btn', onClick: () => mod.close() }, t('acc.cancel')), go]);
-  }
-
-  function openExport() {
-    const p1 = passwordInput({ 'aria-label': t('bk.password') });
-    const p2 = passwordInput({ 'aria-label': t('bk.confirm') });
-    const m = meter(); m.update('');
-    p1.input.addEventListener('input', () => m.update(p1.input.value));
-    const err = h('p', { class: 'error', role: 'alert' });
-    const go = h('button', { type: 'button', class: 'btn primary', onClick: async () => {
-      err.textContent = '';
-      if (p1.input.value.length < MIN_MASTER) { err.textContent = t('bk.short'); return; }
-      if (p1.input.value !== p2.input.value) { err.textContent = t('lock.errMatch'); return; }
-      go.disabled = true; go.textContent = t('g.working');
-      try {
-        const payload = vault.exportPayload();
-        const file = await VC.createBackup(p1.input.value, payload);
-        const blob = new Blob([JSON.stringify(file)], { type: 'application/octet-stream' });
-        const href = URL.createObjectURL(blob);
-        const a = h('a', { href, download: 'vaulty-backup-' + new Date().toISOString().slice(0, 10) + '.vaulty', class: 'offscreen' });
-        document.body.append(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(href), 10000);
-        prefs.lastBackup = Date.now(); savePrefs();
-        mod.close(); toast(t('bk.done', { n: payload.accounts.length })); if (S.tab === 'settings') renderMain();
-      } catch (e) { go.disabled = false; go.textContent = t('bk.export'); err.textContent = t('acc.saveFailed'); }
-    } }, t('bk.export'));
-    const mod = openModal(t('bk.title'), h('div', { class: 'form' }, h('p', { class: 'hint' }, t('bk.text')), field(t('bk.password'), p1.wrap, m.el), field(t('bk.confirm'), p2.wrap), err),
-      [h('button', { type: 'button', class: 'btn', onClick: () => mod.close() }, t('acc.cancel')), go]);
-  }
-
-  function openImport() {
-    const file = h('input', { type: 'file', class: 'input', accept: '.vaulty,.json,application/json,application/octet-stream' });
-    const pw = passwordInput({ 'aria-label': t('im.password') });
-    const err = h('p', { class: 'error', role: 'alert' });
-    const go = h('button', { type: 'button', class: 'btn primary', onClick: async () => {
-      err.textContent = '';
-      const f = file.files && file.files[0];
-      if (!f) { err.textContent = t('im.noFile'); return; }
-      go.disabled = true; go.textContent = t('g.working');
-      const reset = () => { go.disabled = false; go.textContent = t('im.restore'); };
-      let parsed;
-      try { if (f.size > 30 * 1024 * 1024) throw new Error('big'); parsed = JSON.parse(await f.text()); } catch (e) { reset(); err.textContent = t('im.badFile'); return; }
-      try {
-        const payload = await VC.openBackup(pw.input.value, parsed);   // integrity + password check
-        const r = await vault.importPayload(payload);
-        mod.close(); toast(t('im.result', { a: r.added, u: r.updated, s: r.skipped })); renderMain();
-      } catch (e) {
-        reset(); err.textContent = e.code === 'BAD_PASSWORD' ? t('im.badPass') : t('im.badFile');
-      }
-    } }, t('im.restore'));
-    const mod = openModal(t('im.title'), h('div', { class: 'form' }, h('p', { class: 'hint' }, t('im.text')), field(t('im.file'), file), field(t('im.password'), pw.wrap), err),
-      [h('button', { type: 'button', class: 'btn', onClick: () => mod.close() }, t('acc.cancel')), go]);
-  }
-
-  function openWipe() {
-    const pw = passwordInput({ 'aria-label': t('lock.master') });
-    const err = h('p', { class: 'error', role: 'alert' });
-    const go = h('button', { type: 'button', class: 'btn danger-fill', onClick: async () => {
-      err.textContent = '';
-      go.disabled = true;
-      if (!(await vault.verify(pw.input.value))) { go.disabled = false; err.textContent = t('lock.errWrong'); return; }
-      await vault.wipe(); hasVault = false; setFailState({}); mod.close(); S.tab = 'home'; render(); toast(t('wipe.done'));
-    } }, t('wipe.ok'));
-    const mod = openModal(t('wipe.title'), h('div', { class: 'form' }, h('p', {}, t('wipe.text')), field(t('lock.master'), pw.wrap), err),
-      [h('button', { type: 'button', class: 'btn', onClick: () => mod.close() }, t('acc.cancel')), go]);
-  }
-
-  // ------------------------------------------------------------------ auto-lock
-  function touch() { lastActivity = Date.now(); }
-  ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll', 'input'].forEach((e) => window.addEventListener(e, touch, { passive: true, capture: true }));
-  const idleExceeded = () => vault && vault.isUnlocked() && Date.now() - lastActivity > prefs.autoLockMin * 60000;
-  setInterval(() => { if (idleExceeded()) lockVault(true); }, 1000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && idleExceeded()) lockVault(true); });
-
-  // ------------------------------------------------------------------ boot
-  async function boot() {
-    applyPrefs();
-    if (!VC.available) { vault = { isUnlocked: () => false }; render(); return; }
-    try {
-      vault = new Vault(new VS.IDBStorage('vaulty'));
-      hasVault = await vault.exists();
-    } catch (e) {
-      vault = { isUnlocked: () => false };
-      root.append(h('main', { class: 'lockscreen' }, h('section', { class: 'lock-card' }, h('h1', {}, 'Vaulty'), h('p', { class: 'error' }, t('lock.noDb')))));
-      return;
-    }
-    render();
-    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-  }
-  boot();
-})();
+if(localStorage.getItem('fayrouz_dark')==='1')document.body.classList.add('dark');authOverlay();

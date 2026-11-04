@@ -1,41 +1,146 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#8054e9"><title>Fayrouz 1.1.4 | فيروز</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101a2d">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Vaulty — خزنة رقمية لكلمات المرور تعمل محلياً على جهازك مع تشفير كامل للبيانات.">
+<title>Vaulty — خزنتك الرقمية</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='14' fill='%23d9b66f'/%3E%3Crect x='13' y='22' width='22' height='15' rx='3' fill='none' stroke='%23111b2c' stroke-width='2.6'/%3E%3Cpath d='M17 22v-4a7 7 0 0 1 14 0v4' fill='none' stroke='%23111b2c' stroke-width='2.6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app-shell">
-  <aside class="sidebar">
-    <div class="brand"><div class="brand-mark">F</div><div><strong>Fayrouz</strong><small>مساحتي الخاصة</small></div></div>
-    <div class="side-label">القائمة الرئيسية</div>
-    <nav id="nav">
-      <button class="nav-item active" data-page="home"><span>⌂</span>الرئيسية</button>
-      <button class="nav-item" data-page="tasks"><span>✓</span>مهامي</button>
-      <button class="nav-item" data-page="calendar"><span>▦</span>مواعيدي</button>
-      <button class="nav-item" data-page="notes"><span>✎</span>مذكراتي</button>
-      <button class="nav-item" data-page="photos"><span>♡</span>صوري</button>
-      <button class="nav-item" data-page="goals"><span>◎</span>أهدافي</button>
-      <button class="nav-item" data-page="habits"><span>✿</span>عاداتي</button>
-      <button class="nav-item" data-page="events"><span>✧</span>مناسباتي</button>
-    </nav>
-    <div class="sidebar-bottom"><button class="nav-item" data-page="settings"><span>⚙</span>الإعدادات</button><div class="side-quote">«الأشياء الجميلة تبدأ بخطوة صغيرة»</div></div>
-  </aside>
-  <main class="main-area">
-    <header class="topbar"><div><div class="eyebrow" id="todayLabel">مساحتكِ اليوم</div><h1 id="pageTitle">أهلاً بكِ في فيروز <span>✿</span></h1></div><div class="top-actions"><div class="clock"><strong id="clockTime">--:--</strong><small id="clockDate">---</small></div><button class="avatar" aria-label="فيروز">ف</button></div></header>
-    <section id="content" class="content"></section>
-    <footer>Fayrouz <span>•</span> مساحة صغيرة لكل ما يهمكِ</footer>
-  </main>
+
+<div class="app is-locked" id="app">
+  <header class="header">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">vault<span>y.</span></div>
+        <div class="brand-sub">مساحتك الآمنة لكل ما يهمك</div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <button type="button" class="ghost-btn" id="generatorBtn">✧ <span>مولّد كلمات المرور</span></button>
+      <button type="button" class="icon-btn" id="lockBtn" title="قفل الخزنة" aria-label="قفل الخزنة">⌑</button>
+    </div>
+  </header>
+
+  <section class="welcome">
+    <div>
+      <div class="eyebrow">مساحة خاصة · تخزين محلي مشفّر على الجهاز</div>
+      <h1>أهلاً بعودتك 👋</h1>
+      <p>كل بياناتك المهمة، مرتبة في مكان واحد.</p>
+    </div>
+    <div class="status"><i class="dot"></i> الخزنة مفتوحة</div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-label">إجمالي العناصر المحفوظة</div><div class="stat-number" id="totalCount">0 <small>عنصر</small></div><div class="stat-icon">✧</div></div>
+    <div class="stat"><div class="stat-label">كلمات مرور قوية</div><div class="stat-number" id="strongCount">0</div></div>
+    <div class="stat"><div class="stat-label">الفئات المستخدمة</div><div class="stat-number" id="categoryCount">0</div></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><h2>خزنتك</h2><p>إدارة حساباتك وبيانات الدخول بسهولة</p></div>
+      <button type="button" class="primary-btn" id="addBtn">＋ إضافة عنصر</button>
+    </div>
+    <div class="toolbar">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+        <input id="searchInput" type="search" placeholder="ابحث عن حساب أو موقع..." aria-label="بحث في الخزنة" autocomplete="off">
+      </div>
+    </div>
+    <div class="filters" id="filters">
+      <button type="button" class="filter active" data-cat="الكل">الكل</button>
+      <button type="button" class="filter" data-cat="شخصي">شخصي</button>
+      <button type="button" class="filter" data-cat="عمل">عمل</button>
+      <button type="button" class="filter" data-cat="تواصل اجتماعي">تواصل اجتماعي</button>
+      <button type="button" class="filter" data-cat="تسوق">تسوق</button>
+      <button type="button" class="filter" data-cat="مالي">مالي</button>
+      <button type="button" class="filter" data-cat="أخرى">أخرى</button>
+    </div>
+    <div class="vault-grid" id="vaultGrid"></div>
+  </section>
+
+  <div class="footer-actions">
+    <button type="button" class="ghost-btn" id="exportBtn">⇩ <span>تصدير نسخة احتياطية</span></button>
+    <button type="button" class="ghost-btn" id="importBtn">⇧ <span>استيراد نسخة احتياطية</span></button>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+  </div>
+
+  <p class="bottom-note">Vaulty · بياناتك مشفّرة وتبقى على هذا الجهاز · لا تشارك كلمة مرورك الرئيسية مع أي شخص</p>
 </div>
-<div id="modal" class="modal hidden"><div class="modal-card"><button class="close" id="closeModal">×</button><h2 id="modalTitle">إضافة</h2><form id="itemForm"><div id="formFields"></div><div class="modal-actions"><button type="button" class="btn ghost" id="cancelModal">إلغاء</button><button class="btn primary" type="submit">حفظ</button></div></form></div></div>
-<div id="mediaViewer" class="media-viewer hidden" role="dialog" aria-modal="true" aria-label="مشغل الصور والفيديوهات">
-  <div class="media-viewer-panel"><div class="media-viewer-top"><div><strong id="mediaViewerTitle">المعرض</strong><small id="mediaViewerCount"></small></div><button id="closeMediaViewer" class="viewer-close" type="button" aria-label="إغلاق">×</button></div>
-  <div id="mediaViewerBody" class="media-viewer-body"></div>
-  <div class="media-viewer-controls"><button id="mediaPrev" class="btn ghost" type="button">→ السابق</button><button id="mediaViewerDownload" class="btn primary" type="button">⬇ تحميل الملف</button><button id="mediaNext" class="btn ghost" type="button">التالي ←</button></div></div>
+
+<!-- إضافة / تعديل عنصر -->
+<div class="overlay" id="itemOverlay" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+  <div class="modal">
+    <div class="modal-head"><h3 id="formTitle">إضافة إلى الخزنة</h3><button type="button" class="close" data-close="itemOverlay" aria-label="إغلاق">×</button></div>
+    <form id="itemForm" autocomplete="off">
+      <input type="hidden" id="itemId">
+      <div class="form-grid">
+        <div class="field"><label for="name">اسم الحساب / الخدمة *</label><input id="name" required maxlength="60" placeholder="مثلاً: Google"></div>
+        <div class="field"><label for="category">الفئة</label>
+          <select id="category"><option>شخصي</option><option>عمل</option><option>تواصل اجتماعي</option><option>تسوق</option><option>مالي</option><option>أخرى</option></select>
+        </div>
+        <div class="field full"><label for="website">الموقع الإلكتروني</label><input id="website" maxlength="200" placeholder="example.com" dir="ltr"></div>
+        <div class="field full"><label for="username">اسم المستخدم / البريد</label><input id="username" maxlength="120" dir="ltr" placeholder="name@example.com"></div>
+        <div class="field full"><label for="password">كلمة المرور *</label>
+          <div class="password-wrap">
+            <input id="password" type="password" required maxlength="256" dir="ltr" autocomplete="new-password">
+            <button type="button" class="secondary" id="togglePassword" title="إظهار / إخفاء" aria-label="إظهار أو إخفاء كلمة المرور">◉</button>
+            <button type="button" class="secondary" id="makePassword">توليد</button>
+          </div>
+        </div>
+        <div class="field full"><label for="notes">ملاحظات</label><input id="notes" maxlength="300" placeholder="ملاحظات اختيارية"></div>
+      </div>
+      <div class="modal-actions"><button class="primary-btn" type="submit">حفظ العنصر</button><button class="secondary" type="button" data-close="itemOverlay">إلغاء</button></div>
+    </form>
+  </div>
 </div>
-<div id="toast" class="toast"></div>
+
+<!-- مولّد كلمات المرور -->
+<div class="overlay" id="generatorOverlay" role="dialog" aria-modal="true" aria-labelledby="generatorTitle">
+  <div class="modal">
+    <div class="modal-head"><h3 id="generatorTitle">مولّد كلمات مرور قوية</h3><button type="button" class="close" data-close="generatorOverlay" aria-label="إغلاق">×</button></div>
+    <p class="hint">أنشئ كلمة مرور عشوائية باستخدام مولّد آمن من المتصفح.</p>
+    <div class="generator-output" id="generated" aria-live="polite">—</div>
+    <div class="field"><label for="lengthRange">طول كلمة المرور: <b id="lengthValue">18</b></label><input type="range" id="lengthRange" class="range" min="8" max="40" value="18"></div>
+    <div class="modal-actions"><button type="button" class="primary-btn" id="regenerate">توليد من جديد</button><button type="button" class="secondary" id="copyGenerated">نسخ</button></div>
+  </div>
+</div>
+
+<!-- تأكيد -->
+<div class="overlay on-top" id="confirmOverlay" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="modal narrow">
+    <div class="modal-head"><h3 id="confirmTitle">حذف العنصر؟</h3><button type="button" class="close" data-close="confirmOverlay" aria-label="إغلاق">×</button></div>
+    <p class="hint" id="confirmText">سيتم حذف هذا العنصر من الخزنة. لا يمكن التراجع عن هذه الخطوة.</p>
+    <div class="modal-actions"><button type="button" class="primary-btn btn-danger" id="confirmOk">حذف نهائياً</button><button type="button" class="secondary" data-close="confirmOverlay">إلغاء</button></div>
+  </div>
+</div>
+
+<!-- شاشة القفل / إنشاء الخزنة -->
+<div class="lock-screen show" id="lockScreen" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
+  <form class="lock-box" id="lockForm">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></div>
+    <h2 id="lockTitle">خزنتك مقفلة</h2>
+    <p id="lockText">أدخل كلمة المرور الرئيسية للمتابعة.<br>ستبقى بياناتك على هذا الجهاز.</p>
+    <input id="unlockPassword" type="password" placeholder="كلمة المرور الرئيسية" aria-label="كلمة المرور الرئيسية" autocomplete="current-password">
+    <input id="confirmPassword" type="password" placeholder="أعد كتابة كلمة المرور الرئيسية" aria-label="تأكيد كلمة المرور الرئيسية" autocomplete="new-password" hidden>
+    <div class="lock-error" id="lockError" role="alert"></div>
+    <button type="submit" class="primary-btn full-width" id="unlockBtn">فتح الخزنة</button>
+    <button type="button" class="lock-link" id="resetVaultBtn" hidden>نسيت كلمة المرور؟ مسح الخزنة والبدء من جديد</button>
+  </form>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="app.js"></script>
-</body></html>
+</body>
+</html>

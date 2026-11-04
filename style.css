@@ -329,3 +329,29 @@ body.dark .wird-stat,body.dark .wird-bookmark{background:#352832;border-color:#6
 /* Fayrouz 1.1.18: the first home card follows the selected theme immediately. */
 .hero{background:linear-gradient(112deg,var(--accent),var(--accent2)) !important;box-shadow:0 18px 38px color-mix(in srgb,var(--accent) 24%,transparent) !important;border-color:color-mix(in srgb,var(--accent) 28%,white) !important;transition:background .25s ease,box-shadow .25s ease,border-color .25s ease}
 .hero:after{color:rgba(255,255,255,.14) !important}
+
+
+/* Fayrouz 1.1.19 — flower badge and clock follow the active palette */
+.clock{
+  border:1px solid color-mix(in srgb,var(--accent) 22%,transparent) !important;
+  background:color-mix(in srgb,var(--surface) 86%,var(--accent) 14%) !important;
+  box-shadow:0 7px 20px color-mix(in srgb,var(--accent) 12%,transparent) !important;
+  transition:background .25s ease,border-color .25s ease,box-shadow .25s ease;
+}
+.clock strong{color:var(--accent) !important;transition:color .25s ease}
+.clock small{color:color-mix(in srgb,var(--muted) 72%,var(--accent) 28%) !important}
+.wird-flower{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 72%,var(--accent2) 28%),color-mix(in srgb,var(--soft) 68%,var(--accent) 32%)) !important;
+  color:var(--accent) !important;
+  border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);
+  box-shadow:0 7px 22px color-mix(in srgb,var(--accent) 18%,transparent) !important;
+  transition:background .25s ease,color .25s ease,border-color .25s ease,box-shadow .25s ease;
+}
+.wird-kicker,.wird-date,.wird-stat strong,.wird-day>b{color:var(--accent) !important}
+.wird-stat{border-color:color-mix(in srgb,var(--accent) 20%,var(--line)) !important;background:color-mix(in srgb,var(--surface) 90%,var(--accent) 10%) !important;color:var(--text) !important}
+.wird-progress .progress i,.wird-day>i>span{background:linear-gradient(90deg,var(--accent2),var(--accent)) !important}
+.wird-dua,.wird-bookmark,.wird-week{border-color:color-mix(in srgb,var(--accent) 20%,var(--line)) !important;background:color-mix(in srgb,var(--surface) 91%,var(--accent) 9%) !important;color:var(--text) !important}
+.wird-dua>span{color:var(--accent) !important}
+body.dark .clock{background:color-mix(in srgb,var(--surface) 82%,var(--accent) 18%) !important;border-color:color-mix(in srgb,var(--accent) 35%,var(--line)) !important}
+body.dark .clock strong{color:var(--accent2) !important}
+body.dark .wird-stat,body.dark .wird-bookmark,body.dark .wird-dua,body.dark .wird-week{background:color-mix(in srgb,var(--surface) 88%,var(--accent) 12%) !important;border-color:color-mix(in srgb,var(--accent) 30%,var(--line)) !important;color:var(--text) !important}

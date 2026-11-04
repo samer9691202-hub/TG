@@ -304,3 +304,20 @@ body.dark .wird-hero{background:linear-gradient(135deg,#392a34,#49303d);border-c
 .auth-submit{background:linear-gradient(115deg,var(--accent),var(--accent2));box-shadow:0 9px 22px color-mix(in srgb,var(--accent) 23%,transparent)}
 .auth-forgot{color:var(--accent)}
 body.dark .auth-screen{background:radial-gradient(circle at 15% 15%,color-mix(in srgb,var(--accent2) 25%,#211a32),transparent 36%),radial-gradient(circle at 90% 10%,color-mix(in srgb,var(--accent) 24%,#211a32),transparent 35%),linear-gradient(135deg,#211a32,color-mix(in srgb,var(--accent) 16%,#211a32) 55%,color-mix(in srgb,var(--accent2) 15%,#211a32))}
+
+
+/* Fayrouz 1.1.16 — themed credential management card */
+.credential-dialog{position:fixed;inset:0;z-index:1400;display:grid;place-items:center;padding:18px;background:rgba(28,20,38,.48);backdrop-filter:blur(10px);}
+.credential-card{position:relative;width:min(100%,440px);padding:28px 25px 22px;border:1px solid var(--theme-border,var(--line));border-radius:27px;background:color-mix(in srgb,var(--surface) 96%,var(--accent) 4%);box-shadow:0 24px 75px rgba(24,14,40,.24);}
+.credential-close{position:absolute;left:16px;top:15px;width:36px;height:36px;border:0;border-radius:11px;background:var(--soft);color:var(--muted);font-size:24px;cursor:pointer}
+.credential-icon{width:52px;height:52px;margin:0 auto 10px;display:grid;place-items:center;border-radius:17px;background:var(--soft);color:var(--accent);font-size:27px}
+.credential-kicker{text-align:center;color:var(--accent);font-size:12px;font-weight:800;margin:0 0 5px}
+.credential-card h2{text-align:center;margin:0 0 7px;color:var(--text);font-size:21px}
+.credential-description{text-align:center;color:var(--muted);font-size:13px;line-height:1.8;margin:0 0 20px}
+.credential-field{display:grid;gap:7px;margin:0 0 13px;color:var(--text);font-size:13px;font-weight:700}
+.credential-field input{min-height:46px;font-size:16px}
+.credential-hint{display:block;color:var(--muted);font-size:12px;line-height:1.8;margin-top:3px}
+.credential-actions{display:flex;gap:10px;margin-top:20px}
+.credential-actions button{flex:1;min-height:46px}
+body.dark .credential-card{background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);border-color:var(--theme-border,var(--line))}
+@media(max-width:420px){.credential-card{padding:25px 18px 19px;border-radius:23px}.credential-card h2{font-size:19px}}

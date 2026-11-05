@@ -1,4 +1,4 @@
-Fayrouz 1.1.29 — Android Studio project with native WebView bridge
+Fayrouz 1.1.30 — Android Studio project with native WebView bridge
 
 This is a complete Android Studio source project, not a plain HTML-only ZIP.
 The bridge is already connected in MainActivity:

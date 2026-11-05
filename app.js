@@ -4,6 +4,7 @@ const sections = {
   notes:{title:'مذكراتي',sub:'مساحة لأفكاركِ وذكرياتكِ',add:'كتابة مذكرة',fields:[['title','عنوان المذكرة','text'],['category','التصنيف','select',false,['شخصي','أفكار','ذكريات','عمل ودراسة','عام']],['details','اكتبي هنا...','textarea',true]]},
 };
 let page='home', editing=null, pendingMedia=[], mediaCache={}, mediaFilter='all', pendingPreviewUrls=[], noteQuery='', taskFilter='all', noteCategoryFilter='الكل', noteSort='newest';
+const quranAppIcon='📖';
 const $=s=>document.querySelector(s);
 // Encrypted local vault: user records are kept in memory only while unlocked.
 let vaultKey=null, vaultCache={}, vaultWriteQueue=Promise.resolve();
@@ -55,13 +56,45 @@ function renderWirdPage(){
  const streak=()=>{let n=0,d=new Date();for(;;){const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;if(!(history[k]?.done))break;n++;d.setDate(d.getDate()-1)}return n};
  const week=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;return {k,label:d.toLocaleDateString('ar-QA',{weekday:'short'}),v:history[k]?.pages||0}});
  c.innerHTML=`<div class="page-head"><div><h2>وردي من القرآن <span>🌸</span></h2><p>خطوات صغيرة كل يوم، وأثر عظيم بإذن الله.</p></div></div>
- <section class="wird-hero"><div class="wird-flower">۞</div><p class="wird-kicker">وَرْدٌ يطمئن القلب</p><h2>﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾</h2><small>سورة المزمل · الآية 4</small><div class="wird-actions"><a class="btn primary" href="https://quran.com" target="_blank" rel="noopener">📖 افتحي المصحف</a><button class="btn ghost" type="button" onclick="saveWirdDone()">${done?'✓ ورد اليوم مكتمل':'إنهاء ورد اليوم'}</button></div></section>
+ <section class="wird-hero"><div class="wird-flower">۞</div><p class="wird-kicker">وَرْدٌ يطمئن القلب</p><h2>﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾</h2><small>سورة المزمل · الآية 4</small><div class="wird-actions"><button class="btn primary" type="button" onclick="openQuranChooser()">📖 افتحي المصحف</button><button class="btn ghost" type="button" onclick="saveWirdDone()">${done?'✓ ورد اليوم مكتمل':'إنهاء ورد اليوم'}</button></div><div id="quranAppChooser" class="quran-app-overlay" hidden onclick="if(event.target===this)closeQuranChooser()"><section class="quran-app-dialog" role="dialog" aria-modal="true" aria-labelledby="quranAppTitle"><div class="quran-app-head"><div><h3 id="quranAppTitle">اختاري تطبيق المصحف</h3><p>اختاري أحد تطبيقات القرآن المثبتة على هاتفك.</p></div><button type="button" class="quran-app-close" onclick="closeQuranChooser()" aria-label="إغلاق">×</button></div><label class="quran-app-search"><span>⌕</span><input id="quranAppSearch" type="search" placeholder="ابحثي عن تطبيق في هاتفك" oninput="filterQuranApps(this.value)"></label><div id="quranAppList" class="quran-app-list"><div class="quran-app-loading">جارٍ البحث عن التطبيقات المثبتة…</div></div><p class="quran-app-note" id="quranAppNote">تظهر هنا التطبيقات المثبتة التي يمكن فتحها على هاتفك.</p></section></div></section>
  <div class="wird-stats"><div class="wird-stat"><span>🌷</span><strong>${pages}</strong><small>صفحات اليوم</small></div><div class="wird-stat"><span>🔥</span><strong>${streak()}</strong><small>أيام متتالية</small></div><div class="wird-stat"><span>📚</span><strong>${finishDays}</strong><small>يوم لختم القرآن حسب هدفك</small></div></div>
  <div class="wird-grid"><section class="panel wird-panel"><div class="panel-head"><h3>🌷 وردي اليوم</h3><span class="wird-date">${dateText(todayKey)}</span></div><label class="field">هدفي اليومي (صفحات)<input id="wirdGoal" type="number" min="1" max="604" value="${goal}"></label><div class="wird-progress"><div class="wird-progress-head"><strong>${done?'ما شاء الله، أتممتِ وردك':pages+' من '+goal+' صفحة'}</strong><b>${done?'100%':pct+'%'}</b></div><div class="progress"><i style="width:${done?100:pct}%"></i></div></div><div class="wird-quick-actions"><button type="button" class="btn ghost" onclick="adjustWirdPages(-1)">− صفحة</button><button type="button" class="btn primary" onclick="adjustWirdPages(1)">＋ صفحة</button></div><label class="field">إجمالي الصفحات المقروءة اليوم<input id="wirdPages" type="number" min="0" max="604" value="${pages}"></label><p class="wird-note">${remaining?`باقي لكِ ${remaining} صفحة لإكمال هدف اليوم.`:'أكملتِ هدفك اليومي، بارك الله في وقتك.'}</p><button class="btn primary" type="button" onclick="saveWirdProgress()">حفظ التقدم</button></section>
  <section class="panel wird-panel"><div class="panel-head"><h3>📍 موضع القراءة</h3></div><label class="field">السورة والآية أو الجزء<input id="wirdLast" type="text" maxlength="100" placeholder="مثال: سورة البقرة، الآية 25" value="${esc(last)}"></label><button class="btn ghost" type="button" onclick="saveWirdLast()">حفظ آخر موضع</button><p class="wird-note">سجّلي آخر موضع توقفتِ عنده لتكملي منه لاحقاً.</p><div class="wird-bookmark">${last?`<span>آخر موضع محفوظ</span><strong>${esc(last)}</strong>`:'لم يتم حفظ موضع بعد'}</div></section></div>
  <section class="panel wird-week"><div class="panel-head"><h3>📅 نشاط آخر 7 أيام</h3><small>عدد الصفحات يومياً</small></div><div class="wird-week-bars">${week.map(x=>`<div class="wird-day"><b>${x.v}</b><i><span style="height:${Math.min(100,Math.round(x.v/Math.max(goal,1)*100))}%"></span></i><small>${x.label}</small></div>`).join('')}</div></section>
  <section class="wird-dua"><span>♡</span><div><b>دعاء نافع</b><p>اللهم اجعل القرآن ربيع قلبي، ونور صدري، وجلاء حزني، وذهاب همّي.</p></div></section><p class="wird-disclaimer">يُحفظ تقدمكِ وآخر موضع وسجل القراءة على هذا الجهاز. افتحي المصحف للقراءة ثم سجّلي ما أنجزتِه هنا.</p>`;
 }
+let installedQuranApps=[];
+window.openQuranChooser=()=>{
+ const box=document.getElementById('quranAppChooser');if(!box)return;box.hidden=false;
+ const list=document.getElementById('quranAppList'),note=document.getElementById('quranAppNote'),search=document.getElementById('quranAppSearch');
+ if(search)search.value='';
+ if(!window.FayrouzAndroid||typeof window.FayrouzAndroid.getInstalledApps!=='function'){
+  installedQuranApps=[];list.innerHTML='<div class="quran-app-empty"><b>📱</b><strong>ربط Android غير مفعّل</strong><span>أضيفي ملف الجسر المرفق إلى WebView في تطبيق Android ليتمكن فيروز من عرض التطبيقات المثبتة فعلياً.</span></div>';
+  note.textContent='هذه الخاصية تحتاج إلى جسر Android المرفق مع المشروع.';return;
+ }
+ try{
+  const raw=window.FayrouzAndroid.getInstalledApps();
+  installedQuranApps=typeof raw==='string'?JSON.parse(raw):raw;
+  if(!Array.isArray(installedQuranApps))installedQuranApps=[];
+  installedQuranApps=installedQuranApps.filter(a=>a&&a.packageName&&a.label).sort((a,b)=>a.label.localeCompare(b.label,'ar'));
+  renderInstalledQuranApps('');
+  note.textContent=installedQuranApps.length?'اختاري التطبيق الذي تريدين فتحه.':'لم يتم العثور على تطبيقات قابلة للفتح.';
+ }catch(e){console.error(e);installedQuranApps=[];list.innerHTML='<div class="quran-app-empty"><b>⚠</b><strong>تعذر قراءة التطبيقات</strong><span>تحققي من إعداد جسر Android في التطبيق.</span></div>';note.textContent='';}
+};
+window.filterQuranApps=value=>renderInstalledQuranApps(value||'');
+function renderInstalledQuranApps(query){
+ const list=document.getElementById('quranAppList');if(!list)return;
+ const q=String(query).trim().toLocaleLowerCase('ar');
+ const apps=installedQuranApps.filter(a=>!q||String(a.label).toLocaleLowerCase('ar').includes(q)||String(a.packageName).toLowerCase().includes(q));
+ if(!apps.length){list.innerHTML=`<div class="quran-app-empty"><b>⌕</b><strong>${installedQuranApps.length?'لا توجد نتائج مطابقة':'لا توجد تطبيقات مثبتة قابلة للفتح'}</strong><span>${installedQuranApps.length?'جرّبي اسماً آخر.':'ثبّتي تطبيقاً أولاً ثم أعيدي فتح هذه القائمة.'}</span></div>`;return;}
+ list.innerHTML=apps.map(a=>`<button type="button" class="quran-app-option" onclick="launchQuranApp('${String(a.packageName).replace(/[^A-Za-z0-9_.]/g,'')}')"><span class="quran-app-icon">📱</span><span class="quran-app-name"><b>${esc(a.label)}</b><small>${esc(a.packageName)}</small></span><span class="quran-app-arrow">←</span></button>`).join('');
+}
+window.closeQuranChooser=()=>{const box=document.getElementById('quranAppChooser');if(box)box.hidden=true};
+window.launchQuranApp=pkg=>{
+ if(!pkg||!window.FayrouzAndroid||typeof window.FayrouzAndroid.launchApp!=='function'){toast('تعذر فتح التطبيق المحدد');return;}
+ try{const ok=window.FayrouzAndroid.launchApp(pkg);if(ok===false){toast('تعذر فتح التطبيق. تأكدي من أنه ما زال مثبتاً.');return;}closeQuranChooser();}
+ catch(e){console.error(e);toast('تعذر فتح التطبيق المحدد');}
+};
 window.adjustWirdPages=delta=>{const el=$('#wirdPages');if(el)el.value=Math.max(0,Math.min(604,(Number(el.value)||0)+delta))};
 window.saveWirdProgress=()=>{const goal=Math.max(1,Math.min(604,Number($('#wirdGoal').value)||1)),pages=Math.max(0,Math.min(604,Number($('#wirdPages').value)||0)),history=JSON.parse(localStorage.getItem('fayrouz_wird_history')||'{}');localStorage.setItem('fayrouz_wird_goal',goal);localStorage.setItem('fayrouz_wird_pages',pages);localStorage.setItem('fayrouz_wird_day',today());history[today()]={pages,done:pages>=goal};localStorage.setItem('fayrouz_wird_history',JSON.stringify(history));localStorage.setItem('fayrouz_wird_done',pages>=goal?'1':'0');toast('تم حفظ تقدم وردكِ 🌷');renderWirdPage()};
 window.saveWirdDone=()=>{const history=JSON.parse(localStorage.getItem('fayrouz_wird_history')||'{}'),pages=Math.max(Number(localStorage.getItem('fayrouz_wird_pages')||'0'),Number(localStorage.getItem('fayrouz_wird_goal')||'5'));history[today()]={pages,done:true};localStorage.setItem('fayrouz_wird_history',JSON.stringify(history));localStorage.setItem('fayrouz_wird_pages',pages);localStorage.setItem('fayrouz_wird_day',today());localStorage.setItem('fayrouz_wird_done','1');toast('تقبّل الله منكِ 🌸');renderWirdPage()};

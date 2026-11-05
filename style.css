@@ -411,3 +411,51 @@ body.dark .quran-app-dialog{background:var(--surface);color:var(--text)}
 .quran-app-loading,.quran-app-empty{display:grid;justify-items:center;gap:8px;padding:25px 14px;text-align:center;color:var(--muted);line-height:1.8}
 .quran-app-empty b{display:grid;place-items:center;width:48px;height:48px;border-radius:16px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));font-size:24px;color:var(--accent)}
 .quran-app-empty strong{color:var(--text);font-size:14px}.quran-app-empty span{max-width:290px;font-size:12px}
+
+
+/* Fayrouz 1.1.30 — keep the entire app hidden until password authentication succeeds */
+body.auth-locked > .app-shell,
+body.auth-locked > #modal,
+body.auth-locked > #mediaViewer,
+body.auth-locked > #deleteConfirm,
+body.auth-locked > #toast {
+  display: none !important;
+}
+body.auth-locked > .auth-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  background: linear-gradient(135deg, var(--theme-wash, #f4effb), var(--bg, #f7f4fb)) !important;
+  opacity: 1 !important;
+  isolation: isolate;
+}
+
+
+/* Fayrouz 1.1.32 — extend the login card color across the full page */
+body.auth-locked > .auth-screen {
+  background: color-mix(in srgb, var(--surface, #ffffff) 91%, var(--accent, #986b91) 9%) !important;
+  min-height: 100vh !important;
+}
+body.auth-locked > .auth-screen .auth-card {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.dark.auth-locked > .auth-screen {
+  background: color-mix(in srgb, var(--surface, #211b2b) 91%, var(--accent, #986b91) 9%) !important;
+}
+
+
+/* Fayrouz 1.1.33: full-screen login surface; the former card color fills the viewport. */
+html:has(body.auth-locked), html:has(body.auth-locked) body { min-height:100%; background:var(--surface,#fff)!important; }
+body.auth-locked { min-height:100vh!important; overflow:hidden!important; background:var(--surface,#fff)!important; }
+body.auth-locked > :not(#authScreen) { display:none!important; }
+body.auth-locked > #authScreen { position:fixed!important; inset:0!important; width:100vw!important; height:100vh!important; height:100dvh!important; min-height:100vh!important; padding:0!important; margin:0!important; display:grid!important; place-items:center!important; overflow:auto!important; z-index:2147483647!important; background:var(--surface,#fff)!important; }
+body.auth-locked > #authScreen > .auth-card { box-sizing:border-box!important; display:flex!important; flex-direction:column!important; justify-content:center!important; align-items:stretch!important; gap:0!important; width:100%!important; max-width:none!important; min-height:100vh!important; min-height:100dvh!important; height:100%!important; margin:0!important; padding:clamp(24px,5vh,56px) max(22px,calc((100vw - 430px)/2))!important; border:0!important; border-radius:0!important; background:var(--surface,#fff)!important; box-shadow:none!important; backdrop-filter:none!important; -webkit-backdrop-filter:none!important; text-align:center!important; }
+body.auth-locked > #authScreen > .auth-card > form { width:100%!important; max-width:430px!important; align-self:center!important; }
+body.auth-locked > #authScreen > .auth-card > .auth-logo { flex:0 0 62px!important; align-self:center!important; }
+body.auth-locked > #authScreen > .auth-card > .auth-kicker, body.auth-locked > #authScreen > .auth-card > h1, body.auth-locked > #authScreen > .auth-card > p:not(.auth-kicker), body.auth-locked > #authScreen > .auth-card > .auth-note, body.auth-locked > #authScreen > .auth-card > .auth-forgot { align-self:center!important; width:min(100%,430px)!important; }
+body.dark.auth-locked, body.dark.auth-locked > #authScreen, body.dark.auth-locked > #authScreen > .auth-card { background:var(--surface,#211b2b)!important; }
+@media(max-width:640px){body.auth-locked > #authScreen > .auth-card{padding:24px 22px!important}}

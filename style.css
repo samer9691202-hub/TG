@@ -459,3 +459,13 @@ body.auth-locked > #authScreen > .auth-card > .auth-logo { flex:0 0 62px!importa
 body.auth-locked > #authScreen > .auth-card > .auth-kicker, body.auth-locked > #authScreen > .auth-card > h1, body.auth-locked > #authScreen > .auth-card > p:not(.auth-kicker), body.auth-locked > #authScreen > .auth-card > .auth-note, body.auth-locked > #authScreen > .auth-card > .auth-forgot { align-self:center!important; width:min(100%,430px)!important; }
 body.dark.auth-locked, body.dark.auth-locked > #authScreen, body.dark.auth-locked > #authScreen > .auth-card { background:var(--surface,#211b2b)!important; }
 @media(max-width:640px){body.auth-locked > #authScreen > .auth-card{padding:24px 22px!important}}
+
+/* Task duration dropdown: opens and closes with the same button */
+.duration-picker{position:relative}
+.duration-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);color:var(--text);font:14px 'Tajawal';cursor:pointer;text-align:right}
+.duration-trigger i{font-style:normal;color:var(--muted);transition:transform .18s}
+.duration-picker.is-open .duration-trigger i{transform:rotate(180deg)}
+.duration-options{display:none;position:absolute;top:calc(100% + 6px);right:0;left:0;z-index:12;padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}
+.duration-picker.is-open .duration-options{display:grid;gap:3px}
+.duration-option{width:100%;border:0;border-radius:8px;padding:10px 12px;background:transparent;color:var(--text);font:14px 'Tajawal';text-align:right;cursor:pointer}
+.duration-option:hover,.duration-option.selected{background:var(--soft);color:var(--accent)}

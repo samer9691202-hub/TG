@@ -476,3 +476,16 @@ body.dark.auth-locked, body.dark.auth-locked > #authScreen, body.dark.auth-locke
 .duration-option:hover,.duration-option.selected{background:rgba(255,255,255,.42)!important}
 body.dark .duration-options{background:rgba(45,37,58,.72)!important;border-color:rgba(255,255,255,.12)!important;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
 body.dark .duration-option:hover,body.dark .duration-option.selected{background:rgba(255,255,255,.09)!important}
+
+
+/* Fayrouz 1.1.42 — encrypted task activity log */
+.task-history{margin:22px 0 8px;border:1px solid var(--theme-border);border-radius:20px;background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);overflow:hidden}
+.task-history-toggle{width:100%;display:flex;align-items:center;gap:12px;padding:15px 17px;border:0;background:transparent;color:var(--text);font:inherit;text-align:right;cursor:pointer}
+.task-history-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:13px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--accent);font-size:21px}
+.task-history-label{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}.task-history-label strong{font-size:14px}.task-history-label small{font-size:11px;color:var(--muted)}
+.task-history-count{min-width:27px;height:27px;display:grid;place-items:center;border-radius:99px;background:var(--soft);color:var(--accent);font-size:12px;font-weight:800}.task-history-arrow{color:var(--muted);font-size:18px}
+.task-history-list{padding:0 17px 15px;border-top:1px solid var(--theme-border)}
+.task-history-entry{display:flex;gap:12px;padding:13px 2px;border-bottom:1px solid var(--theme-border)}.task-history-entry:last-child{border-bottom:0}
+.task-history-dot{width:9px;height:9px;flex:0 0 9px;margin-top:6px;border-radius:50%;background:var(--accent)}.task-history-dot.is-done{background:#69a783}.task-history-dot.is-deleted{background:#d46b72}
+.task-history-copy{display:flex;min-width:0;flex-direction:column;gap:4px}.task-history-copy strong{font-size:13px;color:var(--text);overflow-wrap:anywhere}.task-history-copy small{font-size:10px;color:var(--muted)}.task-history-empty{margin:14px 0;padding:18px}
+body.dark .task-history{background:color-mix(in srgb,var(--surface) 91%,var(--accent) 9%)}

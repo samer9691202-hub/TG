@@ -469,3 +469,10 @@ body.dark.auth-locked, body.dark.auth-locked > #authScreen, body.dark.auth-locke
 .duration-picker.is-open .duration-options{display:grid;gap:3px}
 .duration-option{width:100%;border:0;border-radius:8px;padding:10px 12px;background:transparent;color:var(--text);font:14px 'Tajawal';text-align:right;cursor:pointer}
 .duration-option:hover,.duration-option.selected{background:var(--soft);color:var(--accent)}
+
+/* Fayrouz 1.1.39: translucent duration menu; second tap closes it */
+.duration-options{background:rgba(255,255,255,.62)!important;border-color:rgba(255,255,255,.78)!important;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 14px 34px rgba(55,38,75,.13)}
+.duration-option{background:transparent!important}
+.duration-option:hover,.duration-option.selected{background:rgba(255,255,255,.42)!important}
+body.dark .duration-options{background:rgba(45,37,58,.72)!important;border-color:rgba(255,255,255,.12)!important;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+body.dark .duration-option:hover,body.dark .duration-option.selected{background:rgba(255,255,255,.09)!important}

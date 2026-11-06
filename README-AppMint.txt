@@ -1,11 +1,13 @@
-Fayrouz 1.2.0 — AppMint package
+Fayrouz 1.2.2 — AppMint package
 
 Package contents:
 - index.html
 - style.css
 - app.js
 
-What's new in 1.2.0:
+What's new in 1.2.2:
+- Removed the task change-events panel, daily journal card, and undated-task panel from the task calendar view. Existing encrypted task history and journal data are preserved; only their visible sections were removed.
+- Task change history now retains up to 10,000 events instead of 1,000.
 - Quran wird goal, daily pages, completion state, last reading position, and reading history are migrated into the encrypted vault.
 - Legacy plaintext Quran progress keys are removed only after the encrypted vault write succeeds.
 - Personal content and encrypted media use the same AES-256-GCM vault key.
@@ -13,7 +15,7 @@ What's new in 1.2.0:
 - Photo/video access now relies on the same unlocked vault instead of a separate plaintext-stored PIN verifier.
 - Dashboard now summarizes today's tasks, notes, and Quran progress.
 - The task page shows only tasks scheduled for today (including active week/month duration tasks).
-- Opening the task calendar selects today; selecting any calendar date displays the tasks and journal for that day.
+- Opening the task calendar selects today; selecting any calendar date displays only the tasks scheduled for that day.
 
 Security and migration notes:
 - Existing encrypted vault data is retained.

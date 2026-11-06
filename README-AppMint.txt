@@ -1,11 +1,12 @@
-Fayrouz 1.2.2 — AppMint package
+Fayrouz 1.2.4 — AppMint package
 
 Package contents:
 - index.html
 - style.css
 - app.js
 
-What's new in 1.2.2:
+What's new in 1.2.4:
+- Weekly and monthly task occurrences now have independent completion states for each calendar date. Completing a task on one day no longer marks the same task complete on every other day in its duration. The completion state is stored with the encrypted task record.
 - Removed the task change-events panel, daily journal card, and undated-task panel from the task calendar view. Existing encrypted task history and journal data are preserved; only their visible sections were removed.
 - Task change history now retains up to 10,000 events instead of 1,000.
 - Quran wird goal, daily pages, completion state, last reading position, and reading history are migrated into the encrypted vault.

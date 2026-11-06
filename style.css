@@ -582,3 +582,25 @@ body.dark .theme-mode-toggle{background:color-mix(in srgb,var(--surface) 82%,var
 .task-calendar-undated button small{font-size:10px;color:var(--accent)}
 body.dark .task-history,body.dark .task-calendar{background:var(--surface)}
 @media(max-width:520px){.task-history-list{padding:12px}.task-calendar{padding:9px}.task-calendar-weekdays,.task-calendar-grid{gap:3px}.task-calendar-day{min-height:56px;border-radius:9px;padding-top:6px}.task-calendar-blank{min-height:56px}.task-calendar-weekdays span{font-size:9px}.task-calendar-toolbar{gap:7px}.task-calendar-toolbar strong{min-width:118px;font-size:13px}.task-calendar-task{align-items:flex-start;flex-direction:column}.task-calendar-task-actions{width:100%;justify-content:flex-end}.task-calendar-search-results button{align-items:flex-start;flex-direction:column;gap:3px}}
+
+
+/* Fayrouz 1.1.48 — daily journal connected to task history */
+.task-journal{margin-top:16px;padding:15px;border:1px solid color-mix(in srgb,var(--accent) 28%,var(--theme-border));border-radius:17px;background:color-mix(in srgb,var(--surface) 91%,var(--accent) 9%)}
+.task-journal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.task-journal-head>div{display:flex;flex-direction:column;gap:3px}
+.task-journal-head>div span{font-size:15px;font-weight:800;color:var(--accent)}
+.task-journal-head small,.task-journal-date{font-size:10px;color:var(--muted)}
+.task-journal-date{padding:6px 9px;border-radius:20px;background:var(--soft);white-space:nowrap}
+.task-journal-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 15px}
+.task-journal-stats>div{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 5px;border:1px solid var(--theme-border);border-radius:12px;background:var(--surface)}
+.task-journal-stats strong{font-size:20px;color:var(--accent)}
+.task-journal-stats small{font-size:10px;color:var(--muted)}
+.task-journal-label{display:block;margin:10px 0 7px;font-size:12px;font-weight:700}
+.task-journal textarea{display:block;width:100%;min-height:105px;resize:vertical;padding:11px;border:1px solid var(--theme-border);border-radius:12px;background:var(--surface);color:var(--text);font:13px/1.7 'Tajawal',sans-serif}
+.task-journal-rating{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:13px 0}
+.task-journal-rating>span{font-size:12px;font-weight:700}
+.task-journal-rating>div{display:flex;gap:3px;direction:ltr}
+.task-journal-star{padding:2px 4px;border:0;background:transparent;color:var(--muted);font-size:24px;line-height:1;cursor:pointer}
+.task-journal-star.active{color:#e5a72d}
+.task-journal-rating>small{font-size:10px;color:var(--muted)}
+.task-journal-save{width:100%;margin-top:2px}

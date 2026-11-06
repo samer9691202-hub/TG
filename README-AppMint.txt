@@ -1,22 +1,14 @@
-Fayrouz 1.1.47 – AppMint package
+Fayrouz 1.1.48 — AppMint package
 
-Import this ZIP into AppMint using the same ZIP project import flow as the working AppMint package.
-The package contains index.html, style.css and app.js at the ZIP root.
+Package contents:
+- index.html
+- style.css
+- app.js
 
-Task form: both Priority and Duration controls open on the first tap and close on a second tap of the same control. Selecting an option saves the selection and closes the menu. Existing task duration defaults and previous app features are preserved.
+New in 1.1.48:
+- Added a daily journal inside the selected day in Task History.
+- Shows the selected day's total, completed, and remaining tasks.
+- Allows a daily note (up to 2,000 characters) and a 1–5 star rating.
+- Journal entries are saved in the encrypted local vault and remain associated with their calendar date.
 
-تحديث 1.1.42: عند فتح التقويم بالضغط على حقل التاريخ، فإن الضغط على الحقل مرة ثانية يعيد التاريخ إلى تاريخ اليوم ويغلق التقويم.
-
-
-الإصدار 1.1.42: إضافة سجل مهام مشفر محلياً يسجل الإضافة والتعديل والإنجاز وإعادة الفتح والحذف.
-
-
-Fayrouz 1.1.45: تحسين سجل المهام، مع تسجيل الإضافة والتعديل والإنجاز وإعادة الفتح والحذف، وتفاصيل التغييرات، وفرز الأحداث زمنياً وتصفية السجل حسب نوع الحدث.
-
-التحديث 1.1.45: استبدال حرف (ف) في زر الحساب أعلى الواجهة بأيقونة للتبديل السريع بين الوضع الفاتح والداكن، مع حفظ الاختيار تلقائياً.
-
-
-Fayrouz 1.1.46: تحويل سجل المهام إلى تقويم شهري تفاعلي. تعرض الأيام أعداد المهام وحالتها، ويمكن التنقل بين الأشهر واختيار يوم لعرض مهامه وسجل تغييراتها. تمت إضافة بحث باسم المهمة أو اليوم أو التاريخ، مع إظهار المهام التي لم يحدد لها موعد في قسم مستقل. وتظهر المهمة في أيام مدة تنفيذها المختارة (يوم أو أسبوع أو شهر).
-
-
-Fayrouz 1.1.47: تم جعل سجل المهام مطوياً افتراضياً. لا يظهر البحث أو التقويم إلا بعد الضغط على عنوان «سجل المهام». بعد فتح السجل، يؤدي اختيار يوم في التقويم أو نتيجة البحث إلى عرض مهام ذلك اليوم وسجل تغييراته. تم إصلاح التنقل بين الأشهر قبل اختيار أي يوم.
+Import the ZIP into AppMint as an HTML project. This package does not include a native Android bridge. The resulting APK has not been tested on a physical Android device.

@@ -604,3 +604,6 @@ body.dark .task-history,body.dark .task-calendar{background:var(--surface)}
 .task-journal-star.active{color:#e5a72d}
 .task-journal-rating>small{font-size:10px;color:var(--muted)}
 .task-journal-save{width:100%;margin-top:2px}
+
+/* Fayrouz 1.2.0 dashboard additions */
+.dashboard-shortcuts{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.dashboard-shortcuts .btn{font-size:12px;padding:9px 12px}.dashboard-lower{margin-top:17px}.dashboard-wird{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px}.dashboard-wird strong{font-size:25px;color:var(--accent)}.dashboard-wird span{font-size:12px;color:var(--muted)}.dashboard-wird .progress{grid-column:1/-1;margin-top:2px}.dashboard-mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.dashboard-mini-stats span{padding:12px 8px;border-radius:13px;background:var(--surface2);font-size:11px;color:var(--muted);text-align:center}.dashboard-mini-stats b{display:block;margin-top:5px;font-size:20px;color:var(--accent)}@media(max-width:650px){.dashboard-shortcuts{display:grid;grid-template-columns:1fr}.dashboard-mini-stats{gap:5px}.dashboard-mini-stats span{font-size:10px;padding:10px 4px}}

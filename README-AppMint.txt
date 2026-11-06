@@ -1,14 +1,26 @@
-Fayrouz 1.1.48 — AppMint package
+Fayrouz 1.2.0 — AppMint package
 
 Package contents:
 - index.html
 - style.css
 - app.js
 
-New in 1.1.48:
-- Added a daily journal inside the selected day in Task History.
-- Shows the selected day's total, completed, and remaining tasks.
-- Allows a daily note (up to 2,000 characters) and a 1–5 star rating.
-- Journal entries are saved in the encrypted local vault and remain associated with their calendar date.
+What's new in 1.2.0:
+- Quran wird goal, daily pages, completion state, last reading position, and reading history are migrated into the encrypted vault.
+- Legacy plaintext Quran progress keys are removed only after the encrypted vault write succeeds.
+- Personal content and encrypted media use the same AES-256-GCM vault key.
+- Removed the built-in founder/master unlock path; only the user's password and recovery code can unwrap the vault key.
+- Photo/video access now relies on the same unlocked vault instead of a separate plaintext-stored PIN verifier.
+- Dashboard now summarizes today's tasks, notes, and Quran progress.
+- The task page shows only tasks scheduled for today (including active week/month duration tasks).
+- Opening the task calendar selects today; selecting any calendar date displays the tasks and journal for that day.
 
-Import the ZIP into AppMint as an HTML project. This package does not include a native Android bridge. The resulting APK has not been tested on a physical Android device.
+Security and migration notes:
+- Existing encrypted vault data is retained.
+- Existing Quran progress stored under legacy fayrouz_wird_* keys is migrated on the next successful unlock.
+- Migration encrypts the imported data before removing legacy plaintext progress keys.
+- Theme and accessibility preferences are also migrated into the encrypted vault.
+- Password/recovery key-wrapping records remain outside the vault by design so they can unlock the encrypted data key.
+- The vault and media remain local to this device; no cloud sync is included.
+
+Import the ZIP into AppMint as an HTML project. This package does not include a native Android bridge. The resulting APK still requires testing on a physical Android device.

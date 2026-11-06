@@ -1,4 +1,7 @@
-Fayrouz 1.2.6 — AppMint package
+Fayrouz 1.2.8 — AppMint package
+
+What's new in 1.2.8:
+- Selecting a date in the task calendar now smoothly scrolls the view to that date's task list.
 
 Package contents:
 - index.html

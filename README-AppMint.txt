@@ -1,11 +1,14 @@
-Fayrouz 1.2.4 — AppMint package
+Fayrouz 1.2.6 — AppMint package
 
 Package contents:
 - index.html
 - style.css
 - app.js
 
-What's new in 1.2.4:
+What's new in 1.2.6:
+- Added the ability to remove a task occurrence from a past calendar day directly in the task history. For weekly/monthly tasks, this excludes only the selected past date and preserves all other dates; a one-day task is deleted normally. Future and current-day occurrences cannot be removed through this history-only action.
+
+Previous changes:
 - Weekly and monthly task occurrences now have independent completion states for each calendar date. Completing a task on one day no longer marks the same task complete on every other day in its duration. The completion state is stored with the encrypted task record.
 - Removed the task change-events panel, daily journal card, and undated-task panel from the task calendar view. Existing encrypted task history and journal data are preserved; only their visible sections were removed.
 - Task change history now retains up to 10,000 events instead of 1,000.

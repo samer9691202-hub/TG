@@ -1,4 +1,4 @@
-Fayrouz 1.2.12 — AppMint package
+Fayrouz 1.2.14 — AppMint package
 
 Performance improvements in 1.2.12:
 - Coalesces rapid vault changes into a single encrypted AES-GCM save, reducing repeated full-vault serialization and encryption while preserving encrypted storage.
@@ -44,3 +44,9 @@ Security and migration notes:
 - The vault and media remain local to this device; no cloud sync is included.
 
 Import the ZIP into AppMint as an HTML project. This package does not include a native Android bridge. The resulting APK still requires testing on a physical Android device.
+
+
+Dashboard update in 1.2.14:
+- Removed the “Open task calendar” shortcut from the “Your spaces” panel.
+- Moved “A letter to myself” into the same quick-card grid as the other spaces.
+- Adjusted card spacing and sizing for a balanced four-card layout on desktop and mobile.

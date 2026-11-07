@@ -606,7 +606,7 @@ body.dark .task-history,body.dark .task-calendar{background:var(--surface)}
 .task-journal-save{width:100%;margin-top:2px}
 
 /* Fayrouz 1.2.0 dashboard additions */
-.dashboard-shortcuts{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.dashboard-shortcuts .btn{font-size:12px;padding:9px 12px}.dashboard-lower{margin-top:17px}.dashboard-wird{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px}.dashboard-wird strong{font-size:25px;color:var(--accent)}.dashboard-wird span{font-size:12px;color:var(--muted)}.dashboard-wird .progress{grid-column:1/-1;margin-top:2px}.dashboard-mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.dashboard-mini-stats span{padding:12px 8px;border-radius:13px;background:var(--surface2);font-size:11px;color:var(--muted);text-align:center}.dashboard-mini-stats b{display:block;margin-top:5px;font-size:20px;color:var(--accent)}@media(max-width:650px){.dashboard-shortcuts{display:grid;grid-template-columns:1fr}.dashboard-mini-stats{gap:5px}.dashboard-mini-stats span{font-size:10px;padding:10px 4px}}
+.quick-grid .quick{min-width:0;min-height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.45;overflow-wrap:anywhere}.dashboard-lower{margin-top:17px}.dashboard-wird{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px}.dashboard-wird strong{font-size:25px;color:var(--accent)}.dashboard-wird span{font-size:12px;color:var(--muted)}.dashboard-wird .progress{grid-column:1/-1;margin-top:2px}.dashboard-mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.dashboard-mini-stats span{padding:12px 8px;border-radius:13px;background:var(--surface2);font-size:11px;color:var(--muted);text-align:center}.dashboard-mini-stats b{display:block;margin-top:5px;font-size:20px;color:var(--accent)}@media(max-width:650px){.quick-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.quick-grid .quick{min-height:82px;padding:10px 3px;font-size:11px}.dashboard-mini-stats{gap:5px}.dashboard-mini-stats span{font-size:10px;padding:10px 4px}}
 
 /* Performance fallback for low-resource Android devices; keeps the same layout and palette. */
 html.low-resource-device .sidebar,
@@ -734,3 +734,49 @@ body.dark .nav-item:hover,body.dark .nav-item.active,body.dark .quick,body.dark 
 .official-theme-note strong{font-size:13px}
 .official-theme-note small{font-size:11px;line-height:1.7;color:var(--muted)}
 .custom-theme-row{align-items:center}
+
+
+/* Fayrouz 1.2.13 — app-wide readable text and refined night palette */
+body.large-text .app-shell{zoom:1.08}
+body.large-text .modal,body.large-text .media-viewer,body.large-text .delete-confirm{font-size:1.08em}
+body.dark{
+ --bg:#19151B;--surface:#27212A;--surface2:#312834;--text:#F4ECF1;--muted:#C0AFBA;
+ --line:#493A47;--soft:#493443;--shadow:0 16px 42px rgba(0,0,0,.32);
+ --accent:#D19AB5;--accent2:#B77F9C;--theme-wash:#30232D;--theme-border:#594451;
+ color:var(--text)!important;
+ background:radial-gradient(ellipse at 8% 5%,rgba(193,143,168,.10),transparent 34%),radial-gradient(ellipse at 92% 18%,rgba(145,91,119,.09),transparent 30%),linear-gradient(135deg,#19151B,#241B25 60%,#2B2029)!important;
+}
+body.dark:before{background:rgba(193,143,168,.07)!important}body.dark:after{background:rgba(145,91,119,.08)!important}
+body.dark .sidebar,body.dark .stat,body.dark .panel,body.dark .item-card,body.dark .empty,
+body.dark .modal-card,body.dark .quran-app-dialog,body.dark .task-history,body.dark .task-calendar-search,
+body.dark .task-calendar-search-results,body.dark .duration-options,body.dark .delete-confirm-card{
+ background:rgba(39,33,42,.96)!important;border-color:var(--line)!important;color:var(--text)!important;
+}
+body.dark .sidebar{box-shadow:0 16px 42px rgba(0,0,0,.24)!important}
+body.dark .side-quote,body.dark .quick,body.dark .clock,body.dark .icon-btn,body.dark .close,
+body.dark .ghost,body.dark .summary-chip,body.dark .calendar-day,body.dark .task-history-icon,
+body.dark .task-history-count,body.dark .quran-app-option,body.dark .duration-trigger{
+ background:#342936!important;border-color:var(--line)!important;color:var(--text)!important;
+}
+body.dark .nav-item{color:#D8C8D2!important}body.dark .nav-item:hover,body.dark .nav-item.active{background:rgba(209,154,181,.16)!important;color:#F3DCE7!important}
+body.dark .nav-item span,body.dark .brand strong,body.dark .brand small,body.dark .side-label,body.dark .eyebrow,
+body.dark .topbar h1,body.dark .topbar h1 span,body.dark .page-head h2,body.dark .page-head p,
+body.dark .panel h3,body.dark .item-card h3,body.dark .item-card p,body.dark .item-meta,
+body.dark .stat strong,body.dark .stat small,body.dark .setting-row strong,body.dark .setting-row small,
+body.dark .setting-value,body.dark .row-main strong,body.dark .row-main small,body.dark .text-link,
+body.dark .task-history-label strong,body.dark .task-history-label small,body.dark .task-history-copy strong,
+body.dark .task-history-copy small,body.dark .quran-app-name b,body.dark .quran-app-name small,
+body.dark .quran-app-head h3,body.dark .quran-app-note{color:var(--text)!important}
+body.dark input,body.dark textarea,body.dark select,body.dark .note-tools input,body.dark .auth-card input,
+body.dark .task-history-tools select,body.dark .quran-app-search input{background:#211B24!important;color:var(--text)!important;border-color:var(--line)!important}
+body.dark input::placeholder,body.dark textarea::placeholder{color:#A995A4!important}
+body.dark .auth-screen{background:linear-gradient(135deg,#19151B,#2B2029)!important}
+body.dark .auth-card{background:rgba(39,33,42,.98)!important;border-color:var(--line)!important}
+body.dark .auth-card h1,body.dark .auth-card label,body.dark .auth-card>p:not(.auth-kicker),body.dark .auth-note{color:var(--text)!important}
+body.dark .calendar-day.blank{background:transparent!important}
+body.dark .calendar-day.today{outline-color:var(--accent)!important}
+body.dark .modal{background:rgba(8,5,10,.72)!important}
+body.dark .toast{background:#E0B7CA!important;color:#241923!important}
+body.dark footer{color:#A995A4!important}
+body.dark .theme-mode-toggle{background:#3A2A38!important;color:#F0C9DC!important;border-color:#76566A!important}
+@media(max-width:650px){body.large-text .app-shell{zoom:1.04}body.dark .sidebar{background:rgba(39,33,42,.98)!important}}

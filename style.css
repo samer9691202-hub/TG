@@ -146,7 +146,7 @@ body.dark .theme-studio{background:linear-gradient(145deg,rgba(54,43,76,.82),rgb
 body.dark .theme-studio{background:linear-gradient(145deg,var(--surface),color-mix(in srgb,var(--soft) 45%,var(--surface)))}body.dark .palette-card{background:var(--surface2)}
 @media(max-width:560px){.palette-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.palette-card{padding:11px 10px}.palette-card.selected{padding:10px 9px}.palette-colors i{height:22px}.palette-card b{font-size:12px}.palette-card small{font-size:9px}.custom-theme-row{display:grid;grid-template-columns:75px 1fr}.reset-theme{grid-column:1/-1;width:100%}.theme-preview{padding:16px}}
 /* Fayrouz 1.1.0 enhancements */
-.daily-focus{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:18px 0;padding:20px}.daily-focus h3{margin:0 0 6px}.daily-focus p{margin:0;color:var(--muted)}.daily-progress{min-width:130px;text-align:center}.daily-progress strong{display:block;font-size:25px;color:var(--accent)}.daily-progress .progress{height:7px;margin-top:7px}.backup-actions{display:flex;gap:8px;flex-wrap:wrap}.calendar-panel{margin-bottom:18px}.calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.calendar-toolbar h3{margin:0}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.calendar-weekday{text-align:center;font-size:12px;color:var(--muted);padding:8px 2px}.calendar-day{min-height:58px;border:1px solid var(--glass-border,rgba(130,100,170,.16));border-radius:13px;background:rgba(255,255,255,.35);color:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}.calendar-day.blank{border:0;background:transparent}.calendar-day.today{outline:2px solid var(--accent)}.calendar-day.has-items i{font-size:10px;font-style:normal;color:white;background:var(--accent);border-radius:20px;padding:1px 6px}.calendar-legend{display:flex;gap:18px;margin-top:15px;color:var(--muted);font-size:12px}.note-tools{display:flex;gap:10px;margin:14px 0}.note-tools input{flex:1;min-width:0;border:1px solid rgba(130,100,170,.2);border-radius:13px;padding:12px 14px;background:rgba(255,255,255,.45);font:inherit;color:inherit}.note-body{white-space:pre-wrap;line-height:1.8}.large-text{font-size:18px}.large-text .item-card,.large-text .panel{font-size:1.05em}@media(max-width:650px){.daily-focus{align-items:flex-start;flex-direction:column}.calendar-grid{gap:4px}.calendar-day{min-height:45px;border-radius:9px}.calendar-weekday{font-size:10px}.note-tools{flex-direction:column}}
+.daily-focus{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:18px 0;padding:20px}.daily-focus h3{margin:0 0 6px}.daily-focus p{margin:0;color:var(--muted)}.daily-progress{min-width:130px;text-align:center}.daily-progress strong{display:block;font-size:25px;color:var(--accent)}.daily-progress .progress{height:7px;margin-top:7px}.backup-actions{display:flex;gap:8px;flex-wrap:wrap}.calendar-panel{margin-bottom:18px}.calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.calendar-toolbar h3{margin:0}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.calendar-weekday{text-align:center;font-size:12px;color:var(--muted);padding:8px 2px}.calendar-day{min-height:58px;border:1px solid var(--glass-border,rgba(130,100,170,.16));border-radius:13px;background:rgba(255,255,255,.35);color:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}.calendar-day.blank{border:0;background:transparent}.calendar-day.today{outline:2px solid var(--accent)}.calendar-day.has-items i{font-size:10px;font-style:normal;color:white;background:var(--accent);border-radius:20px;padding:1px 6px}.calendar-legend{display:flex;gap:18px;margin-top:15px;color:var(--muted);font-size:12px}.note-tools{display:flex;gap:10px;margin:14px 0}.note-tools input{flex:1;min-width:0;border:1px solid rgba(130,100,170,.2);border-radius:13px;padding:12px 14px;background:rgba(255,255,255,.45);font:inherit;color:inherit}.note-body{white-space:pre-wrap;line-height:1.8}@media(max-width:650px){.daily-focus{align-items:flex-start;flex-direction:column}.calendar-grid{gap:4px}.calendar-day{min-height:45px;border-radius:9px}.calendar-weekday{font-size:10px}.note-tools{flex-direction:column}}
 
 /* Fayrouz 1.1.2 — Aurora glass redesign */
 :root{
@@ -737,8 +737,6 @@ body.dark .nav-item:hover,body.dark .nav-item.active,body.dark .quick,body.dark 
 
 
 /* Fayrouz 1.2.13 — app-wide readable text and refined night palette */
-body.large-text .app-shell{zoom:1.08}
-body.large-text .modal,body.large-text .media-viewer,body.large-text .delete-confirm{font-size:1.08em}
 body.dark{
  --bg:#19151B;--surface:#27212A;--surface2:#312834;--text:#F4ECF1;--muted:#C0AFBA;
  --line:#493A47;--soft:#493443;--shadow:0 16px 42px rgba(0,0,0,.32);
@@ -779,7 +777,7 @@ body.dark .modal{background:rgba(8,5,10,.72)!important}
 body.dark .toast{background:#E0B7CA!important;color:#241923!important}
 body.dark footer{color:#A995A4!important}
 body.dark .theme-mode-toggle{background:#3A2A38!important;color:#F0C9DC!important;border-color:#76566A!important}
-@media(max-width:650px){body.large-text .app-shell{zoom:1.04}body.dark .sidebar{background:rgba(39,33,42,.98)!important}}
+@media(max-width:650px){body.dark .sidebar{background:rgba(39,33,42,.98)!important}}
 
 /* Fayrouz 1.2.15 — Welcome hero adapted for night mode */
 body.dark .hero{
@@ -884,3 +882,32 @@ body.dark .note-sort-btn.active{background:#98677F;border-color:#98677F;color:#f
 .wird-disclaimer{margin:10px 4px 0;text-align:center}
 body.dark .wird-overview{background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
 @media(max-width:700px){.wird-overview{padding:10px}.wird-overview .wird-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.wird-overview .wird-stat{min-height:100px;padding:10px 4px}.wird-grid{grid-template-columns:1fr}.wird-grid>.wird-panel{padding:16px}.wird-week{padding:14px}.wird-week-bars{gap:5px}.wird-day>i{max-width:22px}}
+
+
+/* Fayrouz 1.2.30 — enhanced Quran reading position card */
+.wird-position-card{position:relative;display:flex;flex-direction:column;gap:14px;overflow:hidden;border:1px solid color-mix(in srgb,var(--accent) 24%,var(--line))!important;background:linear-gradient(155deg,color-mix(in srgb,var(--surface) 96%,var(--accent) 4%),var(--surface))!important}
+.wird-position-heading{display:flex;align-items:center;gap:12px;min-width:0}
+.wird-position-icon{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;border-radius:15px;background:color-mix(in srgb,var(--accent) 13%,var(--surface));color:var(--accent);font-size:27px;font-weight:700}
+.wird-position-title{min-width:0;flex:1}
+.wird-position-title h3{margin:0;color:var(--text);font-size:17px}
+.wird-position-title p{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.wird-position-status{flex:0 0 auto;padding:6px 10px;border-radius:20px;font-size:11px;font-weight:800}
+.wird-position-status.is-saved{background:color-mix(in srgb,#4d9b78 14%,var(--surface));color:#438765}
+.wird-position-status.is-empty{background:color-mix(in srgb,var(--accent) 10%,var(--surface));color:var(--accent)}
+.wird-position-current{display:grid;gap:7px;padding:15px;border:1px solid color-mix(in srgb,var(--accent) 20%,var(--line));border-radius:16px;background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.wird-position-label{color:var(--accent);font-size:12px;font-weight:800}
+.wird-position-current strong{color:var(--text);font-size:17px;line-height:1.8;overflow-wrap:anywhere}
+.wird-position-current small{color:var(--muted);font-size:11px;line-height:1.5}
+.wird-position-field{margin:0!important}
+.wird-position-hint{margin-top:-8px;color:var(--muted);font-size:11px;line-height:1.7}
+.wird-position-save{width:100%;min-height:46px;justify-content:center;gap:8px}
+.wird-position-save span{font-size:17px}
+body.dark .wird-position-status.is-saved{background:#284638;color:#a8dfc0}
+@media(max-width:420px){.wird-position-heading{gap:9px}.wird-position-icon{width:40px;height:40px;flex-basis:40px}.wird-position-status{padding:5px 7px;font-size:10px}.wird-position-current{padding:13px}.wird-position-current strong{font-size:15px}}
+
+/* Reading position: dedicated Quran page number */
+.wird-page-number{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;padding:12px 15px;border:1px solid var(--border-color,rgba(152,103,127,.2));border-radius:14px;background:var(--soft-bg,rgba(185,138,163,.10));width:max-content;max-width:100%}
+.wird-page-number span{font-size:.9em;color:var(--muted);font-weight:600}
+.wird-page-number b{display:inline-flex;align-items:center;justify-content:center;min-width:48px;height:48px;padding:0 10px;border-radius:12px;background:var(--primary,#98677F);color:#fff;font-size:1.45em;font-weight:800}
+.wird-page-number small{color:var(--muted);font-size:.82em}
+.wird-position-field input[type=number]{direction:ltr;text-align:right}

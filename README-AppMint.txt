@@ -1,3 +1,24 @@
+Fayrouz 1.2.31 — Reading position page number
+
+- Added a dedicated Quran page-number field (1–604) to the reading-position card.
+- Shows the saved page number prominently with a clear “of 604” indicator.
+- Keeps the surah/ayah/juz text and page number as separate saved values.
+- Preserves existing saved positions and validates page numbers before saving.
+
+Fayrouz 1.2.30 — Enhanced Quran reading position card
+
+- Redesigned the reading-position card with a clear saved-position preview, save status, and last-updated date.
+- Improved the edit field, examples, spacing, responsive layout, and light/dark appearance.
+- Preserved the existing saved reading position and encrypted vault storage; legacy positions remain visible.
+- Added validation to prevent saving an empty reading position.
+
+Fayrouz 1.2.29 — Global text scaling and future-letter card fix
+
+- Fixed text enlargement so it scales text consistently across all app pages, cards, forms, dialogs, and dynamically opened content.
+- Removed the previous layout zoom that enlarged interface dimensions instead of text alone.
+- Saving a “رسالة إلى نفسي” now opens the Notes page, selects its dedicated tab, and displays the saved message card immediately.
+- Preserved existing notes and app data.
+
 Fayrouz 1.2.22 — Home dashboard highlights
 - Removed the character counter from note cards.
 - Removed the copy-note action from the note viewer.

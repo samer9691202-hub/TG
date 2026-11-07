@@ -1030,3 +1030,39 @@ body.dark .wird-today-main,body.dark .wird-goal-settings{background:color-mix(in
 .wird-position-card .wird-position-field input{min-height:42px!important}
 .wird-position-save{min-height:43px!important}
 @media(max-width:380px){.wird-cards-redesigned>.wird-panel{padding:14px!important}.wird-today-main{gap:9px!important}.wird-progress-ring{width:78px!important;height:78px!important;flex-basis:78px!important}.wird-today-controls>.btn{font-size:10px!important;padding-inline:5px!important}.wird-position-showcase{grid-template-columns:78px minmax(0,1fr)!important}}
+
+/* Fayrouz 1.2.38 — clearer spacing between daily wird cards */
+.wird-cards-redesigned{row-gap:24px!important;column-gap:24px!important}
+@media(max-width:700px){.wird-cards-redesigned{row-gap:20px!important;column-gap:20px!important}}
+
+
+/* Fayrouz 1.2.40 — restore richer, clearer rose-mauve colors */
+:root{
+  --bg:#F7F1F4;--surface:#FFFFFF;--surface2:#F3E9EF;
+  --text:#392D36;--muted:#756773;--accent:#89546F;--accent2:#B77F9D;
+  --soft:#EEDFE7;--line:#E2D3DC;--shadow:0 12px 30px rgba(83,48,69,.09);
+}
+body{background:radial-gradient(ellipse at 8% 0%,rgba(183,127,157,.15),transparent 34%),radial-gradient(ellipse at 95% 15%,rgba(137,84,111,.09),transparent 30%),var(--bg)}
+.hero{background:linear-gradient(112deg,#89546F 0%,#A66D8A 55%,#B77F9D 100%);box-shadow:0 16px 34px rgba(112,65,91,.22)}
+.stat,.panel,.item-card,.empty{background:#FFFFFF;border-color:#E6D8E0;box-shadow:0 10px 26px rgba(83,48,69,.075)}
+.stat .icon{background:#F0E1E9;color:#89546F;box-shadow:inset 0 0 0 1px rgba(137,84,111,.08)}
+.stat strong,.item-card h3,.panel h3,.page-head h2{color:#44313E}
+.stat small,.item-card p,.page-head p{color:#796B76}
+.primary{background:linear-gradient(120deg,#89546F,#A66D8A);box-shadow:0 7px 16px rgba(137,84,111,.23)}
+.ghost,.quick{background:#F1E5EC;color:#78475F;border-color:#E4D2DD}
+.quick:hover{background:#EBD9E3}
+.progress{background:#EADBE4}.progress i{background:linear-gradient(90deg,#B77F9D,#89546F)}
+.nav-item.active{background:linear-gradient(100deg,#F0E1E9,#EBD9E3);color:#78475F}
+.nav-item.active span,.nav-item span{color:#89546F}
+.side-quote{background:#F0E3EA;color:#765568;border-color:#E5D2DD}
+input,textarea,select{background:#F6EFF3;border-color:#E2D3DC}
+.wird-position-showcase{background:#F0E2E9!important;border-color:#E2CFDA!important}
+.wird-goal-settings-inside{background:#F6EDF2!important;border-color:#E2CFDA!important}
+body.dark{--bg:#211820;--surface:#30232D;--surface2:#3B2A37;--text:#F6ECF2;--muted:#C6AEBB;--accent:#D49AB7;--accent2:#E0B1C8;--soft:#493342;--line:#59404F;--shadow:0 14px 34px rgba(0,0,0,.24);background:radial-gradient(ellipse at 8% 5%,rgba(183,127,157,.2),transparent 34%),radial-gradient(ellipse at 92% 18%,rgba(137,84,111,.16),transparent 30%),linear-gradient(135deg,#211820,#2A1D27 60%,#30202B)}
+body.dark .hero{background:linear-gradient(112deg,#70445C,#89546F 55%,#A66D8A)}
+body.dark .stat,body.dark .panel,body.dark .item-card,body.dark .empty{background:#30232D;border-color:#59404F}
+body.dark .stat strong,body.dark .item-card h3,body.dark .panel h3,body.dark .page-head h2{color:#F6ECF2}
+body.dark .stat small,body.dark .item-card p,body.dark .page-head p{color:#C6AEBB}
+body.dark .quick,body.dark .ghost{background:#493342;color:#F1D8E5;border-color:#62485A}
+body.dark .wird-position-showcase,body.dark .wird-goal-settings-inside{background:#3B2A37!important;border-color:#62485A!important}
+body.dark input,body.dark textarea,body.dark select{background:#3B2A37;border-color:#62485A;color:#F6ECF2}

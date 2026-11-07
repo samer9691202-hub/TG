@@ -1,4 +1,10 @@
-Fayrouz 1.2.37 — Simplified daily wird cards
+Fayrouz 1.2.39 — Save reading position by page number
+
+- Allows saving a Quran page number on its own, without requiring a surah or ayah description.
+- Displays “الصفحة X” in the saved-position summary when only a page number is entered.
+- Keeps the optional surah/ayah/juz description, validates page numbers from 1 to 604, and preserves existing encrypted storage and saved data.
+
+Fayrouz 1.2.38 — Better spacing between daily wird cards
 
 - Reduced visual density, nested panels, shadows, padding, and gaps in the daily wird and reading-position cards.
 - Simplified the progress area and compacted page controls while preserving all labels, actions, and saved values.

@@ -1,4 +1,15 @@
-Fayrouz 1.2.10 — AppMint package
+Fayrouz 1.2.12 — AppMint package
+
+Performance improvements in 1.2.12:
+- Coalesces rapid vault changes into a single encrypted AES-GCM save, reducing repeated full-vault serialization and encryption while preserving encrypted storage.
+- Flushes pending encrypted writes when the app moves to the background or is closed.
+- Removes redundant full-vault encryption during startup migration and removes legacy plaintext only after the encrypted snapshot is committed successfully.
+- Keeps decrypted photo/video object URLs cached while the app is open, avoiding repeated media decryption when refreshing the gallery or changing filters.
+- Displays the media gallery immediately and decrypts media in small concurrent batches.
+- Skips repeated legacy-media migration after it has completed successfully once.
+- Updates the clock once per minute and immediately when the app returns to the foreground.
+- Applies a lightweight visual fallback on low-resource devices while preserving the existing layout and color palette.
+
 
 What's new in 1.2.10:
 - Replaced the task-page 'Overdue outside today' statistic card with 'All tasks', showing the total number of saved tasks.

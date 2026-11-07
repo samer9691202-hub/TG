@@ -1,880 +1,252 @@
-/* ==========================================================================
-   Vaulty 1.0.5 — app.js
-   - تشفير الخزنة بالكامل: PBKDF2-SHA256 + AES-256-GCM (Web Crypto API)
-   - كلمة المرور الرئيسية لا تُخزَّن إطلاقاً؛ صحتها تُتحقق بفك التشفير
-   - لا توجد أي اتصالات شبكية؛ كل شيء يعمل محلياً
-   ========================================================================== */
-(() => {
-  'use strict';
-
-  /* ---------- الثوابت ---------- */
-  const VAULT_KEY = 'vaulty_vault_v2';      // الخزنة المشفّرة
-  const LEGACY_KEY = 'vaulty_items_v1';     // بيانات النسخة القديمة (نص صريح) — تُرحَّل ثم تُحذف
-  const PBKDF2_ITERATIONS = 250000;
-  const MIN_MASTER_LENGTH = 4;
-  const MIN_RECOVERY_LENGTH = 8;
-  const AUTO_LOCK_MS = 5 * 60 * 1000;       // قفل تلقائي بعد 5 دقائق خمول
-  const REVEAL_MS = 15 * 1000;              // إخفاء كلمة المرور المعروضة تلقائياً
-  const CATEGORIES = ['شخصي', 'عمل', 'تواصل اجتماعي', 'تسوق', 'مالي', 'أخرى'];
-  const MASK = '••••••••••••';
-
-  /* ---------- أدوات عامة ---------- */
-  const $ = s => document.querySelector(s);
-  const $$ = s => Array.from(document.querySelectorAll(s));
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
-
-  const toB64 = buf => {
-    const bytes = new Uint8Array(buf);
-    let bin = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) {
-      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    }
-    return btoa(bin);
-  };
-  const fromB64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
-
-  // معرّف فريد (لا يعتمد على crypto.randomUUID المتوفر في السياقات الآمنة فقط)
-  const uid = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-
-  /* ---------- الحالة ---------- */
-  const state = {
-    items: [],
-    cryptoKey: null,
-    recoveryKey: null,
-    pendingRecovery: null,
-    needsRecoveryRefresh: false,
-    meta: null,            // { iter, salt }
-    activeCat: 'الكل',
-    locked: true,
-    mode: 'unlock',        // 'unlock' | 'setup'
-    busy: false,
-    failedAttempts: 0,
-    onConfirm: null,
-    saveQueue: Promise.resolve(),
-    idleTimer: null,
-    revealTimers: new Map()
-  };
-
-  /* ---------- التخزين ---------- */
-  function storageAvailable() {
-    try {
-      localStorage.setItem('__vaulty_test', '1');
-      localStorage.removeItem('__vaulty_test');
-      return true;
-    } catch { return false; }
-  }
-  const cryptoAvailable = () => !!(window.crypto && crypto.subtle && crypto.getRandomValues);
-
-  function readRecord() {
-    const raw = localStorage.getItem(VAULT_KEY);
-    return raw ? JSON.parse(raw) : null;
-  }
-
-  function validRecord(r) {
-    return !!r && (r.v === 2 || r.v === 3) && typeof r.salt === 'string' && typeof r.iv === 'string' &&
-      typeof r.data === 'string' && Number.isInteger(r.iter) && r.iter >= 10000 && r.iter <= 1000000 &&
-      (r.v === 2 || (typeof r.recoverySalt === 'string' && typeof r.recoveryIv === 'string' && typeof r.recoveryData === 'string'));
-  }
-
-  function readLegacyItems() {
-    try {
-      const arr = JSON.parse(localStorage.getItem(LEGACY_KEY) || '[]');
-      return sanitizeItems(arr);
-    } catch { return []; }
-  }
-
-  /* ---------- التشفير ---------- */
-  async function deriveKey(password, salt, iterations) {
-    const base = await crypto.subtle.importKey('raw', enc.encode(password.normalize('NFC')), 'PBKDF2', false, ['deriveKey']);
-    return crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
-      base,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt']
-    );
-  }
-
-  async function persist() {
-    const plain = enc.encode(JSON.stringify(state.items));
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, state.cryptoKey, plain);
-    const record = { v: 3, kdf: 'PBKDF2-SHA256', iter: state.meta.iter, salt: state.meta.salt, iv: toB64(iv), data: toB64(ct) };
-    if (state.recoveryKey) {
-      const recoveryIv = crypto.getRandomValues(new Uint8Array(12));
-      const recoveryData = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: recoveryIv }, state.recoveryKey, plain);
-      Object.assign(record, { recoverySalt: state.meta.recoverySalt, recoveryIv: toB64(recoveryIv), recoveryData: toB64(recoveryData), recoveryCodeIssued: true, recoveryUserSet: true, recoveryStale: false });
-      state.needsRecoveryRefresh = false;
-    } else {
-      // احتفظ بنسخة الاسترداد السابقة ولا تحذفها عند الحفظ بكلمة المرور الرئيسية فقط.
-      // تُعلَّم النسخة بأنها قديمة، ويُنشأ رمز جديد بعد فتح الخزنة في المرة التالية.
-      try {
-        const previous = readRecord();
-        if (previous && previous.recoverySalt && previous.recoveryIv && previous.recoveryData) {
-          Object.assign(record, { recoverySalt: previous.recoverySalt, recoveryIv: previous.recoveryIv, recoveryData: previous.recoveryData, recoveryCodeIssued: !!previous.recoveryCodeIssued, recoveryUserSet: !!previous.recoveryUserSet, recoveryStale: true });
-        }
-      } catch {}
-    }
-    localStorage.setItem(VAULT_KEY, JSON.stringify(record));
-  }
-
-  // الحفظ يُنفَّذ بالتسلسل لمنع تداخل عمليات الكتابة
-  function queueSave() {
-    state.saveQueue = state.saveQueue.then(persist);
-    return state.saveQueue.catch(() => { toast('تعذر حفظ البيانات — تحقق من مساحة التخزين'); state.saveQueue = Promise.resolve(); });
-  }
-
-  function sanitizeItems(arr) {
-    if (!Array.isArray(arr)) return [];
-    const seen = new Set();
-    return arr
-      .filter(x => x && typeof x === 'object' && typeof x.password === 'string')
-      .map(x => {
-        let id = typeof x.id === 'string' && /^[\w-]{1,64}$/.test(x.id) ? x.id : uid();
-        if (seen.has(id)) id = uid();
-        seen.add(id);
-        return {
-          id,
-          name: String(x.name ?? '').slice(0, 60) || 'بدون اسم',
-          category: CATEGORIES.includes(x.category) ? x.category : 'أخرى',
-          website: String(x.website ?? '').slice(0, 200),
-          username: String(x.username ?? '').slice(0, 120),
-          password: x.password.slice(0, 256),
-          notes: String(x.notes ?? '').slice(0, 300)
-        };
-      });
-  }
-
-  /* ---------- واجهة: تنبيه ونسخ ---------- */
-  let toastTimer;
-  function toast(msg) {
-    const t = $('#toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
-  }
-
-  async function copyText(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      // بديل للمتصفحات/السياقات التي تمنع Clipboard API
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.setAttribute('readonly', '');
-      ta.style.cssText = 'position:fixed;top:0;opacity:0';
-      document.body.appendChild(ta);
-      ta.select();
-      let ok = false;
-      try { ok = document.execCommand('copy'); } catch { ok = false; }
-      ta.remove();
-      return ok;
-    }
-  }
-
-  /* ---------- قوة كلمة المرور (نفس المعيار الأصلي) ---------- */
-  function strength(p) {
-    let n = 0;
-    if (p.length >= 12) n++;
-    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) n++;
-    if (/\d/.test(p)) n++;
-    if (/[^a-zA-Z0-9]/.test(p)) n++;
-    return n;
-  }
-
-  function updateStrengthHint(value, target) {
-    if (!target) return;
-    // لا تعرض تحذير قوة كلمة المرور أثناء تسجيل الدخول؛ يظهر فقط عند إنشاء/تغيير كلمة المرور.
-    if (target.id === 'setupPasswordStrength' && state.mode !== 'setup') {
-      target.textContent = '';
-      target.className = 'strength-hint';
-      return;
-    }
-    if (!value) { target.textContent = ''; target.className = 'strength-hint'; return; }
-    const score = strength(value);
-    target.textContent = value.length < 8 || score <= 1
-      ? 'تنبيه: كلمة المرور ضعيفة. يمكنك المتابعة، لكن يُنصح باستخدام 8 أحرف أو أكثر مع أرقام ورموز.'
-      : score === 2 ? 'قوة كلمة المرور: متوسطة. يمكنك تقويتها بمزيد من التنوع والطول.'
-      : 'قوة كلمة المرور: جيدة.';
-    target.className = 'strength-hint ' + (value.length < 8 || score <= 1 ? 'weak' : score === 2 ? 'medium' : 'good');
-  }
-
-  /* ---------- مولّد كلمات المرور ---------- */
-  const SETS = {
-    lower: 'abcdefghijkmnopqrstuvwxyz',
-    upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
-    digit: '23456789',
-    symbol: '!@#$%&*+-_?'
-  };
-
-  // عدد عشوائي منتظم بدون انحياز (rejection sampling)
-  function randInt(max) {
-    const limit = Math.floor(0x100000000 / max) * max;
-    const a = new Uint32Array(1);
-    do { crypto.getRandomValues(a); } while (a[0] >= limit);
-    return a[0] % max;
-  }
-
-  function makePassword(len = 18) {
-    const sets = Object.values(SETS);
-    const all = sets.join('');
-    const out = sets.map(s => s[randInt(s.length)]);          // حرف واحد على الأقل من كل نوع
-    while (out.length < len) out.push(all[randInt(all.length)]);
-    for (let i = out.length - 1; i > 0; i--) {                // خلط Fisher–Yates
-      const j = randInt(i + 1);
-      [out[i], out[j]] = [out[j], out[i]];
-    }
-    return out.join('');
-  }
-
-  function generate() {
-    $('#generated').textContent = makePassword(+$('#lengthRange').value);
-  }
-
-  /* ---------- العرض ---------- */
-  function clearRevealTimers() {
-    state.revealTimers.forEach(t => clearTimeout(t));
-    state.revealTimers.clear();
-  }
-
-  function render() {
-    clearRevealTimers();
-    const q = $('#searchInput').value.trim().toLowerCase();
-    const items = state.items;
-    const shown = items.filter(x =>
-      (state.activeCat === 'الكل' || x.category === state.activeCat) &&
-      [x.name, x.website, x.username, x.notes].join(' ').toLowerCase().includes(q)
-    );
-
-    $('#totalCount').innerHTML = items.length + ' <small>عنصر</small>';
-    $('#strongCount').textContent = items.filter(x => strength(x.password) >= 3).length;
-    $('#categoryCount').textContent = new Set(items.map(x => x.category)).size;
-
-    $('#vaultGrid').innerHTML = shown.length ? shown.map(x => `<article class="item">
-  <div class="item-top"><div class="site-icon">${esc((x.name || '?').trim().slice(0, 1).toUpperCase())}</div><div class="item-title"><strong>${esc(x.name)}</strong><span>${esc(x.website || 'بدون موقع')}</span></div><button type="button" class="more" aria-label="تعديل العنصر" title="تعديل" data-edit="${x.id}">···</button></div>
-  <div class="item-meta"><span class="tag">${esc(x.category)}</span><span>${strength(x.password) >= 3 ? '● كلمة قوية' : '○ كلمة مرور'}</span></div>
-  <div class="credential"><span class="masked" id="pw-${x.id}">${MASK}</span><div class="mini-actions">
-    <button type="button" title="إظهار / إخفاء" aria-label="إظهار أو إخفاء كلمة المرور" data-reveal="${x.id}">◉</button>
-    <button type="button" title="نسخ كلمة المرور" aria-label="نسخ كلمة المرور" data-copy="${x.id}">▢</button>
-    ${x.username ? `<button type="button" title="نسخ اسم المستخدم" aria-label="نسخ اسم المستخدم" data-copyuser="${x.id}">@</button>` : ''}
-    <button type="button" title="حذف العنصر" aria-label="حذف العنصر" data-delete="${x.id}">⌫</button>
-  </div></div>
-</article>`).join('') : `<div class="empty"><div class="empty-icon">◇</div><b>${items.length ? 'لا توجد نتائج مطابقة' : 'خزنتك تبدأ من هنا'}</b><span>${items.length ? 'جرّب كلمة بحث أو فئة مختلفة.' : 'أضف أول حساب واحفظ بياناته في مكان مرتب.'}</span>${!items.length ? '<br><button type="button" class="primary-btn" data-action="add">＋ إضافة أول عنصر</button>' : ''}</div>`;
-  }
-
-  /* ---------- النوافذ ---------- */
-  const openOverlay = id => $('#' + id).classList.add('show');
-  const closeOverlay = id => $('#' + id).classList.remove('show');
-  const closeAllOverlays = () => $$('.overlay.show').forEach(o => o.classList.remove('show'));
-
-  function setPasswordVisible(visible) {
-    $('#password').type = visible ? 'text' : 'password';
-  }
-
-  function openForm(item) {
-    $('#itemForm').reset();
-    setPasswordVisible(false);
-    $('#itemId').value = item?.id || '';
-    $('#formTitle').textContent = item ? 'تعديل العنصر' : 'إضافة إلى الخزنة';
-    if (item) {
-      $('#name').value = item.name;
-      $('#category').value = item.category;
-      $('#website').value = item.website || '';
-      $('#username').value = item.username || '';
-      $('#password').value = item.password;
-      $('#notes').value = item.notes || '';
-    }
-    openOverlay('itemOverlay');
-    $('#name').focus();
-  }
-
-  function askConfirm({ title, text, label, danger = true, onConfirm }) {
-    $('#confirmTitle').textContent = title;
-    $('#confirmText').textContent = text;
-    const ok = $('#confirmOk');
-    ok.textContent = label;
-    ok.classList.toggle('btn-danger', danger);
-    state.onConfirm = onConfirm;
-    openOverlay('confirmOverlay');
-  }
-
-  /* ---------- عمليات العناصر ---------- */
-  async function onItemSubmit(e) {
-    e.preventDefault();
-    const name = $('#name').value.trim();
-    const password = $('#password').value;
-    if (!name || !password) { toast('الاسم وكلمة المرور مطلوبان'); return; }
-    const id = $('#itemId').value || uid();
-    const obj = {
-      id, name,
-      category: $('#category').value,
-      website: $('#website').value.trim(),
-      username: $('#username').value.trim(),
-      password,
-      notes: $('#notes').value.trim()
-    };
-    const i = state.items.findIndex(x => x.id === id);
-    if (i >= 0) state.items[i] = obj; else state.items.unshift(obj);
-    render();
-    closeOverlay('itemOverlay');
-    $('#itemForm').reset();
-    setPasswordVisible(false);
-    await queueSave();
-    toast('تم حفظ العنصر');
-  }
-
-  async function onGridClick(e) {
-    const b = e.target.closest('button');
-    if (!b) return;
-    if (b.dataset.action === 'add') { openForm(); return; }
-    const d = b.dataset;
-    const id = d.edit || d.reveal || d.copy || d.copyuser || d.delete;
-    const x = state.items.find(z => z.id === id);
-    if (!x) return;
-
-    if (d.edit) openForm(x);
-
-    if (d.reveal) {
-      const el = $('#pw-' + id);
-      const open = el.dataset.open === '1';
-      clearTimeout(state.revealTimers.get(id));
-      if (open) {
-        el.textContent = MASK; el.dataset.open = '0';
-      } else {
-        el.textContent = x.password; el.dataset.open = '1';
-        state.revealTimers.set(id, setTimeout(() => { el.textContent = MASK; el.dataset.open = '0'; }, REVEAL_MS));
-      }
-    }
-
-    if (d.copy) toast(await copyText(x.password) ? 'تم نسخ كلمة المرور' : 'تعذر النسخ في هذا المتصفح');
-    if (d.copyuser) toast(await copyText(x.username) ? 'تم نسخ اسم المستخدم' : 'تعذر النسخ في هذا المتصفح');
-
-    if (d.delete) {
-      askConfirm({
-        title: 'حذف العنصر؟',
-        text: 'سيتم حذف هذا العنصر من الخزنة. لا يمكن التراجع عن هذه الخطوة.',
-        label: 'حذف نهائياً',
-        onConfirm: async () => {
-          state.items = state.items.filter(z => z.id !== id);
-          render();
-          await queueSave();
-          toast('تم حذف العنصر');
-        }
-      });
-    }
-  }
-
-  /* ---------- النسخ الاحتياطي ---------- */
-  async function exportBackup() {
-    await state.saveQueue.catch(() => {});
-    const raw = localStorage.getItem(VAULT_KEY);
-    if (!raw) { toast('لا توجد بيانات للتصدير'); return; }
-    const name = `vaulty-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    const blob = new Blob([raw], { type: 'application/json' });
-    // على الجوال / داخل التطبيقات: نافذة المشاركة إن كانت مدعومة
-    try {
-      const file = new File([blob], name, { type: 'application/json' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Vaulty backup' });
-        toast('تم تصدير نسخة مشفّرة');
-        return;
-      }
-    } catch (err) {
-      if (err && err.name === 'AbortError') return;   // ألغى المستخدم المشاركة
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast('تم تصدير نسخة مشفّرة');
-  }
-
-  async function onImportFile(e) {
-    const file = e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) { toast('الملف كبير جداً'); return; }
-    let record;
-    try {
-      record = JSON.parse(await file.text());
-    } catch { toast('الملف غير صالح'); return; }
-    if (!validRecord(record)) { toast('هذا ليس ملف نسخة احتياطية صالحاً لـ Vaulty'); return; }
-    askConfirm({
-      title: 'استبدال الخزنة الحالية؟',
-      text: 'سيتم استبدال جميع بيانات الخزنة الحالية بمحتوى النسخة الاحتياطية، وستحتاج إلى كلمة المرور الرئيسية الخاصة بتلك النسخة. صدّر نسخة من خزنتك الحالية أولاً إن كنت تريد الاحتفاظ بها.',
-      label: 'استبدال',
-      onConfirm: async () => {
-        await state.saveQueue.catch(() => {});
-        try {
-          const clean = { ...record, v: record.v === 3 ? 3 : 2, kdf: 'PBKDF2-SHA256' };
-          localStorage.setItem(VAULT_KEY, JSON.stringify(clean));
-        } catch { toast('تعذر حفظ النسخة المستوردة'); return; }
-        lockVault('تم استيراد النسخة. أدخل كلمة المرور الرئيسية الخاصة بها لفتحها.');
-      }
-    });
-  }
-
-  /* ---------- القفل وإنشاء الخزنة ---------- */
-  function setLockError(msg) { $('#lockError').textContent = msg || ''; }
-
-  function setBusy(b) {
-    state.busy = b;
-    $('#unlockBtn').disabled = b;
-    $('#unlockBtn').textContent = b ? 'جارٍ المعالجة…' : (state.mode === 'setup' ? 'إنشاء الخزنة' : 'فتح الخزنة');
-  }
-
-  function refreshLockMode() {
-    const hasVault = !!localStorage.getItem(VAULT_KEY);
-    state.mode = hasVault ? 'unlock' : 'setup';
-    // أظهر رابط استرداد الخزنة على شاشة القفل عند وجود خزنة محفوظة.
-    // كان الزر مخفياً في HTML ولم تتم إزالة hidden عند وضع فتح الخزنة.
-    $('#recoverVaultBtn').hidden = !hasVault;
-    const legacyCount = hasVault ? 0 : readLegacyItems().length;
-    $('#confirmPassword').hidden = hasVault;
-    if (hasVault) { $('#setupPasswordStrength').textContent = ''; $('#setupPasswordStrength').className = 'strength-hint'; }
-    $('#unlockPassword').autocomplete = hasVault ? 'current-password' : 'new-password';
-    if (hasVault) {
-      $('#lockTitle').textContent = 'خزنتك مقفلة';
-      $('#lockText').innerHTML = 'أدخل كلمة المرور الرئيسية للمتابعة.<br>ستبقى بياناتك على هذا الجهاز.';
-    } else {
-      $('#lockTitle').textContent = 'إنشاء خزنتك';
-      $('#lockText').innerHTML = 'اختر كلمة مرور رئيسية (4 أحرف على الأقل)، واكتب رمز الاسترداد بنفسك. ستُشفَّر به نسخة استرداد منفصلة من بياناتك.' +
-        (legacyCount ? `<br>تم العثور على ${legacyCount} عنصر محفوظ سابقاً وسيتم تشفيرها ونقلها تلقائياً.` : '');
-    }
-    setBusy(false);
-  }
-
-  function showLockScreen() {
-    $('#lockScreen').classList.add('show');
-    $('#app').classList.add('is-locked');
-    refreshLockMode();
-    setTimeout(() => $('#unlockPassword').focus(), 0);
-  }
-
-  function lockVault(message) {
-    state.locked = true;
-    state.items = [];
-    state.cryptoKey = null;
-    state.recoveryKey = null;
-    state.meta = null;
-    state.onConfirm = null;
-    clearTimeout(state.idleTimer);
-    clearRevealTimers();
-    closeAllOverlays();
-    $('#itemForm').reset();
-    setPasswordVisible(false);
-    $('#itemId').value = '';
-    $('#generated').textContent = '—';
-    $('#searchInput').value = '';
-    $('#vaultGrid').innerHTML = '';
-    $('#unlockPassword').value = '';
-    $('#confirmPassword').value = '';
-    setLockError('');
-    showLockScreen();
-    if (message) setLockError(message);
-  }
-
-  function enterApp() {
-    state.locked = false;
-    state.failedAttempts = 0;
-    $('#unlockPassword').value = '';
-    $('#confirmPassword').value = '';
-    setLockError('');
-    $('#lockScreen').classList.remove('show');
-    $('#app').classList.remove('is-locked');
-    render();
-    resetIdle();
-  }
-
-  async function createVault(password, recoveryCode) {
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    state.cryptoKey = await deriveKey(password, salt, PBKDF2_ITERATIONS);
-    state.meta = { iter: PBKDF2_ITERATIONS, salt: toB64(salt) };
-    const recoverySalt = crypto.getRandomValues(new Uint8Array(16));
-    state.recoveryKey = await deriveKey(normalizeRecoveryCode(recoveryCode), recoverySalt, 600000);
-    state.meta.recoverySalt = toB64(recoverySalt);
-    state.items = readLegacyItems();                 // ترحيل البيانات القديمة إن وُجدت
-    await persist();
-    localStorage.removeItem(LEGACY_KEY);
-    return recoveryCode;             // حذف النسخة النصية بعد نجاح التشفير
-  }
-
-  async function openVault(password) {
-    let rec;
-    try { rec = readRecord(); } catch { rec = null; }
-    if (!validRecord(rec)) throw new Error('corrupt');
-    const key = await deriveKey(password, fromB64(rec.salt), rec.iter);
-    let plain;
-    try {
-      plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.iv) }, key, fromB64(rec.data));
-    } catch { throw new Error('wrong'); }
-    state.items = sanitizeItems(JSON.parse(dec.decode(plain)));
-    state.cryptoKey = key;
-    state.meta = { iter: rec.iter, salt: rec.salt, recoverySalt: rec.recoverySalt || null };
-    // كلمة المرور الرئيسية وحدها تفتح الخزنة. لا نطلب رمز الاسترداد عند كل دخول.
-    // الإصدارات السابقة لم تسجل تأكيد عرض الرمز؛ لذلك نولّد رمزاً جديداً مرة واحدة
-    // بعد أول فتح ناجح، ثم نحدّث نسخة الاسترداد عند الحاجة بعد تعديل البيانات.
-    state.recoveryKey = null;
-    state.needsRecoveryRefresh = !rec.recoveryUserSet || !rec.recoveryCodeIssued || !!rec.recoveryStale || !rec.recoveryData;
-  }
-
-  async function onLockSubmit(e) {
-    e.preventDefault();
-    if (state.busy) return;
-    const pw = $('#unlockPassword').value;
-    setLockError('');
-
-    if (state.mode === 'setup') {
-      const recoveryCode = $('#setupRecoveryCode').value;
-      if (pw.length < MIN_MASTER_LENGTH) { setLockError(`كلمة المرور الرئيسية يجب ألا تقل عن ${MIN_MASTER_LENGTH} أحرف.`); return; }
-      if (pw !== $('#confirmPassword').value) { setLockError('كلمتا المرور غير متطابقتين.'); return; }
-      if (normalizeRecoveryCode(recoveryCode).length < MIN_RECOVERY_LENGTH) { setLockError(`رمز الاسترداد الذي تختاره يجب أن يكون ${MIN_RECOVERY_LENGTH} أحرف على الأقل.`); return; }
-      if (recoveryCode !== $('#confirmSetupRecoveryCode').value) { setLockError('رمزا الاسترداد غير متطابقين.'); return; }
-      setBusy(true);
-      try {
-        await createVault(pw, recoveryCode);
-        enterApp();
-        $('#setupRecoveryCode').value = '';
-        $('#confirmSetupRecoveryCode').value = '';
-        toast('تم إنشاء الخزنة وتشفيرها. احتفظ برمز الاسترداد الذي اخترته.');
-      } catch {
-        state.cryptoKey = null; state.items = [];
-        setLockError('تعذر إنشاء الخزنة. تأكد من أن التخزين المحلي متاح في المتصفح.');
-        setBusy(false);
-      }
-      return;
-    }
-
-    if (!pw) { setLockError('أدخل كلمة المرور الرئيسية.'); return; }
-    setBusy(true);
-    try {
-      await openVault(pw);
-      const needsRecoverySetup = state.needsRecoveryRefresh;
-      enterApp();
-      toast('تم فتح الخزنة');
-      if (needsRecoverySetup) {
-        openOverlay('recoverySettingsOverlay');
-        $('#recoverySettingsHint').textContent = 'هذه الخزنة لا تملك رمز استرداد مؤكداً. أنشئ رمزاً من اختيارك الآن حتى تتمكن من استعادتها لاحقاً.';
-      }
-    } catch (err) {
-      state.failedAttempts++;
-      await sleep(Math.min(state.failedAttempts * 400, 4000));   // إبطاء المحاولات المتكررة
-      setLockError(err.message === 'corrupt'
-        ? 'بيانات الخزنة تالفة. استورد نسخة احتياطية إن توفرت.'
-        : err.message === 'recovery-required' ? 'رمز الاسترداد مطلوب للمتابعة بأمان.'
-        : err.message === 'recovery-invalid' ? 'رمز الاسترداد غير صحيح.'
-        : 'كلمة المرور الرئيسية غير صحيحة.');
-      $('#unlockPassword').select();
-      setBusy(false);
-    }
-  }
-
-  function showRecoveryCode(code) {
-    const box = $('#recoveryCodeBox');
-    box.textContent = code;
-    openOverlay('recoveryCodeOverlay');
-  }
-
-  function normalizeRecoveryCode(code) { return String(code || '').normalize('NFC').trim(); }
-
-  async function enableRecovery(code) {
-    const normalized = normalizeRecoveryCode(code);
-    if (normalized.length < MIN_RECOVERY_LENGTH) throw new Error('recovery-short');
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const nextKey = await deriveKey(normalized, salt, 600000);
-    const oldKey = state.recoveryKey;
-    const oldMeta = { ...state.meta };
-    state.recoveryKey = nextKey;
-    state.meta.recoverySalt = toB64(salt);
-    try {
-      await state.saveQueue.catch(() => {});
-      await persist();
-      state.saveQueue = Promise.resolve();
-      state.needsRecoveryRefresh = false;
-    } catch (err) {
-      state.recoveryKey = oldKey;
-      state.meta = oldMeta;
-      throw err;
-    }
-  }
-
-  async function saveRecoverySettings(e) {
-    if (e) e.preventDefault();
-    const code = $('#newRecoveryCode').value;
-    const confirm = $('#confirmNewRecoveryCode').value;
-    const error = $('#recoverySettingsError');
-    error.textContent = '';
-    if (normalizeRecoveryCode(code).length < MIN_RECOVERY_LENGTH) {
-      error.textContent = `رمز الاسترداد يجب أن يحتوي على ${MIN_RECOVERY_LENGTH} أحرف على الأقل.`; return;
-    }
-    if (code !== confirm) { error.textContent = 'رمزا الاسترداد غير متطابقين.'; return; }
-    const btn = $('#saveRecoveryCodeBtn');
-    btn.disabled = true; btn.textContent = 'جارٍ حفظ الرمز…';
-    try {
-      await enableRecovery(code);
-      $('#recoverySettingsForm').reset();
-      closeOverlay('recoverySettingsOverlay');
-      toast('تم حفظ رمز الاسترداد الجديد. الرمز السابق لم يعد صالحاً.');
-    } catch {
-      error.textContent = 'تعذر حفظ رمز الاسترداد. لم يتم تأكيد أي تغيير.';
-    } finally { btn.disabled = false; btn.textContent = 'حفظ رمز الاسترداد'; }
-  }
-
-  async function changeMasterPassword(e) {
-    e.preventDefault();
-    const current = $('#currentMasterPassword').value;
-    const next = $('#newMasterPassword').value;
-    const confirm = $('#confirmNewMasterPassword').value;
-    const error = $('#passwordChangeError');
-    error.textContent = '';
-    if (next.length < MIN_MASTER_LENGTH) { error.textContent = `كلمة المرور الجديدة يجب ألا تقل عن ${MIN_MASTER_LENGTH} أحرف.`; return; }
-    if (next !== confirm) { error.textContent = 'كلمتا المرور الجديدتان غير متطابقتين.'; return; }
-    const button = $('#saveMasterPasswordBtn');
-    button.disabled = true;
-    button.textContent = 'جارٍ التحديث…';
-    try {
-      const rec = readRecord();
-      const checkKey = await deriveKey(current, fromB64(state.meta.salt), state.meta.iter);
-      // تحقق من كلمة المرور الحالية بفك تشفير السجل قبل تغيير أي شيء.
-      await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.iv) }, checkKey, fromB64(rec.data));
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const nextKey = await deriveKey(next, salt, PBKDF2_ITERATIONS);
-      const oldKey = state.cryptoKey;
-      const oldMeta = { ...state.meta };
-      state.cryptoKey = nextKey;
-      state.meta.iter = PBKDF2_ITERATIONS;
-      state.meta.salt = toB64(salt);
-      // لا نعلن نجاح التغيير إلا بعد كتابة السجل المشفّر فعلياً.
-      try {
-        await state.saveQueue.catch(() => {});
-        await persist();
-        state.saveQueue = Promise.resolve();
-      } catch (saveError) {
-        state.cryptoKey = oldKey;
-        state.meta = oldMeta;
-        throw saveError;
-      }
-      $('#changeMasterForm').reset();
-      closeOverlay('passwordSettingsOverlay');
-      toast('تم تغيير كلمة المرور مع الحفاظ على بيانات الخزنة');
-    } catch {
-      error.textContent = 'كلمة المرور الحالية غير صحيحة، لم يتم إجراء أي تغيير.';
-    } finally {
-      button.disabled = false;
-      button.textContent = 'حفظ كلمة المرور الجديدة';
-    }
-  }
-
-  async function recoverVault() {
-    const code = normalizeRecoveryCode($('#recoveryInput').value);
-    if (code.length < MIN_RECOVERY_LENGTH) { setLockError(`أدخل رمز الاسترداد الذي اخترته (لا يقل عن ${MIN_RECOVERY_LENGTH} أحرف).`); return; }
-    setBusy(true);
-    try {
-      const rec = readRecord();
-      if (!validRecord(rec) || rec.v !== 3) throw new Error('bad');
-      const key = await deriveKey(code, fromB64(rec.recoverySalt), 600000);
-      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.recoveryIv) }, key, fromB64(rec.recoveryData));
-      const recoveredItems = sanitizeItems(JSON.parse(dec.decode(plain)));
-      state.pendingRecovery = { items: recoveredItems, key, record: rec };
-      $('#recoveryPanel').hidden = true;
-      $('#recoveryPasswordForm').reset();
-      $('#recoveryPasswordError').textContent = '';
-      $('#recoveryPasswordStrength').textContent = '';
-      setBusy(false);
-      openOverlay('recoveryPasswordOverlay');
-      $('#recoveryNewPassword').focus();
-    } catch {
-      setLockError('رمز الاسترداد غير صحيح أو لا توجد نسخة استرداد صالحة.');
-      setBusy(false);
-    }
-  }
-
-  async function saveRecoveredPassword(e) {
-    e.preventDefault();
-    const password = $('#recoveryNewPassword').value;
-    const confirmation = $('#recoveryConfirmPassword').value;
-    const error = $('#recoveryPasswordError');
-    error.textContent = '';
-    if (password.length < MIN_MASTER_LENGTH) { error.textContent = `كلمة المرور يجب ألا تقل عن ${MIN_MASTER_LENGTH} أحرف.`; return; }
-    if (password !== confirmation) { error.textContent = 'كلمتا المرور غير متطابقتين.'; return; }
-    if (!state.pendingRecovery) { error.textContent = 'انتهت جلسة الاسترداد. أعد إدخال رمز الاسترداد.'; return; }
-    const button = $('#saveRecoveredPasswordBtn');
-    button.disabled = true;
-    button.textContent = 'جارٍ حفظ كلمة المرور…';
-    const previous = { items: state.items, cryptoKey: state.cryptoKey, recoveryKey: state.recoveryKey, meta: state.meta };
-    try {
-      const pending = state.pendingRecovery;
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      state.items = pending.items;
-      state.cryptoKey = await deriveKey(password, salt, PBKDF2_ITERATIONS);
-      state.meta = { iter: PBKDF2_ITERATIONS, salt: toB64(salt), recoverySalt: pending.record.recoverySalt };
-      state.recoveryKey = pending.key;
-      await persist();
-      state.pendingRecovery = null;
-      $('#recoveryInput').value = '';
-      $('#recoveryPasswordForm').reset();
-      closeOverlay('recoveryPasswordOverlay');
-      enterApp();
-      toast('تم استرداد الخزنة وتغيير كلمة المرور دون فقدان البيانات');
-    } catch {
-      state.items = previous.items;
-      state.cryptoKey = previous.cryptoKey;
-      state.recoveryKey = previous.recoveryKey;
-      state.meta = previous.meta;
-      error.textContent = 'تعذر حفظ كلمة المرور الجديدة. لم يتم اعتماد التغيير؛ حاول مرة أخرى.';
-    } finally {
-      button.disabled = false;
-      button.textContent = 'حفظ كلمة المرور';
-    }
-  }
-
-  /* ---------- القفل التلقائي ---------- */
-  function resetIdle() {
-    clearTimeout(state.idleTimer);
-    if (state.locked) return;
-    state.idleTimer = setTimeout(() => lockVault('تم قفل الخزنة تلقائياً بسبب عدم النشاط.'), AUTO_LOCK_MS);
-  }
-
-  /* ---------- ربط الأحداث ---------- */
-  function bindEvents() {
-    $('#addBtn').addEventListener('click', () => openForm());
-    $('#makePassword').addEventListener('click', () => { $('#password').value = makePassword(); setPasswordVisible(true); });
-    $('#togglePassword').addEventListener('click', () => setPasswordVisible($('#password').type === 'password'));
-    $('#itemForm').addEventListener('submit', onItemSubmit);
-
-    $('#vaultGrid').addEventListener('click', onGridClick);
-    $('#vaultGrid').addEventListener('dblclick', e => {
-      if (e.target.closest('button')) return;
-      const card = e.target.closest('.item');
-      const editBtn = card && card.querySelector('[data-edit]');
-      const x = editBtn && state.items.find(z => z.id === editBtn.dataset.edit);
-      if (x) openForm(x);
-    });
-
-    $('#searchInput').addEventListener('input', render);
-    $('#filters').addEventListener('click', e => {
-      const b = e.target.closest('[data-cat]');
-      if (!b) return;
-      state.activeCat = b.dataset.cat;
-      $$('.filter').forEach(x => x.classList.toggle('active', x === b));
-      render();
-    });
-
-    $$('[data-close]').forEach(b => b.addEventListener('click', () => closeOverlay(b.dataset.close)));
-    $$('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); }));
-    document.addEventListener('keydown', e => {
-      if (e.key !== 'Escape') return;
-      const open = $$('.overlay.show');
-      if (open.length) open[open.length - 1].classList.remove('show');
-    });
-
-    $('#generatorBtn').addEventListener('click', () => { openOverlay('generatorOverlay'); generate(); });
-    $('#lengthRange').addEventListener('input', e => { $('#lengthValue').textContent = e.target.value; generate(); });
-    $('#regenerate').addEventListener('click', generate);
-    $('#copyGenerated').addEventListener('click', async () => {
-      toast(await copyText($('#generated').textContent) ? 'تم نسخ كلمة المرور' : 'تعذر النسخ');
-    });
-
-    $('#confirmOk').addEventListener('click', () => {
-      const fn = state.onConfirm;
-      state.onConfirm = null;
-      closeOverlay('confirmOverlay');
-      if (fn) fn();
-    });
-
-    $('#lockBtn').addEventListener('click', () => lockVault());
-    $('#lockForm').addEventListener('submit', onLockSubmit);
-    $('#unlockPassword').addEventListener('input', () => {
-      if (state.mode === 'setup') updateStrengthHint($('#unlockPassword').value, $('#setupPasswordStrength'));
-      else { $('#setupPasswordStrength').textContent = ''; $('#setupPasswordStrength').className = 'strength-hint'; }
-    });
-    $('#newMasterPassword').addEventListener('input', () => updateStrengthHint($('#newMasterPassword').value, $('#changePasswordStrength')));
-    $('#recoverVaultBtn').addEventListener('click', () => {
-      const rec = readRecord();
-      if (!rec || rec.v !== 3 || !rec.recoverySalt || !rec.recoveryIv || !rec.recoveryData) {
-        setLockError('لا توجد نسخة استرداد صالحة لهذه الخزنة. افتحها بكلمة المرور ثم أنشئ رمز استرداد من الإعدادات.');
-        return;
-      }
-      $('#recoveryPanel').hidden = false;
-      $('#lockScreen').classList.add('recovery-mode');
-      setLockError('');
-      $('#recoveryInput').focus();
-    });
-    $('#cancelRecoveryBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = true; $('#lockScreen').classList.remove('recovery-mode'); $('#recoveryInput').value = ''; setLockError(''); });
-    $('#recoverSubmitBtn').addEventListener('click', recoverVault);
-    $('#recoveryPasswordForm').addEventListener('submit', saveRecoveredPassword);
-    $('#recoveryNewPassword').addEventListener('input', () => updateStrengthHint($('#recoveryNewPassword').value, $('#recoveryPasswordStrength')));
-    $('#cancelRecoveryPassword').addEventListener('click', () => { state.pendingRecovery = null; $('#recoveryPasswordForm').reset(); closeOverlay('recoveryPasswordOverlay'); setLockError(''); $('#recoveryPanel').hidden = false; });
-    $('#copyRecoveryCode').addEventListener('click', async () => toast(await copyText($('#recoveryCodeBox').textContent) ? 'تم نسخ رمز الاسترداد' : 'تعذر النسخ'));
-    $('#closeRecoveryCode').addEventListener('click', () => closeOverlay('recoveryCodeOverlay'));
-
-    $('#settingsBtn').addEventListener('click', () => openOverlay('settingsOverlay'));
-    $('#changeMasterBtn').addEventListener('click', () => {
-      $('#changeMasterForm').reset();
-      $('#passwordChangeError').textContent = '';
-      closeOverlay('settingsOverlay');
-      openOverlay('passwordSettingsOverlay');
-      $('#currentMasterPassword').focus();
-    });
-    $('#changeMasterForm').addEventListener('submit', changeMasterPassword);
-    $('#newRecoveryBtn').addEventListener('click', () => {
-      $('#recoverySettingsForm').reset();
-      $('#recoverySettingsError').textContent = '';
-      $('#recoverySettingsHint').textContent = 'اختر رمزاً لا يقل عن 8 أحرف. تذكّر أن الرمز حساس لحالة الأحرف، ولا يمكن استعادته إذا نسيته.';
-      closeOverlay('settingsOverlay');
-      openOverlay('recoverySettingsOverlay');
-      $('#newRecoveryCode').focus();
-    });
-    $('#recoverySettingsForm').addEventListener('submit', saveRecoverySettings);
-
-    $('#exportBtn').addEventListener('click', exportBackup);
-    $('#importBtn').addEventListener('click', () => $('#importFile').click());
-    $('#importFile').addEventListener('change', onImportFile);
-
-    ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(ev =>
-      document.addEventListener(ev, resetIdle, { passive: true, capture: true }));
-
-    // تعديل الخزنة من تبويب آخر: قفل هذا التبويب لتجنب الكتابة فوق البيانات
-    window.addEventListener('storage', e => {
-      if (e.key !== VAULT_KEY && e.key !== null) return;
-      if (state.locked) refreshLockMode();
-      else lockVault('تم تعديل الخزنة من نافذة أخرى. أعد إدخال كلمة المرور.');
-    });
-  }
-
-  /* ---------- التشغيل ---------- */
-  function init() {
-    bindEvents();
-    if (!cryptoAvailable()) {
-      setLockError('المتصفح لا يدعم التشفير المطلوب. افتح Vaulty في متصفح حديث (عبر https أو من ملف محلي).');
-      $('#unlockBtn').disabled = true;
-      return;
-    }
-    if (!storageAvailable()) {
-      setLockError('التخزين المحلي غير متاح (ربما بسبب التصفح الخاص أو إعدادات المتصفح)، لذا لا يمكن استخدام الخزنة.');
-      $('#unlockBtn').disabled = true;
-      return;
-    }
-    refreshLockMode();
-    $('#unlockPassword').focus();
-  }
-
-  init();
-
-  // تسجيل عامل الخدمة (يعمل على http/https فقط، ويُتجاهل عند الفتح كملف محلي)
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-  }
-})();
+'use strict';
+// Lightweight visual fallback for low-memory/low-core Android devices.
+try{if((navigator.deviceMemory&&navigator.deviceMemory<=3)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4))document.documentElement.classList.add('low-resource-device')}catch{}
+const sections = {
+  tasks:{title:'مهامي',sub:'مهام اليوم فقط — استخدمي التقويم لعرض مهام أي يوم آخر',add:'إضافة مهمة',fields:[['title','اسم المهمة','text',true],['priority','الأولوية','select',false,['عادية','متوسطة','عالية']],['duration','مدة المهمة','select',false,['يوم','أسبوع','شهر']],['date','موعد المهمة','date'],['details','تفاصيل المهمة','textarea']]},
+  notes:{title:'مذكراتي',sub:'مساحة لأفكاركِ وذكرياتكِ',add:'كتابة مذكرة',fields:[['title','عنوان المذكرة','text'],['category','التصنيف','select',false,['شخصي','أفكار','ذكريات','عمل ودراسة','عام']],['details','اكتبي هنا...','textarea',true]]},
+};
+let page='home', editing=null, pendingMedia=[], mediaCache={}, mediaFilter='all', pendingPreviewUrls=[], noteQuery='', taskFilter='all', taskHistoryOpen=false, taskHistoryFilter='all', taskHistorySearch='', taskCalendarSelected='', taskCalendarMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1), noteCategoryFilter='الكل', noteSort='newest';
+const $=s=>document.querySelector(s);
+// Encrypted local vault: user records are kept in memory only while unlocked.
+let vaultKey=null, vaultCache={}, vaultWriteQueue=Promise.resolve(), vaultSaveTimer=null, vaultDirty=false;
+const store={get(k){return Array.isArray(vaultCache[k])?vaultCache[k]:[]},set(k,v){vaultCache[k]=v;queueVaultSave();return true}};
+function bytesToB64(bytes){let s='';for(const b of new Uint8Array(bytes))s+=String.fromCharCode(b);return btoa(s)}
+function b64ToBytes(value){const s=atob(value);return Uint8Array.from(s,c=>c.charCodeAt(0))}
+function randomBytes(n=16){const b=new Uint8Array(n);crypto.getRandomValues(b);return b}
+async function deriveWrapKey(secret,salt){if(!crypto?.subtle)throw new Error('Web Crypto غير متاح. افتحي التطبيق عبر Chrome أو Edge محدث.');const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function wrapVaultKey(secret,rawKey){const salt=randomBytes(16),iv=randomBytes(12),k=await deriveWrapKey(secret,salt),cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,rawKey);return {v:1,salt:bytesToB64(salt),iv:bytesToB64(iv),cipher:bytesToB64(cipher)}}
+async function unwrapVaultKey(secret,record){const k=await deriveWrapKey(secret,b64ToBytes(record.salt));const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(record.iv)},k,b64ToBytes(record.cipher));return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},true,['encrypt','decrypt'])}
+async function encryptBytes(data){const iv=randomBytes(12),plain=data instanceof ArrayBuffer?new Uint8Array(data):new Uint8Array(data);const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},vaultKey,plain);return {v:1,iv:new Uint8Array(iv),cipher}}
+async function decryptBytes(record){return crypto.subtle.decrypt({name:'AES-GCM',iv:record.iv},vaultKey,record.cipher)}
+async function persistVault(){
+ if(!vaultKey||!vaultDirty)return;
+ vaultDirty=false;
+ // Snapshot once per batch so edits made during encryption are not lost.
+ const snapshot=JSON.stringify({v:1,data:vaultCache}),iv=randomBytes(12),plain=new TextEncoder().encode(snapshot);
+ const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},vaultKey,plain);
+ localStorage.setItem('fayrouz_vault_v1',JSON.stringify({v:1,iv:bytesToB64(iv),cipher:bytesToB64(cipher)}));
+ if(vaultDirty)scheduleVaultSave(0);
+}
+function scheduleVaultSave(delay=320){clearTimeout(vaultSaveTimer);vaultSaveTimer=setTimeout(()=>{
+ vaultSaveTimer=null;
+ vaultWriteQueue=vaultWriteQueue.then(persistVault).catch(e=>{vaultDirty=true;console.error(e);toast('تعذر حفظ البيانات المشفّرة. تحققي من مساحة الجهاز.')});
+},delay)}
+function queueVaultSave(){vaultDirty=true;scheduleVaultSave();return vaultWriteQueue}
+function flushVaultSave(){if(!vaultKey||!vaultDirty)return vaultWriteQueue;clearTimeout(vaultSaveTimer);vaultSaveTimer=null;vaultWriteQueue=vaultWriteQueue.then(persistVault).catch(e=>{vaultDirty=true;console.error(e);throw e});return vaultWriteQueue}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushVaultSave()});window.addEventListener('pagehide',()=>{flushVaultSave()});
+async function loadVault(){
+ const saved=localStorage.getItem('fayrouz_vault_v1');
+ if(saved){const env=JSON.parse(saved),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(env.iv)},vaultKey,b64ToBytes(env.cipher));const parsed=JSON.parse(new TextDecoder().decode(plain));vaultCache=parsed.data||{};}
+ else{vaultCache={};for(const key of Object.keys(sections)){try{vaultCache[key]=JSON.parse(localStorage.getItem('fayrouz_'+key)||'[]')}catch{vaultCache[key]=[]}}}
+ for(const key of Object.keys(sections))if(!Array.isArray(vaultCache[key]))vaultCache[key]=[];
+ // Migrate legacy Quran progress and preferences without deleting their source copies yet.
+ if(!vaultCache.wird||typeof vaultCache.wird!=='object'){
+  let history={};try{history=JSON.parse(localStorage.getItem('fayrouz_wird_history')||'{}')||{}}catch{}
+  vaultCache.wird={goal:Number(localStorage.getItem('fayrouz_wird_goal')||5),day:localStorage.getItem('fayrouz_wird_day')||'',pages:Number(localStorage.getItem('fayrouz_wird_pages')||0),done:localStorage.getItem('fayrouz_wird_done')==='1',last:localStorage.getItem('fayrouz_wird_last')||'',history};
+ }
+ const preferenceKeys=['dark','large_text','accent','accent2','soft','theme_name'];
+ if(!vaultCache.preferences||typeof vaultCache.preferences!=='object')vaultCache.preferences={};
+ for(const key of preferenceKeys){const legacy=localStorage.getItem('fayrouz_'+key);if(vaultCache.preferences[key]===undefined&&legacy!==null)vaultCache.preferences[key]=legacy;}
+ for(const obsolete of ['calendar','goals','habits','events'])delete vaultCache[obsolete];
+ // Commit the complete encrypted snapshot before removing any legacy plaintext values.
+ vaultDirty=true;
+ await flushVaultSave();
+ for(const key of Object.keys(sections))localStorage.removeItem('fayrouz_'+key);
+ for(const key of ['goal','day','pages','done','last','history'])localStorage.removeItem('fayrouz_wird_'+key);
+ for(const key of ['fayrouz_wird_goal','fayrouz_wird_day','fayrouz_wird_pages','fayrouz_wird_done','fayrouz_wird_last','fayrouz_wird_history','fayrouz_photos_pin_hash','fayrouz_photos_recovery_hash',...preferenceKeys.map(k=>'fayrouz_'+k)])localStorage.removeItem(key);
+}
+const wirdData=()=>{if(!vaultCache.wird||typeof vaultCache.wird!=='object')vaultCache.wird={goal:5,day:'',pages:0,done:false,last:'',history:{}};return vaultCache.wird};
+const getPref=key=>vaultCache.preferences?.[key]??localStorage.getItem('fayrouz_'+key);
+const setPref=(key,value)=>{vaultCache.preferences=vaultCache.preferences||{};vaultCache.preferences[key]=String(value);if(vaultKey)queueVaultSave();else localStorage.setItem('fayrouz_'+key,String(value));};
+const removePref=key=>{if(vaultCache.preferences)delete vaultCache.preferences[key];localStorage.removeItem('fayrouz_'+key);if(vaultKey)queueVaultSave()};
+const saveWirdData=()=>{queueVaultSave();};
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+function taskOccursOnDate(task,key){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(task.date||'')))return false;if(Array.isArray(task.excludedDates)&&task.excludedDates.includes(key))return false;const start=new Date(task.date+'T12:00:00'),end=new Date(start);if(task.duration==='أسبوع')end.setDate(end.getDate()+6);else if(task.duration==='شهر'){const y=start.getFullYear(),m=start.getMonth()+1,day=start.getDate();end.setFullYear(y,m,Math.min(day,new Date(y,m+1,0).getDate()))}const target=new Date(key+'T12:00:00');return target>=start&&target<=end}
+function taskDoneOnDate(task,key){if(task.completionByDate&&typeof task.completionByDate==='object')return task.completionByDate[key]===true;return !!task.done&&key===String(task.date||'')}
+
+taskCalendarSelected='';
+const dateText=d=>{if(!d)return '';const x=new Date(d+'T12:00:00');return isNaN(x)?'':x.toLocaleDateString('ar-QA',{year:'numeric',month:'long',day:'numeric'})};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>window.crypto?.randomUUID?crypto.randomUUID():`${Date.now()}_${Math.random().toString(16).slice(2)}`;
+function tick(){const d=new Date();$('#clockTime').textContent=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});$('#clockDate').textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});$('#todayLabel').textContent=d.toLocaleDateString('ar-QA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}tick();setInterval(tick,60000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')tick()});
+async function go(p){if(p==='photos'&&!await unlockPhotos()){toast('لم يتم فتح معرض الصور');return}page=p;document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render();window.scrollTo({top:0,behavior:'smooth'})}
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)go(b.dataset.page)});
+$('.sidebar-bottom').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)go(b.dataset.page)});
+function pageHead(title,sub,add){return `<div class="page-head"><div><h2>${title}</h2><p>${sub}</p></div>${add?`<button class="btn primary" onclick="openForm()">＋ ${add}</button>`:''}</div>`}
+function itemCard(item,key){const meta=dateText(item.date);let extra='';if(key==='photos'&&mediaCache[item.mediaId]){const src=mediaCache[item.mediaId];extra=item.mediaType==='video'?`<video class="media-preview" src="${src}" controls playsinline preload="metadata"></video>`:`<button class="media-thumb" type="button" onclick="viewMedia('${item.id}')" aria-label="عرض الصورة"><img class="photo-preview" src="${src}" alt="${esc(item.title||'صورة')}"><span>⌕ عرض الصورة</span></button>`;extra+=`<div class="media-card-actions"><button class="btn ghost" type="button" onclick="viewMedia('${item.id}')">${item.mediaType==='video'?'▶ فتح الفيديو':'⌕ عرض الصورة'}</button><button class="btn primary" type="button" onclick="downloadMedia('${item.id}')">⬇ تحميل</button></div>`;}let done=key==='tasks'&&item.done;return `<article class="item-card ${done?'completed':''}"><div class="item-top"><div><h3>${esc(item.title||'بدون اسم')}</h3>${key==='photos'&&item.fileName?`<p class="original-file-name" title="اسم الملف الأصلي">📄 ${esc(item.fileName)}</p>`:''}<p>${esc(item.details||item.category||'')}</p></div><div class="actions">${key==='photos'?`<button class="icon-btn" title="مفضلة" onclick="togglePhotoFavorite('${item.id}')">${item.favorite?'★':'☆'}</button>`:''}<button class="icon-btn" title="تعديل" onclick="openForm('${item.id}')">✎</button><button class="icon-btn" title="حذف" onclick="removeItem('${item.id}')">×</button></div></div>${extra}<div class="item-meta"><span>${esc(meta||'')} ${key==='photos'&&item.category?'· '+esc(item.category):''}</span>${key==='tasks'?`<label class="done-label"><input type="checkbox" ${done?'checked':''} onchange="toggleTask('${item.id}',this.checked)"> ${done?'مكتملة':'إنجاز المهمة'}</label>`:''}</div></article>`}
+function listHTML(key){let items=store.get(key);if(key==='tasks')items.sort((a,b)=>(a.done===b.done?String(a.date||'').localeCompare(String(b.date||'')):a.done?1:-1));if(key==='photos'){const filtered=items.filter(x=>mediaFilter==='all'||x.mediaType===mediaFilter);return `<div class="cards media-grid">${filtered.length?filtered.map(x=>itemCard(x,key)).join(''):`<div class="empty"><b>♡</b>${items.length?'لا توجد ملفات في هذا التصنيف.':'لم تضيفي صوراً أو فيديوهات بعد.'}</div>`}</div>`;}return `<div class="cards">${items.length?items.map(x=>itemCard(x,key)).join(''):`<div class="empty"><b>✿</b>لا توجد عناصر بعد، ابدئي بإضافة أول عنصر جميل.</div>`}</div>`}
+function renderTasks(){
+ const all=store.get('tasks'), todayItems=all.filter(x=>taskOccursOnDate(x,today())), pending=todayItems.filter(x=>!taskDoneOnDate(x,today())), done=todayItems.filter(x=>taskDoneOnDate(x,today())), overdue=all.filter(x=>!taskDoneOnDate(x,today())&&x.date&&x.date<today()&&!taskOccursOnDate(x,today())).length;
+ let items=todayItems.filter(x=>taskFilter==='all'||(taskFilter==='pending'&&!taskDoneOnDate(x,today()))||(taskFilter==='done'&&taskDoneOnDate(x,today())));
+ items.sort((a,b)=>{if(taskDoneOnDate(a,today())!==taskDoneOnDate(b,today()))return taskDoneOnDate(a,today())?1:-1;const rank={عالية:0,متوسطة:1,عادية:2};if((rank[a.priority]??1)!==(rank[b.priority]??1))return (rank[a.priority]??1)-(rank[b.priority]??1);return String(a.date||'9999').localeCompare(String(b.date||'9999'))});
+ const cards=items.map(x=>{const isDone=taskDoneOnDate(x,today()),late=!isDone&&x.date&&x.date<today(),priority=x.priority||'عادية';return `<article class="item-card task-card ${isDone?'completed':''} ${late?'task-overdue':''}"><div class="item-top"><div class="task-title-wrap"><h3>${esc(x.title||'مهمة بدون اسم')}</h3><div class="task-badges"><span class="priority-badge priority-${priority==='عالية'?'high':priority==='متوسطة'?'medium':'normal'}">${priority} الأولوية</span>${late?'<span class="overdue-badge">متأخرة</span>':''}</div></div><div class="actions"><button class="icon-btn" title="تعديل" onclick="openForm('${x.id}')">✎</button><button class="icon-btn" title="حذف" onclick="removeItem('${x.id}')">×</button></div></div>${x.details?`<p class="task-details">${esc(x.details)}</p>`:''}<div class="item-meta"><span class="task-date">${x.date?'◷ '+dateText(x.date):'◷ دون موعد'} · لمدة ${esc(x.duration||'يوم')}</span><label class="done-label"><input type="checkbox" ${isDone?'checked':''} onchange="toggleTask('${x.id}',this.checked,'${today()}')"> ${isDone?'مكتملة':'إنجاز المهمة'}</label></div></article>`}).join('');
+ const keyOfDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d||''))?String(d):'';
+ const groups={};
+ const taskDateKeys=t=>{const start=keyOfDate(t.date);if(!start)return[];const from=new Date(start+'T12:00:00'),end=new Date(from);if(t.duration==='أسبوع')end.setDate(end.getDate()+6);else if(t.duration==='شهر'){const y=from.getFullYear(),m=from.getMonth()+1,day=from.getDate(),last=new Date(y,m+1,0).getDate();end.setFullYear(y,m,Math.min(day,last))}const keys=[];for(const d=new Date(from);d<=end&&keys.length<32;d.setDate(d.getDate()+1))keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);return keys};
+ all.forEach(t=>taskDateKeys(t).filter(k=>!(Array.isArray(t.excludedDates)&&t.excludedDates.includes(k))).forEach(k=>{(groups[k]??={tasks:[]}).tasks.push(t)}));
+ const normalizeSearch=v=>String(v||'').toLocaleLowerCase('ar-QA').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).trim();
+ const q=normalizeSearch(taskHistorySearch);
+ const dayMatches=(k,g)=>{if(!q)return true;const d=new Date(k+'T12:00:00'),dateVariants=[k,`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`,dateText(k),d.toLocaleDateString('ar-QA',{weekday:'long'})].map(normalizeSearch);return dateVariants.some(x=>x.includes(q))||g.tasks.some(x=>normalizeSearch(`${x.title||''} ${x.details||''}`).includes(q))};
+ const monthStart=new Date(taskCalendarMonth.getFullYear(),taskCalendarMonth.getMonth(),1),year=monthStart.getFullYear(),month=monthStart.getMonth(),daysInMonth=new Date(year,month+1,0).getDate(),offset=(monthStart.getDay()+1)%7;
+ const weekdayNames=['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+ const cells=[];for(let i=0;i<offset;i++)cells.push('<span class="task-calendar-blank" aria-hidden="true"></span>');
+ for(let day=1;day<=daysInMonth;day++){
+  const k=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,g=groups[k]||{tasks:[]},active=g.tasks.filter(t=>!taskDoneOnDate(t,k)).length,finished=g.tasks.filter(t=>taskDoneOnDate(t,k)).length,hasActivity=g.tasks.length>0,match=dayMatches(k,g),classes=['task-calendar-day',k===today()?'is-today':'',k===taskCalendarSelected?'is-selected':'',hasActivity?'has-activity':'',q&&!match?'is-dimmed':''].filter(Boolean).join(' ');
+  cells.push(`<button type="button" class="${classes}" onclick="selectTaskCalendarDay('${k}')" aria-label="${day} ${monthStart.toLocaleDateString('ar-QA',{month:'long'})}، ${g.tasks.length} مهمة"><span class="task-calendar-number">${day}</span>${hasActivity?`<span class="task-calendar-count">${g.tasks.length}</span>`:'<span class="task-calendar-mark"></span>'}${g.tasks.length?`<span class="task-calendar-status"><i class="pending" style="--n:${active}"></i><i class="finished" style="--n:${finished}"></i></span>`:''}</button>`);
+ }
+ while(cells.length%7)cells.push('<span class="task-calendar-blank" aria-hidden="true"></span>');
+ const matchingDates=Object.entries(groups).filter(([k,g])=>dayMatches(k,g)).sort((a,b)=>b[0].localeCompare(a[0]));
+ const searchResults=q?matchingDates.flatMap(([k,g])=>g.tasks.map(t=>({k,title:t.title||'مهمة بدون اسم',kind:taskDoneOnDate(t,k)?'مكتملة':'مهمة'}))).filter((x,i,a)=>a.findIndex(y=>y.k===x.k&&y.title===x.title)===i).slice(0,12):[];
+ const selected=taskCalendarSelected,g=groups[selected]||{tasks:[]},selectedTasks=g.tasks.slice().sort((a,b)=>Number(taskDoneOnDate(a,selected))-Number(taskDoneOnDate(b,selected))||String(a.title||'').localeCompare(String(b.title||''),'ar'));
+ const dayTaskCards=selectedTasks.length?selectedTasks.map(t=>{const isDone=taskDoneOnDate(t,selected),late=!isDone&&t.date&&t.date<today(),priority=t.priority||'عادية';return `<article class="task-calendar-task ${isDone?'completed':''}"><div class="task-calendar-task-main"><span class="task-calendar-task-check">${isDone?'✓':'○'}</span><div><strong>${esc(t.title||'مهمة بدون اسم')}</strong><small>${esc(priority)} الأولوية · ${esc(t.duration||'يوم')}${late?' · متأخرة':''}</small></div></div><div class="task-calendar-task-actions"><label class="done-label"><input type="checkbox" ${isDone?'checked':''} onchange="toggleTask('${t.id}',this.checked,'${selected}')"> ${isDone?'مكتملة':'إنجاز'}</label><button class="icon-btn" title="تعديل المهمة" onclick="openForm('${t.id}')">✎</button>${selected<today()?`<button class="icon-btn task-past-delete" title="حذف المهمة من هذا اليوم السابق فقط" onclick="deletePastTaskOccurrence('${t.id}','${selected}')">×</button>`:''}</div></article>`}).join(''):'<div class="empty task-history-empty">لا توجد مهام مسجلة لهذا اليوم.</div>';
+ const historyPanel=`<section class="task-history"><button type="button" class="task-history-toggle" onclick="toggleTaskHistory()" aria-expanded="${taskHistoryOpen}"><span class="task-history-icon">▦</span><span class="task-history-label"><strong>سجل المهام</strong><small>${taskHistoryOpen?'اضغطي على يوم لعرض مهامه':'اضغطي هنا لفتح التقويم والبحث'}</small></span><span class="task-history-count">${all.length}</span><span class="task-history-arrow" aria-hidden="true">${taskHistoryOpen?'⌃':'⌄'}</span></button>${taskHistoryOpen?`<div class="task-history-list"><div class="task-calendar-search"><span aria-hidden="true">⌕</span><input id="taskHistorySearch" type="search" value="${esc(taskHistorySearch)}" placeholder="ابحثي باسم المهمة أو اليوم أو التاريخ" oninput="setTaskHistorySearch(this.value)" aria-label="البحث في سجل المهام"><button type="button" onclick="clearTaskHistorySearch()" aria-label="مسح البحث" ${q?'':'disabled'}>×</button></div>${q?`<div class="task-calendar-search-results">${searchResults.length?searchResults.map(r=>`<button type="button" onclick="selectTaskCalendarDay('${r.k}')"><span>${esc(r.title)}</span><small>${dateText(r.k)} · ${r.kind}</small></button>`).join(''):'<p>لا توجد نتائج مطابقة. جرّبي اسم مهمة أو تاريخاً آخر.</p>'}</div>`:''}<div class="task-calendar"><div class="task-calendar-toolbar"><button type="button" onclick="moveTaskCalendar(-1)" aria-label="الشهر السابق">‹</button><strong>${monthStart.toLocaleDateString('ar-QA',{month:'long',year:'numeric'})}</strong><button type="button" onclick="moveTaskCalendar(1)" aria-label="الشهر التالي">›</button><button type="button" class="task-calendar-today" onclick="goTaskCalendarToday()">اليوم</button></div><div class="task-calendar-weekdays">${weekdayNames.map(n=>`<span>${n}</span>`).join('')}</div><div class="task-calendar-grid">${cells.join('')}</div><div class="task-calendar-legend"><span><i class="pending"></i> قيد التنفيذ</span><span><i class="finished"></i> مكتملة</span><span>الرقم يوضح عدد المهام</span></div></div>${selected?`<section class="task-calendar-day"><div class="task-calendar-day-heading"><div><small>المهام في هذا اليوم</small><h3>${dateText(selected)}</h3></div><span>${selectedTasks.length} مهمة</span></div>${dayTaskCards}</section>`:''}</div>`:''}</section>`;
+ return `<section class="task-overview"><div class="task-stat"><strong>${pending.length}</strong><span>قيد التنفيذ اليوم</span></div><div class="task-stat"><strong>${done.length}</strong><span>مكتملة اليوم</span></div><div class="task-stat"><strong>${todayItems.length}</strong><span>مهام اليوم</span></div></section><div class="task-filter-bar"><div class="task-filter-tabs">${[['all','كل مهام اليوم'],['pending','قيد التنفيذ'],['done','مكتملة']].map(([v,t])=>`<button class="filter-chip ${taskFilter===v?'active':''}" onclick="setTaskFilter('${v}')">${t}</button>`).join('')}</div><span class="task-count">${items.length} مهمة اليوم · ${dateText(today())}</span></div><div class="cards task-cards">${cards||`<div class="empty"><b>✓</b>${taskFilter==='all'?'لا توجد مهام لهذا اليوم. أضيفي مهمة وحددي موعدها اليوم.':'لا توجد مهام في هذا التصنيف لهذا اليوم.'}</div>`}</div>${historyPanel}`;
+}
+window.setTaskFilter=v=>{taskFilter=v;render()};
+window.toggleTaskHistory=()=>{taskHistoryOpen=!taskHistoryOpen;if(taskHistoryOpen&&!taskCalendarSelected){taskCalendarSelected=today();const d=new Date();taskCalendarMonth=new Date(d.getFullYear(),d.getMonth(),1)}render()};
+window.openTaskCalendar=()=>{page='tasks';taskHistoryOpen=true;taskCalendarSelected=today();const d=new Date();taskCalendarMonth=new Date(d.getFullYear(),d.getMonth(),1);document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page==='tasks'));render();window.scrollTo({top:0,behavior:'smooth'})};
+window.setTaskHistorySearch=value=>{taskHistorySearch=String(value||'');const input=$('#taskHistorySearch');const pos=input?.selectionStart??taskHistorySearch.length;render();const next=$('#taskHistorySearch');if(next){next.focus();next.setSelectionRange(pos,pos)}};
+window.clearTaskHistorySearch=()=>{taskHistorySearch='';render();$('#taskHistorySearch')?.focus()};
+window.selectTaskCalendarDay=key=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(key))return;taskCalendarSelected=key;const d=new Date(key+'T12:00:00');taskCalendarMonth=new Date(d.getFullYear(),d.getMonth(),1);taskHistoryOpen=true;render();requestAnimationFrame(()=>requestAnimationFrame(()=>{const dayPanel=document.querySelector('section.task-calendar-day');if(dayPanel){const top=dayPanel.getBoundingClientRect().top+window.scrollY-24;window.scrollTo({top:Math.max(0,top),behavior:'smooth'})}}))};
+window.rateTaskJournal=rating=>{if(!taskCalendarSelected)return;const data=vaultCache.taskJournal&&typeof vaultCache.taskJournal==='object'?vaultCache.taskJournal:{};data[taskCalendarSelected]={...(data[taskCalendarSelected]||{}),rating:Math.max(1,Math.min(5,Number(rating)||1))};vaultCache.taskJournal=data;queueVaultSave();render()};
+window.saveTaskJournal=()=>{if(!taskCalendarSelected)return;const data=vaultCache.taskJournal&&typeof vaultCache.taskJournal==='object'?vaultCache.taskJournal:{},old=data[taskCalendarSelected]||{};data[taskCalendarSelected]={...old,note:$('#taskJournalNote')?.value.trim()||'',updatedAt:new Date().toISOString()};vaultCache.taskJournal=data;queueVaultSave();toast('تم حفظ يومياتكِ بنجاح 🌷');render()};
+window.moveTaskCalendar=delta=>{taskCalendarMonth=new Date(taskCalendarMonth.getFullYear(),taskCalendarMonth.getMonth()+delta,1);if(taskCalendarSelected){const y=taskCalendarMonth.getFullYear(),m=taskCalendarMonth.getMonth(),max=new Date(y,m+1,0).getDate(),old=new Date(taskCalendarSelected+'T12:00:00'),day=Number.isNaN(old.getTime())?1:old.getDate();taskCalendarSelected=`${y}-${String(m+1).padStart(2,'0')}-${String(Math.min(day,max)).padStart(2,'0')}`}render()};
+window.goTaskCalendarToday=()=>{taskCalendarSelected=today();const d=new Date();taskCalendarMonth=new Date(d.getFullYear(),d.getMonth(),1);render()};
+window.setTaskHistoryFilter=value=>{taskHistoryFilter=['all','created','updated','completed','reopened','deleted'].includes(value)?value:'all';render()};
+function commitTaskChange(tasks,task,action,type,previous){
+ if(!task)return false;
+ const history=Array.isArray(vaultCache.taskHistory)?vaultCache.taskHistory.slice():[];
+ const changes=[];
+ if(type==='updated'&&previous){const fields=[['title','العنوان'],['date','الموعد'],['priority','الأولوية'],['duration','المدة'],['details','التفاصيل']];for(const [key,label] of fields){const before=String(previous[key]??''),after=String(task[key]??'');if(before!==after)changes.push(`${label}: ${before||'—'} ← ${after||'—'}`)}}
+ history.unshift({id:uid(),taskId:task.id,title:task.title||'مهمة بدون اسم',action,type,date:task.date||'',priority:task.priority||'عادية',duration:task.duration||'يوم',details:task.details||'',done:!!task.done,changes,at:new Date().toISOString()});
+ vaultCache.tasks=tasks;vaultCache.taskHistory=history.slice(0,10000);queueVaultSave();return true;
+}
+function renderNotes(){
+ let all=store.get('notes');let items=all.filter(x=>`${x.title||''} ${x.details||''} ${x.category||''}`.toLowerCase().includes(noteQuery.toLowerCase())&&(noteCategoryFilter==='الكل'||(x.category||'عام')===noteCategoryFilter));
+ items.sort((a,b)=>noteSort==='oldest'?String(a.updatedAt||a.createdAt||'').localeCompare(String(b.updatedAt||b.createdAt||'')):noteSort==='title'?String(a.title||'').localeCompare(String(b.title||''),'ar'):String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||'')));
+ const cats=['الكل',...new Set(all.map(x=>x.category||'عام'))];
+ return `<section class="notes-summary"><div><strong>${all.length}</strong><span>كل المذكرات</span></div><div><strong>${all.filter(x=>x.favorite).length}</strong><span>المفضلة</span></div><div><strong>${all.reduce((n,x)=>n+String(x.details||'').length,0).toLocaleString('ar-QA')}</strong><span>حرف محفوظ</span></div></section><div class="note-tools"><input type="search" placeholder="ابحثي في العناوين والمحتوى..." value="${esc(noteQuery)}" oninput="setNoteQuery(this.value)"><select aria-label="ترتيب المذكرات" onchange="setNoteSort(this.value)"><option value="newest" ${noteSort==='newest'?'selected':''}>الأحدث أولاً</option><option value="oldest" ${noteSort==='oldest'?'selected':''}>الأقدم أولاً</option><option value="title" ${noteSort==='title'?'selected':''}>حسب العنوان</option></select></div><div class="note-category-tabs">${cats.map(c=>`<button class="filter-chip ${noteCategoryFilter===c?'active':''}" onclick="setNoteCategory('${esc(c)}')">${esc(c)}</button>`).join('')}</div><div class="cards note-cards">${items.length?items.map(x=>`<article class="item-card note-card"><div class="item-top"><div><h3>${esc(x.title||'بدون عنوان')}</h3><p class="note-category-label">${esc(x.category||'عام')}</p></div><div class="actions"><button class="icon-btn" title="${x.favorite?'إزالة من المفضلة':'إضافة للمفضلة'}" onclick="toggleFavoriteNote('${x.id}')">${x.favorite?'★':'☆'}</button><button class="icon-btn" title="تعديل" onclick="openForm('${x.id}')">✎</button><button class="icon-btn" title="حذف" onclick="removeItem('${x.id}')">×</button></div></div><p class="note-body">${esc(x.details||'مذكرة فارغة')}</p><div class="note-footer"><small>آخر تحديث: ${dateText((x.updatedAt||x.createdAt||'').slice(0,10))||'—'}</small><small>${String(x.details||'').length.toLocaleString('ar-QA')} حرف</small></div></article>`).join(''):'<div class="empty"><b>✎</b>لا توجد مذكرات مطابقة لبحثكِ أو تصنيفكِ.</div>'}</div>`;
+}
+window.setNoteCategory=v=>{noteCategoryFilter=v;render()};window.setNoteSort=v=>{noteSort=v;render()};
+window.setNoteQuery=v=>{noteQuery=v;const pos=document.querySelector('.note-tools input')?.selectionStart??v.length;render();const inp=document.querySelector('.note-tools input');if(inp){inp.focus();inp.setSelectionRange(pos,pos)}};
+window.toggleFavoriteNote=id=>{store.set('notes',store.get('notes').map(x=>x.id===id?{...x,favorite:!x.favorite}:x));render()};
+function renderWirdPage(){
+ const c=$('#content'),todayKey=today(),wird=wirdData(),goal=Math.max(1,Math.min(604,Number(wird.goal||5))),savedDay=wird.day||'',done=savedDay===todayKey&&!!wird.done,pages=savedDay===todayKey?Math.max(0,Math.min(604,Number(wird.pages||0))):0,last=wird.last||'',history=wird.history||{},pct=Math.min(100,Math.round(pages/goal*100)),remaining=Math.max(0,goal-pages),finishDays=Math.ceil(604/goal);
+ const streak=()=>{let n=0,d=new Date();for(;;){const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;if(!(history[k]?.done))break;n++;d.setDate(d.getDate()-1)}return n};
+ const week=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;return {k,label:d.toLocaleDateString('ar-QA',{weekday:'short'}),v:history[k]?.pages||0}});
+ c.innerHTML=`<div class="page-head"><div><h2>وردي من القرآن <span>🌸</span></h2><p>خطوات صغيرة كل يوم، وأثر عظيم بإذن الله.</p></div></div>
+ <section class="wird-hero"><div class="wird-flower">۞</div><p class="wird-kicker">وَرْدٌ يطمئن القلب</p><h2>﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾</h2><small>سورة المزمل · الآية 4</small><div class="wird-actions"><button class="btn ghost" type="button" onclick="saveWirdDone()">${done?'✓ ورد اليوم مكتمل':'إنهاء ورد اليوم'}</button></div></section>
+ <div class="wird-stats"><div class="wird-stat"><span>🌷</span><strong>${pages}</strong><small>صفحات اليوم</small></div><div class="wird-stat"><span>🔥</span><strong>${streak()}</strong><small>أيام متتالية</small></div><div class="wird-stat"><span>📚</span><strong>${finishDays}</strong><small>يوم لختم القرآن حسب هدفك</small></div></div>
+ <div class="wird-grid"><section class="panel wird-panel"><div class="panel-head"><h3>🌷 وردي اليوم</h3><span class="wird-date">${dateText(todayKey)}</span></div><label class="field">هدفي اليومي (صفحات)<input id="wirdGoal" type="number" min="1" max="604" value="${goal}"></label><div class="wird-progress"><div class="wird-progress-head"><strong>${done?'ما شاء الله، أتممتِ وردك':pages+' من '+goal+' صفحة'}</strong><b>${done?'100%':pct+'%'}</b></div><div class="progress"><i style="width:${done?100:pct}%"></i></div></div><div class="wird-quick-actions"><button type="button" class="btn ghost" onclick="adjustWirdPages(-1)">− صفحة</button><button type="button" class="btn primary" onclick="adjustWirdPages(1)">＋ صفحة</button></div><label class="field">إجمالي الصفحات المقروءة اليوم<input id="wirdPages" type="number" min="0" max="604" value="${pages}"></label><p class="wird-note">${remaining?`باقي لكِ ${remaining} صفحة لإكمال هدف اليوم.`:'أكملتِ هدفك اليومي، بارك الله في وقتك.'}</p><button class="btn primary" type="button" onclick="saveWirdProgress()">حفظ التقدم</button></section>
+ <section class="panel wird-panel"><div class="panel-head"><h3>📍 موضع القراءة</h3></div><label class="field">السورة والآية أو الجزء<input id="wirdLast" type="text" maxlength="100" placeholder="مثال: سورة البقرة، الآية 25" value="${esc(last)}"></label><button class="btn ghost" type="button" onclick="saveWirdLast()">حفظ آخر موضع</button><p class="wird-note">سجّلي آخر موضع توقفتِ عنده لتكملي منه لاحقاً.</p><div class="wird-bookmark">${last?`<span>آخر موضع محفوظ</span><strong>${esc(last)}</strong>`:'لم يتم حفظ موضع بعد'}</div></section></div>
+ <section class="panel wird-week"><div class="panel-head"><h3>📅 نشاط آخر 7 أيام</h3><small>عدد الصفحات يومياً</small></div><div class="wird-week-bars">${week.map(x=>`<div class="wird-day"><b>${x.v}</b><i><span style="height:${Math.min(100,Math.round(x.v/Math.max(goal,1)*100))}%"></span></i><small>${x.label}</small></div>`).join('')}</div></section>
+ <section class="wird-dua"><span>♡</span><div><b>دعاء نافع</b><p>اللهم اجعل القرآن ربيع قلبي، ونور صدري، وجلاء حزني، وذهاب همّي.</p></div></section><p class="wird-disclaimer">يُحفظ تقدمكِ وآخر موضع وسجل القراءة على هذا الجهاز. سجّلي ما أنجزتِه هنا لمتابعة وردكِ اليومي.</p>`;
+}
+window.adjustWirdPages=delta=>{const el=$('#wirdPages');if(el)el.value=Math.max(0,Math.min(604,(Number(el.value)||0)+delta))};
+window.saveWirdProgress=()=>{const data=wirdData(),goal=Math.max(1,Math.min(604,Number($('#wirdGoal').value)||1)),pages=Math.max(0,Math.min(604,Number($('#wirdPages').value)||0));data.goal=goal;data.pages=pages;data.day=today();data.done=pages>=goal;data.history=data.history||{};data.history[today()]={pages,done:data.done};saveWirdData();toast('تم حفظ تقدم وردكِ داخل الخزنة المشفّرة 🌷');renderWirdPage()};
+window.saveWirdDone=()=>{const data=wirdData(),pages=Math.max(Number(data.pages||0),Number(data.goal||5));data.pages=pages;data.day=today();data.done=true;data.history=data.history||{};data.history[today()]={pages,done:true};saveWirdData();toast('تقبّل الله منكِ 🌸');renderWirdPage()};
+window.saveWirdLast=()=>{wirdData().last=$('#wirdLast').value.trim();saveWirdData();toast('تم حفظ آخر موضع داخل الخزنة المشفّرة');renderWirdPage()};
+function render(){const c=$('#content');$('#pageTitle').innerHTML=page==='home'?'أهلاً بكِ في فيروز <span>✿</span>':page==='settings'?'الإعدادات':sections[page]?.title||'فيروز';
+ if(page==='home'){const tasks=store.get('tasks'),todayTasks=tasks.filter(x=>taskOccursOnDate(x,today())),pending=todayTasks.filter(x=>!x.done),done=todayTasks.filter(x=>x.done),overdue=tasks.filter(x=>!x.done&&x.date&&x.date<today()&&!taskOccursOnDate(x,today())),total=todayTasks.length,progress=total?Math.round(done.length/total*100):0,wird=wirdData(),wirdToday=wird.day===today()?Number(wird.pages||0):0,wirdGoal=Math.max(1,Number(wird.goal||5));c.innerHTML=`<div class="hero"><div><h2>مرحباً بكِ في مساحتكِ الجميلة ✨</h2><p>هنا تبدأ أيامكِ المرتبة، وأفكاركِ الصغيرة تصبح إنجازات.</p></div><div class="date-pill">${dateText(today())}</div></div><div class="stats"><div class="stat"><div class="icon">✓</div><strong>${pending.length}</strong><small>مهام اليوم المتبقية</small></div><div class="stat"><div class="icon">✿</div><strong>${done.length}</strong><small>مهام اليوم المنجزة</small></div><div class="stat"><div class="icon">✎</div><strong>${store.get('notes').length}</strong><small>مذكراتكِ</small></div><div class="stat"><div class="icon">۞</div><strong>${wirdToday}</strong><small>صفحات ورد اليوم</small></div></div><div class="daily-focus panel"><div><h3>إنجاز اليوم ✨</h3><p>${total?`أنجزتِ ${done.length} من ${total} مهام اليوم.`:'لا توجد مهام مجدولة لهذا اليوم.'}</p></div><div class="daily-progress"><strong>${progress}%</strong><small>نسبة إنجاز المهام</small><div class="progress"><i style="width:${progress}%"></i></div></div><button class="btn ghost" onclick="go('tasks')">عرض مهام اليوم</button></div><div class="dashboard-grid"><section class="panel"><div class="panel-head"><h3>مساحاتكِ</h3></div><div class="quick-grid">${[['tasks','✓','مهامي'],['notes','✎','مذكراتي'],['wird','۞','وردي']].map(([p,i,t])=>`<button class="quick" onclick="go('${p}')"><span>${i}</span>${t}</button>`).join('')}</div><div class="dashboard-shortcuts"><button type="button" class="btn ghost" onclick="openTaskCalendar()">▦ فتح تقويم المهام</button><button type="button" class="btn ghost" onclick="openFutureLetter()">✉ رسالة إلى نفسي</button></div></section><section class="panel"><div class="panel-head"><h3>مهام اليوم</h3><button class="text-link" onclick="go('tasks')">عرض اليوم</button></div><div class="list">${todayTasks.slice().sort((a,b)=>Number(a.done)-Number(b.done)).slice(0,6).map(x=>`<div class="row"><span class="dot"></span><div class="row-main"><strong>${esc(x.title)}</strong><small>${x.done?'مكتملة':x.date?'موعد اليوم':'دون موعد'}</small></div><input class="check" aria-label="إنجاز المهمة" type="checkbox" ${x.done?'checked':''} onchange="toggleTask('${x.id}',this.checked)"></div>`).join('')||'<div class="empty">لا توجد مهام لهذا اليوم 🌷</div>'}</div></section></div><div class="dashboard-grid dashboard-lower"><section class="panel"><div class="panel-head"><h3>ورد القرآن اليوم</h3><button class="text-link" onclick="go('wird')">متابعة الورد</button></div><div class="dashboard-wird"><strong>${wirdToday} / ${wirdGoal}</strong><span>صفحة</span><div class="progress"><i style="width:${Math.min(100,Math.round(wirdToday/wirdGoal*100))}%"></i></div></div></section><section class="panel"><div class="panel-head"><h3>ملخص المهام</h3></div><div class="dashboard-mini-stats"><span>المكتملة <b>${done.length}</b></span><span>المتبقية <b>${pending.length}</b></span><span>المتأخرة <b>${overdue.length}</b></span></div></section></div>`;return;}
+ if(page==='wird'){renderWirdPage();return;}
+ if(sections[page]){if(page==='notes'){c.innerHTML=pageHead(sections.notes.title,sections.notes.sub,sections.notes.add)+renderNotes();return;}if(page==='tasks'){c.innerHTML=pageHead(sections.tasks.title,sections.tasks.sub,sections.tasks.add)+renderTasks();return;}let summary='';c.innerHTML=pageHead(sections[page].title,sections[page].sub,sections[page].add)+summary+listHTML(page);return;}
+ if(page==='settings'){c.innerHTML=`${pageHead('الإعدادات','اجعلي التطبيق أقرب إلى ذوقكِ',null)}<section class="panel"><div class="setting-row"><div><strong>المظهر الليلي</strong><small>تغيير ألوان التطبيق إلى الوضع الداكن</small></div><input class="switch" type="checkbox" ${getPref('dark')==='1'?'checked':''} onchange="setDark(this.checked)"></div><section class="theme-studio"><button type="button" class="theme-studio-toggle" onclick="toggleThemeStudio()" aria-expanded="false" aria-controls="themeStudioOptions"><span class="theme-studio-head"><span><strong>استوديو الألوان</strong><small>اضغطي هنا لعرض قائمة تغيير الألوان.</small></span><span class="live-badge"><i></i> مباشر</span></span><span class="theme-toggle-arrow" aria-hidden="true">⌄</span></button><div id="themeStudioOptions" class="theme-studio-options" hidden><div class="theme-preview"><div class="preview-orb">✿</div><div class="preview-copy"><b>مساحتكِ، بطابعكِ</b><small id="themeName">لوحة الألوان الحالية</small></div><span class="preview-sample"><i></i><i></i><i></i></span></div><div class="theme-label">لوحات مختارة بعناية</div><div class="palette-grid">${[['#C77991','#DFA7B8','#F3E3E7','وردي غباري'],['#7656A8','#B79ACF','#F0EAF7','ليلكي هادئ'],['#B76E79','#D9A6A0','#F8ECEA','وردي كلاسيكي'],['#426D78','#8FB5B5','#E7F1EF','نسيم بحري'],['#B18A52','#D9BD8D','#F6F0E4','ذهبي دافئ'],['#58765F','#9DB49A','#EAF0E7','حديقة خضراء'],['#526A91','#9CAFD0','#E9EEF7','أزرق ملكي'],['#A76F55','#D7A88F','#F5EAE2','طيني أنيق'],['#756B80','#B7AEBF','#F0EDF2','رمادي بنفسجي'],['#A85F83','#D99AB8','#F7EAF1','توتي ناعم'],['#477F79','#91BDB2','#E7F3EF','زمردي']].map(([a,b,soft,n])=>`<button type="button" class="palette-card ${(getPref('accent')||'#C77991').toLowerCase()===a?'selected':''}" data-accent="${a}" onclick="setPalette('${a}','${b}','${soft}','${n}')"><span class="palette-colors"><i style="background:${a}"></i><i style="background:${b}"></i><i style="background:${soft}"></i></span><b>${n}</b><small>${a.toUpperCase()}</small><em>✓</em></button>`).join('')}</div><div class="custom-theme-row"><label class="custom-color"><span>لون مخصص</span><input type="color" value="${getPref('accent')||'#8054e9'}" aria-label="اختيار لون مخصص" oninput="setAccent(this.value,false)" onchange="setAccent(this.value,true)"></label><label class="hex-color"><span>كود HEX</span><input id="accentHex" type="text" maxlength="7" value="${getPref('accent')||'#8054e9'}" oninput="setAccentFromHex(this.value)"></label><button type="button" class="btn ghost reset-theme" onclick="setPalette('#C77991','#DFA7B8','#F3E3E7','وردي غباري')">استعادة الافتراضي</button></div><small class="theme-hint">يتم حفظ اختيارك تلقائياً وتطبيقه على الأزرار والبطاقات والخلفيات دون إعادة تحميل.</small></div></section><div class="setting-row"><div><strong>الساعة</strong><small>تُعرض بنظام 12 ساعة باللغة الإنجليزية</small></div><span class="setting-value">12-hour · English</span></div><div class="setting-row"><div><strong>تشفير البيانات</strong></div><span class="setting-value">AES-256</span></div><div class="setting-row"><div><strong>كلمة المرور</strong><small>تغيير كلمة مرور الدخول إلى التطبيق.</small></div><button class="btn ghost" onclick="changePassword()">تغيير كلمة المرور</button></div><div class="setting-row"><div><strong>رمز الاستعادة</strong><small>تغيير رمز الاستعادة المستخدم عند نسيان كلمة المرور.</small></div><button class="btn ghost" onclick="changeRecoveryCode()">تغيير رمز الاستعادة</button></div><div class="setting-row"><div><strong>الخط والقراءة</strong><small>تكبير النصوص داخل التطبيق.</small></div><button class="btn ghost" onclick="toggleLargeText()">تبديل حجم الخط</button></div><div class="setting-row"><div><strong>الإصدار</strong><small>Fayrouz – Soft Glass Experience</small></div><span>1.2.12</span></div></section>`}}
+window.openFutureLetter=()=>{const text=prompt('اكتبي رسالة لطيفة إلى نفسكِ:');if(text&&text.trim()){const arr=store.get('notes');arr.unshift({id:uid(),title:'رسالة إلى نفسي',category:'رسائل مستقبلية',details:text.trim(),favorite:true,createdAt:new Date().toISOString()});store.set('notes',arr);toast('حُفظت رسالتكِ في المذكرات 💜')}};
+window.toggleLargeText=()=>{document.body.classList.toggle('large-text');setPref('large_text',document.body.classList.contains('large-text')?'1':'0')};
+let datePickerMonth=new Date();
+function calendarMarkup(value){const selected=value?new Date(value+'T12:00:00'):null;const y=datePickerMonth.getFullYear(),m=datePickerMonth.getMonth(),first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),offset=first.getDay();const monthLabel=first.toLocaleDateString('ar-QA',{month:'long',year:'numeric'});const weekdays=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];let cells=weekdays.map(d=>`<span class="date-weekday">${d}</span>`).join('');for(let i=0;i<offset;i++)cells+='<span class="date-empty"></span>';for(let day=1;day<=days;day++){const date=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,todayFlag=date===today(),chosen=value===date;cells+=`<button type="button" class="date-day ${todayFlag?'is-today':''} ${chosen?'is-selected':''}" data-pick-date="${date}">${day}</button>`}return `<div class="date-picker"><div class="date-picker-head"><button type="button" data-month-step="-1" aria-label="الشهر السابق">‹</button><strong>${monthLabel}</strong><button type="button" data-month-step="1" aria-label="الشهر التالي">›</button></div><div class="date-picker-grid">${cells}</div><div class="date-picker-foot"><button type="button" data-date-today>اليوم</button><button type="button" data-date-clear>مسح التاريخ</button></div></div>`}
+function refreshDatePicker(){const wrap=$('#datePickerWrap');if(!wrap)return;const input=wrap.querySelector('input[name=date]');wrap.querySelector('.date-picker-host').innerHTML=calendarMarkup(input.value)}
+function openForm(id){editing=id||null;pendingMedia=[];clearPendingPreviews();const cfg=sections[page],item=id?store.get(page).find(x=>x.id===id)||{}:{};$('#modalTitle').textContent=id?'تعديل':'إضافة';$('#formFields').innerHTML=cfg.fields.map(([name,label,type,required,opts])=>{if(type==='textarea')return `<label class="field">${label}<textarea name="${name}" ${required?'required':''}>${esc(item[name]||'')}</textarea></label>`;if(type==='select'){const selected=item[name]||(name==='duration'?'يوم':'');if(name==='duration'||name==='priority')return `<label class="field">${label}<div class="duration-picker ${name==='priority'?'priority-picker':''}"><input type="hidden" name="${name}" value="${esc(selected)}"><button type="button" class="duration-trigger" aria-expanded="false"><span>${esc(selected||'اختاري الأولوية')}</span><i>⌄</i></button><div class="duration-options">${opts.map(o=>`<button type="button" class="duration-option ${selected===o?'selected':''}" data-choice-value="${o}">${o}</button>`).join('')}</div></div></label>`;return `<label class="field">${label}<select name="${name}"><option value="">اختاري التصنيف</option>${opts.map(o=>`<option value="${o}" ${selected===o?'selected':''}>${o}</option>`).join('')}</select></label>`;}if(type==='file')return `<label class="field">${label}<input name="${name}" type="file" accept="image/*,video/*" ${id?'':'multiple'} ${id?'':'required'}><small>يمكنكِ تحديد عدة صور وفيديوهات معاً. الحد الأقصى 100 ميغابايت للملف الواحد و10 ملفات في المرة الواحدة.</small><div id="mediaSelectionPreview" class="media-selection-preview"></div></label>`;if(name==='date'){const defaultTaskDate=item.date||(page==='tasks'&&!id&&/^\d{4}-\d{2}-\d{2}$/.test(taskCalendarSelected)?taskCalendarSelected:today());return `<label class="field">${label}<div id="datePickerWrap" class="date-picker-wrap"><input type="hidden" name="date" value="${esc(defaultTaskDate)}"><button type="button" class="date-picker-trigger" data-open-calendar><span>▦</span><strong>التاريخ المختار: ${dateText(defaultTaskDate)}</strong><i>⌄</i></button><div class="date-picker-host">${calendarMarkup(defaultTaskDate)}</div></div></label>`;}return `<label class="field">${label}<input name="${name}" type="${type}" value="${esc(item[name]||'')}" ${required?'required':''} ></label>`}).join('');$('#modal').classList.remove('hidden');datePickerMonth=(item.date||(page==='tasks'&&!id&&/^\d{4}-\d{2}-\d{2}$/.test(taskCalendarSelected)?taskCalendarSelected:today()))?new Date((item.date||(page==='tasks'&&!id&&/^\d{4}-\d{2}-\d{2}$/.test(taskCalendarSelected)?taskCalendarSelected:today()))+'T12:00:00'):new Date();document.querySelectorAll('#formFields .duration-picker').forEach(picker=>{const trigger=picker.querySelector('.duration-trigger');const options=picker.querySelector('.duration-options');const hidden=picker.querySelector('input[type=hidden]');trigger.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const opened=picker.classList.contains('is-open');picker.classList.toggle('is-open',!opened);trigger.setAttribute('aria-expanded',String(!opened));});options.addEventListener('click',e=>{const option=e.target.closest('[data-choice-value]');if(!option)return;e.preventDefault();e.stopPropagation();hidden.value=option.dataset.choiceValue;trigger.querySelector('span').textContent=option.dataset.choiceValue;picker.querySelectorAll('.duration-option').forEach(b=>b.classList.toggle('selected',b===option));picker.classList.remove('is-open');trigger.setAttribute('aria-expanded','false');});});const dateWrap=$('#datePickerWrap');if(dateWrap){dateWrap.querySelector('.date-picker-host').classList.remove('is-open');dateWrap.addEventListener('click',e=>{const step=e.target.closest('[data-month-step]');if(step){datePickerMonth.setMonth(datePickerMonth.getMonth()+Number(step.dataset.monthStep));refreshDatePicker();return}const pick=e.target.closest('[data-pick-date]');if(pick){const value=pick.dataset.pickDate;dateWrap.querySelector('input[name=date]').value=value;dateWrap.querySelector('.date-picker-trigger strong').textContent='التاريخ المختار: '+dateText(value);refreshDatePicker();dateWrap.querySelector('.date-picker-host').classList.remove('is-open');return}if(e.target.closest('[data-date-today]')){const value=today();datePickerMonth=new Date(value+'T12:00:00');dateWrap.querySelector('input[name=date]').value=value;dateWrap.querySelector('.date-picker-trigger strong').textContent='التاريخ المختار: '+dateText(value);refreshDatePicker();dateWrap.querySelector('.date-picker-host').classList.remove('is-open');return}if(e.target.closest('[data-date-clear]')){dateWrap.querySelector('input[name=date]').value='';dateWrap.querySelector('.date-picker-trigger strong').textContent='اختاري تاريخ المهمة';refreshDatePicker();return}if(e.target.closest('[data-open-calendar]')){const host=dateWrap.querySelector('.date-picker-host');if(host.classList.contains('is-open')){const value=today();datePickerMonth=new Date(value+'T12:00:00');dateWrap.querySelector('input[name=date]').value=value;dateWrap.querySelector('.date-picker-trigger strong').textContent='التاريخ المختار: '+dateText(value);refreshDatePicker();host.classList.remove('is-open')}else{host.classList.add('is-open')}}})}const file=$('#formFields input[type=file]');if(file)file.addEventListener('change',()=>{clearPendingPreviews();const chosen=Array.from(file.files||[]);if(chosen.length>10){toast('يمكنكِ اختيار 10 ملفات كحد أقصى في المرة الواحدة');file.value='';return}for(const f of chosen){if(f.size>100*1024*1024){toast(`الملف ${f.name} أكبر من 100 ميغابايت`);file.value='';pendingMedia=[];clearPendingPreviews();return}if(!f.type.startsWith('image/')&&!f.type.startsWith('video/')){toast('اختاري صوراً أو فيديوهات فقط');file.value='';pendingMedia=[];clearPendingPreviews();return}}pendingMedia=chosen;const preview=$('#mediaSelectionPreview');if(preview){preview.innerHTML=chosen.map((f,i)=>{const url=URL.createObjectURL(f);pendingPreviewUrls.push(url);return `<div class="media-selected-item">${f.type.startsWith('video/')?`<video src="${url}" muted playsinline></video>`:`<img src="${url}" alt="معاينة">`}<span>${esc(f.name)} · ${formatBytes(f.size)}</span></div>`}).join('')} });if(id&&item.mediaId){const note=document.createElement('small');note.className='field-note';note.textContent='اتركي اختيار الملف فارغاً للاحتفاظ بالملف الحالي، أو اختاري ملفاً جديداً لاستبداله.';$('#mediaSelectionPreview')?.append(note)}}
+function formatBytes(bytes){if(!bytes)return '0 بايت';const units=['بايت','KB','MB','GB'];let n=bytes,i=0;while(n>=1024&&i<units.length-1){n/=1024;i++}return `${n.toFixed(i?1:0)} ${units[i]}`}
+function clearPendingPreviews(){pendingPreviewUrls.forEach(u=>URL.revokeObjectURL(u));pendingPreviewUrls=[]}
+function closeForm(){$('#modal').classList.add('hidden');editing=null;pendingMedia=[];clearPendingPreviews()}$('#closeModal').onclick=closeForm;$('#cancelModal').onclick=closeForm;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeForm()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').classList.contains('hidden'))closeForm()});
+$('#itemForm').onsubmit=async e=>{e.preventDefault();const submit=e.target.querySelector('button[type=submit]');submit.disabled=true;submit.textContent='جارٍ الحفظ…';try{const data=Object.fromEntries(new FormData(e.target).entries());delete data.media;let arr=store.get(page),old=editing?arr.find(x=>x.id===editing):null;if(page==='photos'){if(pendingMedia.length){if(editing){const f=pendingMedia[0],mediaId=uid();await saveMedia(mediaId,f);if(old?.mediaId)await deleteMedia(old.mediaId);arr=arr.map(x=>x.id===editing?{...x,...data,mediaId,mediaType:f.type.startsWith('video/')?'video':'image',fileName:f.name,fileSize:f.size}:x)}else{for(const f of pendingMedia){const mediaId=uid();await saveMedia(mediaId,f);arr.unshift({id:uid(),...data,mediaId,mediaType:f.type.startsWith('video/')?'video':'image',fileName:f.name,fileSize:f.size,createdAt:new Date().toISOString()})}}}else if(old){arr=arr.map(x=>x.id===editing?{...x,...data,mediaId:old.mediaId,mediaType:old.mediaType}:x)}else{toast('اختاري صورة أو فيديو أولاً');return}}if(page!=='photos'){if(editing)arr=arr.map(x=>x.id===editing?{...x,...data,updatedAt:new Date().toISOString()}:x);else arr.unshift({id:uid(),...data,done:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()})}const savedTask=page==='tasks'?arr.find(x=>x.id===(editing||arr[0]?.id)):null;const savedOk=page==='tasks'?commitTaskChange(arr,savedTask,editing?'تم تعديل المهمة':'أُضيفت مهمة جديدة',editing?'updated':'created',old?{...old}:null):store.set(page,arr);if(savedOk){const batchSaved=page==='photos'&&pendingMedia.length>1;closeForm();if(page==='photos')renderMediaPage();else render();toast(batchSaved?'تمت إضافة الملفات بنجاح 🌷':'تم الحفظ بنجاح 🌷')}}catch(err){console.error(err);toast('تعذر حفظ الملف. تأكدي من مساحة الجهاز وحاولي مجدداً.')}finally{submit.disabled=false;submit.textContent='حفظ'}};
+window.openForm=openForm;
+let viewerIndex=0,viewerItems=[];
+window.viewMedia=id=>{viewerItems=store.get('photos').filter(x=>mediaCache[x.mediaId]);viewerIndex=viewerItems.findIndex(x=>x.id===id);if(viewerIndex<0)return;showMediaViewer()};
+function showMediaViewer(){const item=viewerItems[viewerIndex];if(!item)return;const body=$('#mediaViewerBody');body.innerHTML=item.mediaType==='video'?`<video class="viewer-video" src="${mediaCache[item.mediaId]}" controls autoplay playsinline preload="auto"></video>`:`<img class="viewer-image" src="${mediaCache[item.mediaId]}" alt="${esc(item.title||'صورة')}">`;$('#mediaViewerTitle').textContent=item.fileName||item.title||'بدون اسم';$('#mediaViewerCount').textContent=`${viewerIndex+1} / ${viewerItems.length}`;$('#mediaViewer').classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeMediaViewer(){const v=$('#mediaViewer');const video=v.querySelector('video');if(video)video.pause();v.classList.add('hidden');document.body.style.overflow=''}
+function stepMedia(delta){if(!viewerItems.length)return;viewerIndex=(viewerIndex+delta+viewerItems.length)%viewerItems.length;showMediaViewer()}
+$('#mediaViewerDownload').addEventListener('click',()=>{const item=viewerItems[viewerIndex];if(item)downloadMedia(item.id)});$('#closeMediaViewer').addEventListener('click',closeMediaViewer);$('#mediaPrev').addEventListener('click',()=>stepMedia(-1));$('#mediaNext').addEventListener('click',()=>stepMedia(1));$('#mediaViewer').addEventListener('click',e=>{if(e.target.id==='mediaViewer')closeMediaViewer()});document.addEventListener('keydown',e=>{if($('#mediaViewer')&&!$('#mediaViewer').classList.contains('hidden')){if(e.key==='Escape')closeMediaViewer();if(e.key==='ArrowLeft')stepMedia(1);if(e.key==='ArrowRight')stepMedia(-1)}});
+window.go=go;let pendingDeleteId=null;const deleteDialog=$('#deleteConfirm');let pendingPastDelete=null;function closeDeleteDialog(){deleteDialog.classList.add('hidden');pendingDeleteId=null;pendingPastDelete=null;$('#deleteKicker').textContent='تأكيد الحذف';$('#confirmDelete').textContent='تأكيد الحذف'}$('#cancelDelete').addEventListener('click',closeDeleteDialog);deleteDialog.addEventListener('click',e=>{if(e.target===deleteDialog)closeDeleteDialog()});window.removeItem=id=>{pendingDeleteId=id;const item=store.get(page).find(x=>x.id===id);const label=page==='tasks'?'المهمة':page==='notes'?'المذكرة':'العنصر';$('#deleteTitle').textContent=`حذف ${label}؟`;$('#deleteDescription').textContent=`${item?.title?`«${item.title}» — `:''}سيُحذف نهائياً من فيروز، ولن تتمكني من استعادته.`;deleteDialog.classList.remove('hidden')};$('#confirmDelete').addEventListener('click',()=>{if(pendingPastDelete){const {id,dateKey}=pendingPastDelete;const tasks=store.get('tasks'),task=tasks.find(x=>x.id===id);if(task&&taskOccursOnDate(task,dateKey)){const dates=taskDateKeysForDelete(task);if(dates.length<=1){commitTaskChange(tasks.filter(x=>x.id!==id),task,`حُذفت المهمة من سجل يوم ${dateText(dateKey)}`,'deleted')}else{const updated={...task,excludedDates:[...new Set([...(Array.isArray(task.excludedDates)?task.excludedDates:[]),dateKey])]};commitTaskChange(tasks.map(x=>x.id===id?updated:x),updated,`حُذفت من يوم ${dateText(dateKey)} فقط`,'updated',task)}}closeDeleteDialog();render();toast('تم حذف المهمة من اليوم المحدد فقط');return}if(!pendingDeleteId)return;const id=pendingDeleteId,found=store.get(page).find(x=>x.id===id),remaining=store.get(page).filter(x=>x.id!==id);if(page==='photos'&&found?.mediaId)deleteMedia(found.mediaId);if(page==='tasks')commitTaskChange(remaining,found,'حُذفت المهمة','deleted');else store.set(page,remaining);closeDeleteDialog();render();toast('تم الحذف نهائياً')});window.deletePastTaskOccurrence=(id,dateKey)=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(String(dateKey||''))||dateKey>=today()){toast('يمكن حذف مهام الأيام السابقة فقط');return}const task=store.get('tasks').find(x=>x.id===id);if(!task||!taskOccursOnDate(task,dateKey))return;pendingPastDelete={id,dateKey};$('#deleteKicker').textContent='حذف من يوم سابق';$('#deleteTitle').textContent=`حذف «${task.title||'المهمة'}»؟`;$('#deleteDescription').textContent=`سيُحذف ظهور المهمة من يوم ${dateText(dateKey)} فقط. لن تتأثر بقية أيام المهمة.`;$('#confirmDelete').textContent='حذف هذا اليوم';deleteDialog.classList.remove('hidden')};
+function taskDateKeysForDelete(task){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(task.date||'')))return[];const start=new Date(task.date+'T12:00:00'),end=new Date(start);if(task.duration==='أسبوع')end.setDate(end.getDate()+6);else if(task.duration==='شهر'){const y=start.getFullYear(),m=start.getMonth()+1,day=start.getDate();end.setFullYear(y,m,Math.min(day,new Date(y,m+1,0).getDate()))}const out=[];for(const d=new Date(start);d<=end&&out.length<32;d.setDate(d.getDate()+1))out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);return out}
+window.toggleTask=(id,v,dateKey)=>{const tasks=store.get('tasks'),task=tasks.find(x=>x.id===id),key=/^\d{4}-\d{2}-\d{2}$/.test(String(dateKey||''))?dateKey:today();if(!task)return;const completionByDate={...(task.completionByDate&&typeof task.completionByDate==='object'?task.completionByDate:{})};if(!task.completionByDate&&task.done&&task.date)completionByDate[task.date]=true;if(v)completionByDate[key]=true;else delete completionByDate[key];const updated={...task,completionByDate,done:false,completedAt:v?new Date().toISOString():null};commitTaskChange(tasks.map(x=>x.id===id?updated:x),updated,v?'اكتملت المهمة لهذا اليوم':'أُعيد فتح المهمة لهذا اليوم',v?'completed':'reopened',task);render()};window.togglePhotoFavorite=id=>{store.set('photos',store.get('photos').map(x=>x.id===id?{...x,favorite:!x.favorite}:x));renderMediaPage()};function syncThemeModeButton(){const btn=$('#themeModeToggle');if(!btn)return;const dark=document.body.classList.contains('dark');btn.innerHTML=`<span class="theme-mode-icon" aria-hidden="true">${dark?'☀':'☾'}</span>`;btn.setAttribute('aria-label',dark?'التبديل إلى الوضع الفاتح':'التبديل إلى الوضع الداكن');btn.title=dark?'الوضع الحالي داكن — اضغطي للتبديل إلى الفاتح':'الوضع الحالي فاتح — اضغطي للتبديل إلى الداكن'}
+window.setDark=v=>{document.body.classList.toggle('dark',!!v);setPref('dark',v?'1':'0');syncThemeModeButton()};
+$('#themeModeToggle')?.addEventListener('click',()=>window.setDark(!document.body.classList.contains('dark')));
+syncThemeModeButton();function applyAccent(a,s){if(!/^#[0-9a-f]{6}$/i.test(String(a||'')))return;const soft=s||`color-mix(in srgb, ${a} 14%, white)`;const root=document.documentElement;root.style.setProperty('--accent',a);root.style.setProperty('--accent2',getPref('accent2')||`color-mix(in srgb, ${a} 68%, white)`);root.style.setProperty('--soft',soft);root.style.setProperty('--accent-rgb',`${parseInt(a.slice(1,3),16)},${parseInt(a.slice(3,5),16)},${parseInt(a.slice(5,7),16)}`);document.querySelectorAll('.swatch').forEach(b=>b.classList.toggle('selected',(b.dataset.accent||'').toLowerCase()===a.toLowerCase()));const picker=document.querySelector('.custom-color input[type=color]');if(picker&&picker.value.toLowerCase()!==a.toLowerCase())picker.value=a;const hex=document.querySelector('#accentHex');if(hex&&hex.value.toLowerCase()!==a.toLowerCase())hex.value=a;}
+window.toggleThemeStudio=()=>{const box=document.getElementById('themeStudioOptions');const btn=document.querySelector('.theme-studio-toggle');if(!box||!btn)return;const opening=box.hidden;box.hidden=!opening;btn.setAttribute('aria-expanded',String(opening));btn.querySelector('.theme-toggle-arrow').textContent=opening?'⌃':'⌄'};
+window.setPalette=(a,b,soft,name)=>{if(!/^#[0-9a-f]{6}$/i.test(a)||!/^#[0-9a-f]{6}$/i.test(b))return;window.setAccent(a,soft,false);setPref('accent2',b);setPref('theme_name',name);document.documentElement.style.setProperty('--accent2',b);document.querySelectorAll('.palette-card').forEach(x=>x.classList.toggle('selected',x.dataset.accent.toLowerCase()===a.toLowerCase()));const n=document.querySelector('#themeName');if(n)n.textContent=name;toast('تم تطبيق لوحة '+name)};
+window.setAccent=(a,s,notify=true)=>{if(!/^#[0-9a-f]{6}$/i.test(String(a||'')))return;const soft=s||`color-mix(in srgb, ${a} 14%, white)`;if(!s)removePref('accent2');applyAccent(a,soft);setPref('accent',a);setPref('soft',soft);setPref('theme_name','لون مخصص');const n=document.querySelector('#themeName');if(n)n.textContent='لون مخصص';document.querySelectorAll('.palette-card').forEach(x=>x.classList.toggle('selected',x.dataset.accent.toLowerCase()===a.toLowerCase()));if(notify)toast('تم تطبيق اللون وحفظه فوراً')};
+window.setAccentFromHex=value=>{let v=String(value||'').trim();if(!v.startsWith('#'))v='#'+v;if(/^#[0-9a-f]{6}$/i.test(v))window.setAccent(v,null,false)};
+window.addEventListener('storage',e=>{if(e.key==='fayrouz_accent'||e.key==='fayrouz_soft'){applyAccent(getPref('accent'),getPref('soft'))}});
+function toast(t){const x=$('#toast');x.textContent=t;x.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>x.classList.remove('show'),2400)}
+
+// Encrypted media database: only ciphertext is written to IndexedDB.
+let mediaDBPromise,mediaLoadPromises={};
+function mediaDB(){if(!mediaDBPromise)mediaDBPromise=new Promise((resolve,reject)=>{const req=indexedDB.open('FayrouzMedia',1);req.onupgradeneeded=()=>req.result.createObjectStore('media');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});return mediaDBPromise}
+async function saveMedia(id,blob){const encrypted=await encryptBytes(await blob.arrayBuffer());encrypted.type=blob.type||'application/octet-stream';const db=await mediaDB();return new Promise((resolve,reject)=>{const tx=db.transaction('media','readwrite');tx.objectStore('media').put(encrypted,id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
+async function getMedia(id){const db=await mediaDB();const value=await new Promise((resolve,reject)=>{const r=db.transaction('media').objectStore('media').get(id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)});if(!value)return null;if(value instanceof Blob){const legacy=value;await saveMedia(id,legacy);return legacy}const plain=await decryptBytes(value);return new Blob([plain],{type:value.type||'application/octet-stream'})}
+async function deleteMedia(id){try{const db=await mediaDB();db.transaction('media','readwrite').objectStore('media').delete(id)}catch{}if(mediaCache[id]){URL.revokeObjectURL(mediaCache[id]);delete mediaCache[id]}delete mediaLoadPromises[id]}
+async function loadMediaUrl(id){if(mediaCache[id])return mediaCache[id];if(mediaLoadPromises[id])return mediaLoadPromises[id];mediaLoadPromises[id]=(async()=>{const blob=await getMedia(id);if(!blob)return null;const url=URL.createObjectURL(blob);mediaCache[id]=url;return url})().finally(()=>{delete mediaLoadPromises[id]});return mediaLoadPromises[id]}
+async function renderMediaPage(){
+ const c=$('#content'),items=store.get('photos'),valid=new Set(items.map(x=>x.mediaId).filter(Boolean));
+ // Keep decrypted media URLs between page refreshes; revoke only removed media.
+ for(const id of Object.keys(mediaCache))if(!valid.has(id)){URL.revokeObjectURL(mediaCache[id]);delete mediaCache[id]}
+ const images=items.filter(x=>x.mediaType==='image').length,videos=items.filter(x=>x.mediaType==='video').length;
+ const header=()=>pageHead(sections.photos.title,sections.photos.sub,sections.photos.add)+`<div class="media-library-summary"><span>كل الملفات: <b>${items.length}</b></span><span>الصور: <b>${images}</b></span><span>الفيديوهات: <b>${videos}</b></span></div><div class="media-filters"><button class="${mediaFilter==='all'?'active':''}" onclick="setMediaFilter('all')">الكل</button><button class="${mediaFilter==='image'?'active':''}" onclick="setMediaFilter('image')">الصور</button><button class="${mediaFilter==='video'?'active':''}" onclick="setMediaFilter('video')">الفيديوهات</button></div>`;
+ c.innerHTML=header()+listHTML('photos');
+ // Decrypt at most two files concurrently; show the page immediately and update as files become ready.
+ const pending=items.filter(x=>x.mediaId&&!mediaCache[x.mediaId]);
+ for(let i=0;i<pending.length;i+=2){
+  await Promise.all(pending.slice(i,i+2).map(async item=>{try{await loadMediaUrl(item.mediaId)}catch(e){console.error(e);toast('تعذر فك تشفير أحد ملفات الوسائط.')}}));
+  if(page==='photos'&&c===$('#content'))c.innerHTML=header()+listHTML('photos');
+ }
+}
+window.setMediaFilter=f=>{mediaFilter=f;renderMediaPage()};
+function safeFileName(name,fallback){const clean=String(name||fallback||'fayrouz-media').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').trim().slice(0,100);return clean||fallback||'fayrouz-media'}
+window.downloadMedia=async id=>{try{const item=store.get('photos').find(x=>x.id===id);if(!item)return;const blob=await getMedia(item.mediaId);if(!blob){toast('الملف غير موجود');return}const url=URL.createObjectURL(blob),ext=(blob.type.split('/')[1]||'bin').split(';')[0].replace('jpeg','jpg');const name=safeFileName(item.fileName||item.title,`fayrouz-${item.mediaType}`);const a=document.createElement('a');a.href=url;a.download=name.includes('.')?name:`${name}.${ext}`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);toast('بدأ تحميل الملف')}catch(e){console.error(e);toast('تعذر تحميل الملف')}};
+
+// Photos and videos use the same unlocked vault key; no separate plaintext PIN layer.
+async function unlockPhotos(){return !!vaultKey}
+
+// Password and recovery code independently unlock the same random AES-256 data key.
+const hashSecret=async value=>{const bytes=new TextEncoder().encode(value.trim().toLowerCase());const digest=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('')};
+async function setupVault(password,recovery){const raw=randomBytes(32);vaultKey=await crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},true,['encrypt','decrypt']);const p=await wrapVaultKey(password,raw),r=await wrapVaultKey(recovery,raw);localStorage.setItem('fayrouz_key_password',JSON.stringify(p));localStorage.setItem('fayrouz_key_recovery',JSON.stringify(r));await loadVault();localStorage.removeItem('fayrouz_auth_password');localStorage.removeItem('fayrouz_auth_recovery')}
+async function openVault(secret){const entered=String(secret??'');const records=[localStorage.getItem('fayrouz_key_password'),localStorage.getItem('fayrouz_key_recovery')].filter(Boolean);for(const raw of records){try{vaultKey=await unwrapVaultKey(entered,JSON.parse(raw));await loadVault();return true}catch{vaultKey=null}}return false}
+function authOverlay(){if(!globalThis.crypto?.subtle){document.body.insertAdjacentHTML('beforeend','<div class="auth-screen" id="authScreen"><div class="auth-card"><h1>Fayrouz</h1><p>التشفير غير متاح في طريقة فتح التطبيق الحالية. افتحيه باستخدام متصفح حديث ومن خلال HTTPS آمن.</p></div></div>');return}const encrypted=!!localStorage.getItem('fayrouz_key_password'),legacy=!!localStorage.getItem('fayrouz_auth_password');const configured=encrypted||legacy;document.body.insertAdjacentHTML('beforeend',`<div class="auth-screen" id="authScreen"><div class="auth-card"><div class="auth-logo">F</div><p class="auth-kicker">مساحتكِ الخاصة</p><h1>Fayrouz</h1><p id="authMessage">${encrypted?'أدخلي رمز الدخول لفتح مساحتكِ':'أنشئي بيانات الدخول لتشفير مساحتكِ'}</p><form id="authForm">${encrypted?'<label>رمز الدخول<input id="authPassword" type="password" required autocomplete="current-password" autofocus></label>':legacy?'<label>كلمة المرور أو رمز الاستعادة الحالية<input id="legacySecret" type="password" required></label><label>كلمة المرور الجديدة<input id="authPassword" type="password" minlength="4" required></label><label>رمز الاستعادة الجديد<input id="authRecovery" type="password" minlength="4" required></label>':'<label>كلمة المرور الجديدة<input id="authPassword" type="password" minlength="4" required autocomplete="new-password"></label><label>تأكيد كلمة المرور<input id="authConfirm" type="password" minlength="4" required></label><label>رمز الاستعادة (احفظيه في مكان آمن)<input id="authRecovery" type="password" minlength="4" required autocomplete="off"></label>'}<button class="btn primary auth-submit">${configured?'دخول':'تفعيل التشفير'}</button></form>${encrypted?'<button type="button" class="text-link auth-forgot" id="forgotAccess">نسيت كلمة المرور؟ استخدم رمز الاستعادة</button><form id="recoveryForm" class="hidden"><label>رمز الاستعادة<input id="recoveryInput" type="password" minlength="4" required autocomplete="off"></label><button class="btn primary auth-submit" type="submit">فتح باستخدام رمز الاستعادة</button></form>':''}<small class="auth-note">تُشفّر البيانات والوسائط على هذا الجهاز ولا تُرفع إلى أي خادم.</small></div></div>`);$('#authForm').onsubmit=async e=>{e.preventDefault();const btn=$('#authForm button');btn.disabled=true;try{if(encrypted){if(await openVault($('#authPassword').value)){await finishUnlock()}else toast('بيانات الدخول غير صحيحة');}else if(legacy){const entered=await hashSecret($('#legacySecret').value);if(entered!==localStorage.getItem('fayrouz_auth_password')&&entered!==localStorage.getItem('fayrouz_auth_recovery')){toast('بيانات الدخول الحالية غير صحيحة');return}const pw=$('#authPassword').value,rec=$('#authRecovery').value;if(pw.length<4||rec.length<4||pw===rec){toast('كلمة المرور 4 أحرف أو أرقام على الأقل، ورمز الاستعادة 4 أحرف أو أكثر، ويجب أن يختلفا');return}await setupVault(pw,rec);await finishUnlock()}else{const pw=$('#authPassword').value,rec=$('#authRecovery').value;if(pw!==$('#authConfirm').value){toast('كلمتا المرور غير متطابقتين');return}if(pw.length<4||rec.length<4||pw===rec){toast('كلمة المرور 4 أحرف أو أرقام على الأقل، ورمز الاستعادة 4 أحرف أو أكثر، ويجب أن يختلفا');return}await setupVault(pw,rec);await finishUnlock()}}catch(err){console.error(err);toast('تعذر فتح الخزنة المشفّرة. تأكدي من كلمة المرور أو رمز الاستعادة.')}finally{btn.disabled=false}};if(encrypted){$('#forgotAccess').onclick=()=>{$('#recoveryForm').classList.toggle('hidden');if(!$('#recoveryForm').classList.contains('hidden'))$('#recoveryInput').focus()};$('#recoveryForm').onsubmit=async e=>{e.preventDefault();const btn=$('#recoveryForm button');btn.disabled=true;try{if(await openVault($('#recoveryInput').value)){await finishUnlock()}else toast('رمز الاستعادة غير صحيح')}catch(err){console.error(err);toast('تعذر التحقق من رمز الاستعادة')}finally{btn.disabled=false}}}}
+async function migrateAllMedia(){
+ if(localStorage.getItem('fayrouz_media_migrated_v1')==='1')return;
+ const db=await mediaDB(),legacy=await new Promise((resolve,reject)=>{const found=[],tx=db.transaction('media','readonly'),req=tx.objectStore('media').openCursor();req.onsuccess=()=>{const cursor=req.result;if(!cursor){resolve(found);return}if(cursor.value instanceof Blob)found.push([cursor.key,cursor.value]);cursor.continue()};req.onerror=()=>reject(req.error)});
+ for(const [id,blob] of legacy)await saveMedia(id,blob);
+ localStorage.setItem('fayrouz_media_migrated_v1','1');
+}
+async function finishUnlock(){localStorage.removeItem('fayrouz_key_master');localStorage.removeItem('fayrouz_key_master_normalized');await migrateAllMedia();const shell=$('#appShell');if(shell)shell.hidden=false;document.body.classList.remove('auth-locked');$('#authScreen')?.remove();if(getPref('dark')==='1')document.body.classList.add('dark');syncThemeModeButton();if(getPref('large_text')==='1')document.body.classList.add('large-text');const a=getPref('accent');if(a){document.documentElement.style.setProperty('--accent',a);document.documentElement.style.setProperty('--accent2',getPref('accent2')||`color-mix(in srgb, ${a} 65%, white)`);document.documentElement.style.setProperty('--soft',getPref('soft')||`color-mix(in srgb, ${a} 13%, white)`)}render();toast('تم فتح المساحة المشفّرة بنجاح')}
+// Each security setting opens only its own form.
+async function saveVaultCredential(kind){
+ if(!vaultKey){toast('افتحي التطبيق أولاً لإدارة الحماية');return}
+ const isPassword=kind==='password';
+ document.getElementById('credentialDialog')?.remove();
+ const title=isPassword?'تغيير كلمة المرور':'تغيير رمز الاستعادة';
+ const fieldLabel=isPassword?'كلمة المرور الجديدة':'رمز الاستعادة الجديد';
+ const inputId=isPassword?'newCredentialPassword':'newCredentialRecovery';
+ const confirmField=isPassword?'<label class="credential-field">تأكيد كلمة المرور<input id="confirmCredentialPassword" type="password" minlength="4" required autocomplete="new-password" placeholder="أعيدي كتابة كلمة المرور"></label>':'';
+ document.body.insertAdjacentHTML('beforeend',`<div class="credential-dialog" id="credentialDialog" role="dialog" aria-modal="true" aria-labelledby="credentialTitle"><form class="credential-card" id="credentialForm"><button class="credential-close" type="button" aria-label="إغلاق" id="credentialClose">×</button><div class="credential-icon">${isPassword?'♧':'⌑'}</div><p class="credential-kicker">حماية فيروز</p><h2 id="credentialTitle">${title}</h2><p class="credential-description">${isPassword?'اختاري كلمة مرور جديدة للدخول إلى تطبيق فيروز.':'اختاري رمزاً جديداً لاستخدامه عند نسيان كلمة المرور.'}</p><label class="credential-field">${fieldLabel}<input id="${inputId}" type="password" minlength="4" required autocomplete="new-password" placeholder="4 أحرف أو أرقام على الأقل"></label>${confirmField}<small class="credential-hint">${isPassword?'يجب أن تتكون كلمة المرور من 4 أحرف أو أرقام على الأقل.':'يجب أن يتكون رمز الاستعادة من 4 أحرف أو أرقام على الأقل، وأن يختلف عن كلمة المرور.'}</small><div class="credential-actions"><button class="btn ghost" type="button" id="credentialCancel">إلغاء</button><button class="btn primary" type="submit" id="credentialSave">حفظ</button></div></form></div>`);
+ const dialog=$('#credentialDialog'),form=$('#credentialForm'),close=()=>dialog.remove();
+ $('#credentialClose').onclick=close;$('#credentialCancel').onclick=close;dialog.addEventListener('click',e=>{if(e.target===dialog)close()});$('#'+inputId).focus();
+ form.onsubmit=async e=>{
+  e.preventDefault();const value=$('#'+inputId).value.trim(),btn=$('#credentialSave');
+  if(value.length<4){toast('يجب إدخال 4 أحرف أو أرقام على الأقل');return}
+  if(isPassword&&value!==$('#confirmCredentialPassword').value){toast('تأكيد كلمة المرور غير مطابق');$('#confirmCredentialPassword').focus();return}
+  try{const other=JSON.parse(localStorage.getItem(isPassword?'fayrouz_key_recovery':'fayrouz_key_password')||'null');if(other){await unwrapVaultKey(value,other);toast('يجب أن تختلف كلمة المرور عن رمز الاستعادة');return}}catch{}
+  btn.disabled=true;
+  try{const raw=await crypto.subtle.exportKey('raw',vaultKey),record=await wrapVaultKey(value,raw);localStorage.setItem(isPassword?'fayrouz_key_password':'fayrouz_key_recovery',JSON.stringify(record));close();toast(isPassword?'تم تغيير كلمة المرور بنجاح':'تم تغيير رمز الاستعادة بنجاح')}
+  catch(err){console.error(err);toast('تعذر تحديث بيانات الحماية')}
+  finally{if(document.body.contains(btn))btn.disabled=false}
+ };
+}
+window.changePassword=()=>saveVaultCredential('password');
+window.changeRecoveryCode=()=>saveVaultCredential('recovery');
+// Backward-compatible entry point for older saved UI references.
+window.changeCredentials=()=>saveVaultCredential('password');
+
+if(getPref('dark')==='1')document.body.classList.add('dark');syncThemeModeButton();if(getPref('large_text')==='1')document.body.classList.add('large-text');const savedAccent=getPref('accent')||getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();applyAccent(savedAccent,getPref('soft')||null);authOverlay();

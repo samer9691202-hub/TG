@@ -509,3 +509,20 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .recovery-password-actions { display: grid; gap: 10px; margin-top: 15px; }
 .recovery-password-actions .secondary { width: 100%; }
 @media (max-width: 480px) { .recovery-password-modal { padding: 22px 18px; border-radius: 20px; } }
+
+
+/* وضع استعادة الخزنة: إظهار بطاقة الاسترداد فقط مع رابط العودة */
+#lockScreen.recovery-mode .lock-box > .logo,
+#lockScreen.recovery-mode .lock-box > h2,
+#lockScreen.recovery-mode .lock-box > p,
+#lockScreen.recovery-mode .lock-box > #unlockPassword,
+#lockScreen.recovery-mode .lock-box > #confirmPassword,
+#lockScreen.recovery-mode .lock-box > #setupPasswordStrength,
+#lockScreen.recovery-mode .lock-box > #setupRecoveryFields,
+#lockScreen.recovery-mode .lock-box > #unlockBtn,
+#lockScreen.recovery-mode .lock-box > #recoverVaultBtn { display: none !important; }
+#lockScreen.recovery-mode .lock-box { padding-top: 26px; padding-bottom: 26px; }
+#lockScreen.recovery-mode .recovery-panel { display: grid; gap: 12px; margin: 0; }
+.recovery-panel-title { margin: 0; color: var(--gold2, #e8ca8a); font-size: 21px; text-align: center; }
+.recovery-panel-description { margin: 0 0 5px; color: var(--muted); font-size: 13px; line-height: 1.8; text-align: center; }
+#lockScreen.recovery-mode .lock-error { margin-top: 10px; }

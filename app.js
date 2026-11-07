@@ -808,10 +808,11 @@
         return;
       }
       $('#recoveryPanel').hidden = false;
+      $('#lockScreen').classList.add('recovery-mode');
       setLockError('');
       $('#recoveryInput').focus();
     });
-    $('#cancelRecoveryBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = true; $('#recoveryInput').value = ''; setLockError(''); });
+    $('#cancelRecoveryBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = true; $('#lockScreen').classList.remove('recovery-mode'); $('#recoveryInput').value = ''; setLockError(''); });
     $('#recoverSubmitBtn').addEventListener('click', recoverVault);
     $('#recoveryPasswordForm').addEventListener('submit', saveRecoveredPassword);
     $('#recoveryNewPassword').addEventListener('input', () => updateStrengthHint($('#recoveryNewPassword').value, $('#recoveryPasswordStrength')));

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Vaulty 1.0.3 — app.js
+   Vaulty 1.0.5 — app.js
    - تشفير الخزنة بالكامل: PBKDF2-SHA256 + AES-256-GCM (Web Crypto API)
    - كلمة المرور الرئيسية لا تُخزَّن إطلاقاً؛ صحتها تُتحقق بفك التشفير
    - لا توجد أي اتصالات شبكية؛ كل شيء يعمل محلياً
@@ -191,7 +191,13 @@
 
   function updateStrengthHint(value, target) {
     if (!target) return;
-    if (!value) { target.textContent = ''; return; }
+    // لا تعرض تحذير قوة كلمة المرور أثناء تسجيل الدخول؛ يظهر فقط عند إنشاء/تغيير كلمة المرور.
+    if (target.id === 'setupPasswordStrength' && state.mode !== 'setup') {
+      target.textContent = '';
+      target.className = 'strength-hint';
+      return;
+    }
+    if (!value) { target.textContent = ''; target.className = 'strength-hint'; return; }
     const score = strength(value);
     target.textContent = value.length < 8 || score <= 1
       ? 'تنبيه: كلمة المرور ضعيفة. يمكنك المتابعة، لكن يُنصح باستخدام 8 أحرف أو أكثر مع أرقام ورموز.'
@@ -433,6 +439,7 @@
     state.mode = hasVault ? 'unlock' : 'setup';
     const legacyCount = hasVault ? 0 : readLegacyItems().length;
     $('#confirmPassword').hidden = hasVault;
+    if (hasVault) { $('#setupPasswordStrength').textContent = ''; $('#setupPasswordStrength').className = 'strength-hint'; }
     $('#unlockPassword').autocomplete = hasVault ? 'current-password' : 'new-password';
     if (hasVault) {
       $('#lockTitle').textContent = 'خزنتك مقفلة';
@@ -750,7 +757,10 @@
 
     $('#lockBtn').addEventListener('click', () => lockVault());
     $('#lockForm').addEventListener('submit', onLockSubmit);
-    $('#unlockPassword').addEventListener('input', () => updateStrengthHint($('#unlockPassword').value, $('#setupPasswordStrength')));
+    $('#unlockPassword').addEventListener('input', () => {
+      if (state.mode === 'setup') updateStrengthHint($('#unlockPassword').value, $('#setupPasswordStrength'));
+      else { $('#setupPasswordStrength').textContent = ''; $('#setupPasswordStrength').className = 'strength-hint'; }
+    });
     $('#newMasterPassword').addEventListener('input', () => updateStrengthHint($('#newMasterPassword').value, $('#changePasswordStrength')));
     $('#recoverVaultBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = false; setLockError(''); $('#recoveryInput').focus(); });
     $('#cancelRecoveryBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = true; $('#recoveryInput').value = ''; setLockError(''); });

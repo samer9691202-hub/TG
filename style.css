@@ -357,10 +357,10 @@ body.dark .clock strong{color:var(--accent2) !important}
 body.dark .wird-stat,body.dark .wird-bookmark,body.dark .wird-dua,body.dark .wird-week{background:color-mix(in srgb,var(--surface) 88%,var(--accent) 12%) !important;border-color:color-mix(in srgb,var(--accent) 30%,var(--line)) !important;color:var(--text) !important}
 
 /* Fayrouz 1.1.20 — focused task and notes workspace */
-.task-overview,.notes-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:4px 0 18px}
-.task-stat,.notes-summary>div{display:flex;align-items:center;gap:12px;padding:15px 17px;border-radius:18px;background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);border:1px solid var(--theme-border);box-shadow:0 8px 22px rgba(70,50,90,.045)}
-.task-stat strong,.notes-summary strong{font-size:25px;color:var(--accent);line-height:1}
-.task-stat span,.notes-summary span{font-size:12px;color:var(--muted)}
+.task-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:4px 0 18px}
+.task-stat{display:flex;align-items:center;gap:12px;padding:15px 17px;border-radius:18px;background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);border:1px solid var(--theme-border);box-shadow:0 8px 22px rgba(70,50,90,.045)}
+.task-stat strong{font-size:25px;color:var(--accent);line-height:1}
+.task-stat span{font-size:12px;color:var(--muted)}
 .task-stat.has-overdue strong{color:#d46b72}
 .task-filter-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0 15px}
 .task-filter-tabs,.note-category-tabs{display:flex;gap:8px;flex-wrap:wrap}
@@ -384,7 +384,7 @@ body.dark .wird-stat,body.dark .wird-bookmark,body.dark .wird-dua,body.dark .wir
 .note-body{margin:4px 0 8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.95;color:var(--text)!important}
 .note-footer{display:flex;justify-content:space-between;gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid var(--theme-border);color:var(--muted)}
 .note-footer small{font-size:10px}
-@media(max-width:650px){.task-overview,.notes-summary{gap:7px}.task-stat,.notes-summary>div{padding:12px 9px;gap:6px;flex-direction:column;align-items:flex-start}.task-stat strong,.notes-summary strong{font-size:22px}.task-stat span,.notes-summary span{font-size:10px}.task-filter-bar{align-items:flex-start;flex-direction:column}.task-filter-tabs,.note-category-tabs{gap:6px}.filter-chip{padding:7px 10px;font-size:11px}.note-tools select{width:100%}}
+@media(max-width:650px){.task-overview{gap:7px}.task-stat{padding:12px 9px;gap:6px;flex-direction:column;align-items:flex-start}.task-stat strong{font-size:22px}.task-stat span{font-size:10px}.task-filter-bar{align-items:flex-start;flex-direction:column}.task-filter-tabs,.note-category-tabs{gap:6px}.filter-chip{padding:7px 10px;font-size:11px}.note-tools select{width:100%}}
 
 
 /* Fayrouz 1.1.27 — Android Quran app chooser */
@@ -780,3 +780,31 @@ body.dark .toast{background:#E0B7CA!important;color:#241923!important}
 body.dark footer{color:#A995A4!important}
 body.dark .theme-mode-toggle{background:#3A2A38!important;color:#F0C9DC!important;border-color:#76566A!important}
 @media(max-width:650px){body.large-text .app-shell{zoom:1.04}body.dark .sidebar{background:rgba(39,33,42,.98)!important}}
+
+/* Fayrouz 1.2.15 — Welcome hero adapted for night mode */
+body.dark .hero{
+  background:linear-gradient(115deg,#352632 0%,#49303F 58%,#553447 100%)!important;
+  border:1px solid #765466!important;
+  box-shadow:0 18px 38px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.045)!important;
+  color:#F8EDF3!important;
+}
+body.dark .hero h2{color:#FFF1F6!important}
+body.dark .hero p{color:#DCC8D3!important}
+body.dark .hero:after{color:rgba(255,225,238,.075)!important}
+body.dark .hero:before{border-color:rgba(255,225,238,.13)!important;box-shadow:0 0 0 24px rgba(255,225,238,.035),0 0 0 50px rgba(255,225,238,.025)!important}
+body.dark .hero .date-pill{background:rgba(25,18,26,.28)!important;border:1px solid rgba(255,230,241,.2)!important;color:#F8EAF1!important;backdrop-filter:blur(12px)}
+
+/* Fayrouz 1.2.16 — clearer, non-repeating home dashboard */
+.dashboard-stats{grid-template-columns:repeat(3,minmax(0,1fr));}
+.dashboard-stats .stat{min-width:0;}
+.dashboard-stats .stat small{display:block;}
+.dashboard-day-progress{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
+.dashboard-day-progress>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;color:var(--muted);font-size:13px;}
+.dashboard-day-progress strong{color:var(--accent);font-size:17px;}
+.dashboard-day-progress .progress{height:7px;overflow:hidden;border-radius:99px;background:var(--soft);}
+.dashboard-day-progress .progress i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.dashboard-more{margin-top:8px;}
+.dashboard-quran{margin-top:17px;}
+@media(max-width:650px){.dashboard-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}.dashboard-stats .stat{padding:12px 9px;}.dashboard-stats .stat .icon{width:32px;height:32px;font-size:16px;}.dashboard-stats .stat strong{font-size:21px;}.dashboard-stats .stat small{font-size:10px;line-height:1.5;}.dashboard-quran{margin-top:13px;}}
+
+/* Fayrouz 1.2.17 — removed redundant notes summary tiles */

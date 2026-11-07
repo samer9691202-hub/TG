@@ -1,4 +1,4 @@
-Fayrouz 1.2.14 — AppMint package
+Fayrouz 1.2.17 — AppMint package
 
 Performance improvements in 1.2.12:
 - Coalesces rapid vault changes into a single encrypted AES-GCM save, reducing repeated full-vault serialization and encryption while preserving encrypted storage.
@@ -50,3 +50,20 @@ Dashboard update in 1.2.14:
 - Removed the “Open task calendar” shortcut from the “Your spaces” panel.
 - Moved “A letter to myself” into the same quick-card grid as the other spaces.
 - Adjusted card spacing and sizing for a balanced four-card layout on desktop and mobile.
+
+
+Night mode refinement in 1.2.15:
+- The dashboard welcome card now uses a coordinated dark mauve/rose palette in night mode, with adjusted text, decorative details, and date badge contrast.
+
+
+Home dashboard update in 1.2.16:
+- Removed duplicated task summaries and repeated daily counters.
+- Added distinct dashboard counters for all tasks, notes, and overdue tasks.
+- Kept the four shortcut cards, including the personal letter card.
+- Consolidated today's completion percentage into the today tasks card.
+- Kept Quran progress as a separate section.
+- Fixed the home screen to read per-day task completion records correctly.
+
+Notes page cleanup in 1.2.17:
+- Removed the three redundant summary tiles: all notes, favorites, and saved characters.
+- Kept note search, sorting, categories, favorites actions, and note cards unchanged.

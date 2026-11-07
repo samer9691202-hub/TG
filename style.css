@@ -75,7 +75,7 @@ body.dark .auth-card input{background:#263735;border-color:#49625d;color:#fff}
 .media-viewer-controls{flex-wrap:wrap}
 @media(max-width:520px){.media-card-actions{gap:6px}.media-card-actions .btn{padding:8px 6px;font-size:11px}.media-selection-preview{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
-/* Fayrouz 1.0.16 — Soft Glass Experience visual system */
+/* Fayrouz visual system */
 :root{
  --bg:#f4efff;--surface:rgba(255,255,255,.62);--surface2:rgba(255,255,255,.48);
  --text:#302746;--muted:#827894;--accent:#8054e9;--accent2:#b48cf7;
@@ -1070,10 +1070,3 @@ body.dark input,body.dark textarea,body.dark select{background:#3B2A37;border-co
 /* Fayrouz 1.2.41 — consistent spacing between cards in the Wird section */
 .wird-cards-redesigned{row-gap:14px!important;column-gap:14px!important}
 @media(max-width:700px){.wird-cards-redesigned{row-gap:14px!important;column-gap:14px!important}}
-
-/* Compact, touch-friendly font-size control card */
-.font-size-card{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:16px 0;padding:17px 18px;border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line));border-radius:17px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 8%,var(--surface)),var(--surface2));}
-.font-size-copy{display:grid;gap:5px;min-width:0}.font-size-copy strong{font-size:15px;color:var(--text)}.font-size-copy small{font-size:12px;line-height:1.7;color:var(--muted)}
-.font-size-controls{display:flex;align-items:center;gap:9px;flex-shrink:0}.font-size-controls output{min-width:43px;text-align:center;color:var(--accent);font-size:12px;font-weight:800}
-.font-size-btn{display:flex;align-items:center;gap:6px;min-height:42px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line));border-radius:12px;background:var(--surface);color:var(--accent);font:700 15px 'Tajawal';cursor:pointer;white-space:nowrap}.font-size-btn span{font-size:11px}.font-size-btn:disabled{opacity:.38;cursor:not-allowed}
-@media(max-width:560px){.font-size-card{align-items:stretch;flex-direction:column;gap:13px;padding:15px}.font-size-controls{justify-content:space-between}.font-size-btn{flex:1;justify-content:center}.font-size-controls output{min-width:48px}}

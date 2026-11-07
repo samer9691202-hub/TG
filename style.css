@@ -1070,3 +1070,17 @@ body.dark input,body.dark textarea,body.dark select{background:#3B2A37;border-co
 /* Fayrouz 1.2.41 — consistent spacing between cards in the Wird section */
 .wird-cards-redesigned{row-gap:14px!important;column-gap:14px!important}
 @media(max-width:700px){.wird-cards-redesigned{row-gap:14px!important;column-gap:14px!important}}
+
+/* Fayrouz 1.0 — match daily wird card spacing to reading-position card */
+.wird-today-card{position:relative;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.wird-today-card>.wird-card-top{margin:0 0 2px}
+.wird-today-card>.wird-goal-settings{margin:0}
+.wird-today-card>.wird-today-main{margin:0;padding:16px;gap:16px}
+.wird-today-card>.wird-today-controls{margin:0;gap:12px}
+.wird-today-card>.wird-save-progress{margin:0}
+.wird-today-card .wird-today-copy>p{margin:7px 0 14px;line-height:1.8}
+.wird-today-card .wird-progress-meta{margin-bottom:8px}
+.wird-today-card .wird-count-field{gap:8px}
+.wird-today-card .wird-count-field input{margin-top:1px}
+@media(max-width:700px){.wird-today-card{gap:14px}.wird-today-card>.wird-today-main{padding:14px;gap:13px}.wird-today-card>.wird-today-controls{gap:9px}}
+@media(max-width:380px){.wird-today-card{gap:13px}.wird-today-card>.wird-today-main{padding:12px;gap:10px}}

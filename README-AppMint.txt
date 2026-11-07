@@ -1,4 +1,11 @@
-Fayrouz 1.2.17 — AppMint package
+Fayrouz 1.2.22 — Home dashboard highlights
+- Removed the character counter from note cards.
+- Removed the copy-note action from the note viewer.
+- Replaced the sorting dropdown with clear, responsive options: newest first, oldest first, and by title.
+- Date sorting now uses creation date (with update date as a fallback), while the card continues to show the last-updated date.
+- Improved active, hover, mobile, and dark-mode styling for sorting controls.
+
+Fayrouz 1.2.22 — AppMint package
 
 Performance improvements in 1.2.12:
 - Coalesces rapid vault changes into a single encrypted AES-GCM save, reducing repeated full-vault serialization and encryption while preserving encrypted storage.
@@ -67,3 +74,8 @@ Home dashboard update in 1.2.16:
 Notes page cleanup in 1.2.17:
 - Removed the three redundant summary tiles: all notes, favorites, and saved characters.
 - Kept note search, sorting, categories, favorites actions, and note cards unchanged.
+
+
+Home page update in 1.2.22:
+- Replaced the three redundant total/overdue counters with actionable cards: next upcoming task, latest note, and last Quran reading position.
+- Cards open their corresponding sections and support light/dark themes and responsive layouts.

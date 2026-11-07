@@ -480,3 +480,32 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .setup-recovery-fields label { color: var(--muted); font-size: 12px; }
 .setup-recovery-fields input { margin: 5px 0; }
 .setup-recovery-fields small { color: var(--muted); font-size: 10px; line-height: 1.7; }
+
+
+/* ---------- نافذة استعادة الخزنة المخصصة ---------- */
+.recovery-password-modal {
+  width: min(100%, 430px);
+  padding: 27px;
+  background: radial-gradient(circle at 50% 0, #d9b66f17, transparent 38%), linear-gradient(155deg, #172943, #101b2e 72%);
+  border-color: #b895573d;
+  text-align: center;
+}
+.recovery-modal-icon {
+  width: 58px; height: 58px; margin: 0 auto 15px; border-radius: 19px;
+  display: grid; place-items: center; font-size: 27px; font-weight: 800;
+  color: #172033; background: linear-gradient(145deg, #f0d69a, #b58b43);
+  box-shadow: 0 9px 28px #d9b66f2b;
+}
+.recovery-modal-heading h3 { margin: 7px 0 8px; font-size: 20px; color: var(--text); }
+.recovery-modal-heading .hint { margin: 0 0 22px; line-height: 1.8; }
+.recovery-password-field { text-align: right; margin-top: 13px; }
+.recovery-password-field input {
+  height: 49px; border: 1px solid #3b506e; border-radius: 13px;
+  background: #091526; color: var(--text); padding: 0 14px; width: 100%;
+}
+.recovery-password-field input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px #d9b66f18; }
+.recovery-password-modal .strength-hint { text-align: right; margin-top: 8px; line-height: 1.6; }
+.recovery-password-error { color: #ff9292; font-size: 12px; text-align: right; min-height: 18px; margin-top: 8px; }
+.recovery-password-actions { display: grid; gap: 10px; margin-top: 15px; }
+.recovery-password-actions .secondary { width: 100%; }
+@media (max-width: 480px) { .recovery-password-modal { padding: 22px 18px; border-radius: 20px; } }

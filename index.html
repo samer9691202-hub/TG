@@ -177,6 +177,34 @@
   </div>
 </div>
 
+<!-- نافذة مخصصة لتعيين كلمة مرور جديدة بعد التحقق من رمز الاسترداد -->
+<div class="overlay on-top" id="recoveryPasswordOverlay" role="dialog" aria-modal="true" aria-labelledby="recoveryPasswordTitle">
+  <div class="modal narrow recovery-password-modal">
+    <div class="recovery-modal-icon" aria-hidden="true">✓</div>
+    <div class="recovery-modal-heading">
+      <span class="eyebrow">استعادة آمنة</span>
+      <h3 id="recoveryPasswordTitle">تم التحقق من رمز الاسترداد</h3>
+      <p class="hint">أنشئ كلمة مرور رئيسية جديدة للعودة إلى خزنتك. ستبقى بياناتك كما هي.</p>
+    </div>
+    <form id="recoveryPasswordForm">
+      <div class="field recovery-password-field">
+        <label for="recoveryNewPassword">كلمة المرور الجديدة</label>
+        <input id="recoveryNewPassword" type="password" minlength="4" autocomplete="new-password" placeholder="أدخل كلمة مرور جديدة" required>
+      </div>
+      <div class="strength-hint" id="recoveryPasswordStrength" aria-live="polite"></div>
+      <div class="field recovery-password-field">
+        <label for="recoveryConfirmPassword">تأكيد كلمة المرور</label>
+        <input id="recoveryConfirmPassword" type="password" minlength="4" autocomplete="new-password" placeholder="أعد كتابة كلمة المرور" required>
+      </div>
+      <div class="recovery-password-error" id="recoveryPasswordError" role="alert"></div>
+      <div class="recovery-password-actions">
+        <button type="submit" class="primary-btn full-width" id="saveRecoveredPasswordBtn">حفظ كلمة المرور</button>
+        <button type="button" class="secondary full-width" id="cancelRecoveryPassword">إلغاء والعودة</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- عرض رمز الاسترداد مرة واحدة -->
 <div class="overlay" id="recoveryCodeOverlay" role="dialog" aria-modal="true" aria-labelledby="recoveryCodeTitle">
   <div class="modal narrow recovery-modal">

@@ -47,6 +47,7 @@
     items: [],
     cryptoKey: null,
     recoveryKey: null,
+    pendingRecovery: null,
     needsRecoveryRefresh: false,
     meta: null,            // { iter, salt }
     activeCat: 'الكل',
@@ -685,22 +686,57 @@
       if (!validRecord(rec) || rec.v !== 3) throw new Error('bad');
       const key = await deriveKey(code, fromB64(rec.recoverySalt), 600000);
       const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.recoveryIv) }, key, fromB64(rec.recoveryData));
-      state.items = sanitizeItems(JSON.parse(dec.decode(plain)));
-      const newPassword = prompt('تم التحقق من رمز الاسترداد. أدخل كلمة مرور رئيسية جديدة (4 أحرف على الأقل):');
-      if (!newPassword || newPassword.length < MIN_MASTER_LENGTH) throw new Error('cancel');
-      const confirm = prompt('أعد إدخال كلمة المرور الجديدة:');
-      if (newPassword !== confirm) throw new Error('mismatch');
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      state.cryptoKey = await deriveKey(newPassword, salt, PBKDF2_ITERATIONS);
-      state.meta = { iter: PBKDF2_ITERATIONS, salt: toB64(salt), recoverySalt: rec.recoverySalt };
-      state.recoveryKey = key;
-      await persist();
+      const recoveredItems = sanitizeItems(JSON.parse(dec.decode(plain)));
+      state.pendingRecovery = { items: recoveredItems, key, record: rec };
       $('#recoveryPanel').hidden = true;
+      $('#recoveryPasswordForm').reset();
+      $('#recoveryPasswordError').textContent = '';
+      $('#recoveryPasswordStrength').textContent = '';
+      setBusy(false);
+      openOverlay('recoveryPasswordOverlay');
+      $('#recoveryNewPassword').focus();
+    } catch {
+      setLockError('رمز الاسترداد غير صحيح أو لا توجد نسخة استرداد صالحة.');
+      setBusy(false);
+    }
+  }
+
+  async function saveRecoveredPassword(e) {
+    e.preventDefault();
+    const password = $('#recoveryNewPassword').value;
+    const confirmation = $('#recoveryConfirmPassword').value;
+    const error = $('#recoveryPasswordError');
+    error.textContent = '';
+    if (password.length < MIN_MASTER_LENGTH) { error.textContent = `كلمة المرور يجب ألا تقل عن ${MIN_MASTER_LENGTH} أحرف.`; return; }
+    if (password !== confirmation) { error.textContent = 'كلمتا المرور غير متطابقتين.'; return; }
+    if (!state.pendingRecovery) { error.textContent = 'انتهت جلسة الاسترداد. أعد إدخال رمز الاسترداد.'; return; }
+    const button = $('#saveRecoveredPasswordBtn');
+    button.disabled = true;
+    button.textContent = 'جارٍ حفظ كلمة المرور…';
+    const previous = { items: state.items, cryptoKey: state.cryptoKey, recoveryKey: state.recoveryKey, meta: state.meta };
+    try {
+      const pending = state.pendingRecovery;
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      state.items = pending.items;
+      state.cryptoKey = await deriveKey(password, salt, PBKDF2_ITERATIONS);
+      state.meta = { iter: PBKDF2_ITERATIONS, salt: toB64(salt), recoverySalt: pending.record.recoverySalt };
+      state.recoveryKey = pending.key;
+      await persist();
+      state.pendingRecovery = null;
+      $('#recoveryInput').value = '';
+      $('#recoveryPasswordForm').reset();
+      closeOverlay('recoveryPasswordOverlay');
       enterApp();
       toast('تم استرداد الخزنة وتغيير كلمة المرور دون فقدان البيانات');
-    } catch (err) {
-      setLockError(err.message === 'mismatch' ? 'كلمتا المرور الجديدتان غير متطابقتين.' : err.message === 'cancel' ? 'تم إلغاء الاسترداد أو كلمة المرور أقل من 4 أحرف.' : 'رمز الاسترداد غير صحيح أو لا توجد نسخة استرداد صالحة.');
-      setBusy(false);
+    } catch {
+      state.items = previous.items;
+      state.cryptoKey = previous.cryptoKey;
+      state.recoveryKey = previous.recoveryKey;
+      state.meta = previous.meta;
+      error.textContent = 'تعذر حفظ كلمة المرور الجديدة. لم يتم اعتماد التغيير؛ حاول مرة أخرى.';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'حفظ كلمة المرور';
     }
   }
 
@@ -777,6 +813,9 @@
     });
     $('#cancelRecoveryBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = true; $('#recoveryInput').value = ''; setLockError(''); });
     $('#recoverSubmitBtn').addEventListener('click', recoverVault);
+    $('#recoveryPasswordForm').addEventListener('submit', saveRecoveredPassword);
+    $('#recoveryNewPassword').addEventListener('input', () => updateStrengthHint($('#recoveryNewPassword').value, $('#recoveryPasswordStrength')));
+    $('#cancelRecoveryPassword').addEventListener('click', () => { state.pendingRecovery = null; $('#recoveryPasswordForm').reset(); closeOverlay('recoveryPasswordOverlay'); setLockError(''); $('#recoveryPanel').hidden = false; });
     $('#copyRecoveryCode').addEventListener('click', async () => toast(await copyText($('#recoveryCodeBox').textContent) ? 'تم نسخ رمز الاسترداد' : 'تعذر النسخ'));
     $('#closeRecoveryCode').addEventListener('click', () => closeOverlay('recoveryCodeOverlay'));
 

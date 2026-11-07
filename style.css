@@ -970,3 +970,13 @@ body.dark .wird-today-main,body.dark .wird-goal-settings{background:color-mix(in
 .wird-goal-settings[open] .wird-goal-hint{display:block;margin:7px 0 10px;color:var(--muted);font-size:12px;line-height:1.7}
 .wird-goal-save{width:100%;min-height:42px;justify-content:center;margin-top:8px}
 .wird-goal-settings input{width:100%;direction:ltr;text-align:center;font-weight:800;font-size:18px}
+
+/* Move daily-goal editing out of the daily reading card */
+.wird-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.wird-goal-settings-outside{position:relative;flex:0 0 auto;min-width:145px;padding:0;border:0;background:transparent}
+.wird-goal-settings-outside summary{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 13px;border:1px solid var(--line);border-radius:24px;background:color-mix(in srgb,var(--accent) 9%,var(--surface));color:var(--accent);font-size:12px;font-weight:800;cursor:pointer;list-style:none;white-space:nowrap}
+.wird-goal-settings-outside summary:after{content:"＋";margin-inline-start:7px;float:none}
+.wird-goal-settings-outside[open] summary:after{content:"−"}
+.wird-goal-settings-outside[open]{padding:12px;border:1px solid var(--line);border-radius:15px;background:var(--surface);box-shadow:0 8px 24px #0000000a;min-width:min(280px,100%)}
+.wird-goal-settings-outside[open] .field{margin:12px 0 2px!important}
+@media(max-width:480px){.wird-section-title{align-items:flex-start}.wird-goal-settings-outside{margin-top:2px}.wird-goal-settings-outside[open]{width:100%}}

@@ -46,6 +46,7 @@
     items: [],
     cryptoKey: null,
     recoveryKey: null,
+    needsRecoveryRefresh: false,
     meta: null,            // { iter, salt }
     activeCat: 'الكل',
     locked: true,
@@ -106,7 +107,17 @@
     if (state.recoveryKey) {
       const recoveryIv = crypto.getRandomValues(new Uint8Array(12));
       const recoveryData = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: recoveryIv }, state.recoveryKey, plain);
-      Object.assign(record, { recoverySalt: state.meta.recoverySalt, recoveryIv: toB64(recoveryIv), recoveryData: toB64(recoveryData) });
+      Object.assign(record, { recoverySalt: state.meta.recoverySalt, recoveryIv: toB64(recoveryIv), recoveryData: toB64(recoveryData), recoveryCodeIssued: true, recoveryStale: false });
+      state.needsRecoveryRefresh = false;
+    } else {
+      // احتفظ بنسخة الاسترداد السابقة ولا تحذفها عند الحفظ بكلمة المرور الرئيسية فقط.
+      // تُعلَّم النسخة بأنها قديمة، ويُنشأ رمز جديد بعد فتح الخزنة في المرة التالية.
+      try {
+        const previous = readRecord();
+        if (previous && previous.recoverySalt && previous.recoveryIv && previous.recoveryData) {
+          Object.assign(record, { recoverySalt: previous.recoverySalt, recoveryIv: previous.recoveryIv, recoveryData: previous.recoveryData, recoveryCodeIssued: !!previous.recoveryCodeIssued, recoveryStale: true });
+        }
+      } catch {}
     }
     localStorage.setItem(VAULT_KEY, JSON.stringify(record));
   }
@@ -490,17 +501,11 @@
     state.items = sanitizeItems(JSON.parse(dec.decode(plain)));
     state.cryptoKey = key;
     state.meta = { iter: rec.iter, salt: rec.salt, recoverySalt: rec.recoverySalt || null };
+    // كلمة المرور الرئيسية وحدها تفتح الخزنة. لا نطلب رمز الاسترداد عند كل دخول.
+    // الإصدارات السابقة لم تسجل تأكيد عرض الرمز؛ لذلك نولّد رمزاً جديداً مرة واحدة
+    // بعد أول فتح ناجح، ثم نحدّث نسخة الاسترداد عند الحاجة بعد تعديل البيانات.
     state.recoveryKey = null;
-    if (rec.v === 3) {
-      const recoveryCode = prompt('أدخل رمز الاسترداد لمزامنة حماية الخزنة قبل المتابعة:');
-      if (!recoveryCode) throw new Error('recovery-required');
-      try {
-        const normalized = recoveryCode.toUpperCase().replace(/[^A-F0-9]/g, '');
-        const recoveryKey = await deriveKey(normalized, fromB64(rec.recoverySalt), 600000);
-        await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.recoveryIv) }, recoveryKey, fromB64(rec.recoveryData));
-        state.recoveryKey = recoveryKey;
-      } catch { throw new Error('recovery-invalid'); }
-    }
+    state.needsRecoveryRefresh = !rec.recoveryCodeIssued || !!rec.recoveryStale || !rec.recoveryData;
   }
 
   async function onLockSubmit(e) {
@@ -531,7 +536,7 @@
     try {
       await openVault(pw);
       let recoveryCode = null;
-      if (!state.recoveryKey) {
+      if (state.needsRecoveryRefresh) {
         recoveryCode = await enableRecovery();
       }
       enterApp();
@@ -563,6 +568,7 @@
     state.recoveryKey = await deriveKey(code.replace(/-/g, ''), salt, 600000);
     state.meta.recoverySalt = toB64(salt);
     await queueSave();
+    state.needsRecoveryRefresh = false;
     return code;
   }
 

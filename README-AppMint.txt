@@ -128,3 +128,13 @@ Notes page cleanup in 1.2.17:
 Home page update in 1.2.22:
 - Replaced the three redundant total/overdue counters with actionable cards: next upcoming task, latest note, and last Quran reading position.
 - Cards open their corresponding sections and support light/dark themes and responsive layouts.
+
+الإصدار 1.2.41
+- توحيد المسافة بين بطاقات قسم وردي لتكون 14px، بما يتناسق مع المسافات الداخلية في بطاقة موضع القراءة.
+- لم يتم تغيير محتوى البطاقات أو وظائفها أو بياناتها.
+
+
+الإصدار 1.2.42
+- استبدال زر تكبير النصوص ببطاقة تحكم مباشرة بحجم الخط، تتضمن خطاً أصغر وخطاً أكبر ومستوى الحجم الحالي.
+- دعم عدة مستويات لحجم الخط من 85% إلى 130% وحفظ الاختيار تلقائياً على مستوى التطبيق.
+- الحفاظ على الإعداد القديم وتوافقه عند التحديث.

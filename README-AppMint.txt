@@ -1,3 +1,11 @@
+Fayrouz 1.2.33 — Editable daily Quran goal
+
+- Made the daily page target visibly editable and open by default in the “وردي اليوم” card.
+- Added a dedicated “حفظ الهدف اليومي” action so changing the target does not require saving reading progress.
+- Validates the target as a whole number from 1 to 604 pages and persists it in the existing encrypted storage.
+- Recalculates today’s completion state and progress against the newly saved target without resetting the pages already read.
+- Preserved the existing redesigned cards, reading-position page number, prior data, and light/dark themes.
+
 Fayrouz 1.2.32 — Redesigned daily wird and reading-position cards
 
 - Rebuilt the “وردي اليوم” card with a visual progress ring, clearer daily count, quick page controls, collapsible goal setting, and a dedicated save action.

@@ -965,3 +965,8 @@ body.dark .wird-today-card,body.dark .wird-position-card{background:linear-gradi
 body.dark .wird-today-main,body.dark .wird-goal-settings{background:color-mix(in srgb,var(--surface) 90%,var(--accent) 10%)}
 @media(max-width:700px){.wird-cards-redesigned{gap:13px}.wird-cards-redesigned>.wird-panel{padding:16px;border-radius:19px}.wird-today-main{gap:13px;padding:13px 11px}.wird-progress-ring{width:94px;height:94px;flex-basis:94px}.wird-progress-ring strong{font-size:25px}.wird-position-showcase{grid-template-columns:102px minmax(0,1fr);gap:11px;padding:11px}.wird-position-page{min-height:120px}.wird-position-page strong{font-size:38px}}
 @media(max-width:380px){.wird-card-symbol{width:39px;height:39px;flex-basis:39px}.wird-card-heading h3{font-size:15px}.wird-goal-pill{padding:6px 8px;font-size:10px}.wird-today-main{align-items:flex-start;gap:9px}.wird-progress-ring{width:82px;height:82px;flex-basis:82px}.wird-progress-ring:before{inset:6px}.wird-progress-ring strong{font-size:22px}.wird-today-controls{grid-template-columns:1fr 1.2fr 1fr;gap:6px}.wird-today-controls>.btn{padding-inline:5px;font-size:11px}.wird-position-showcase{grid-template-columns:88px minmax(0,1fr)}.wird-position-page{min-height:110px}.wird-position-page strong{font-size:33px}}
+
+/* Fayrouz 1.2.33 — editable daily Quran goal */
+.wird-goal-settings[open] .wird-goal-hint{display:block;margin:7px 0 10px;color:var(--muted);font-size:12px;line-height:1.7}
+.wird-goal-save{width:100%;min-height:42px;justify-content:center;margin-top:8px}
+.wird-goal-settings input{width:100%;direction:ltr;text-align:center;font-weight:800;font-size:18px}

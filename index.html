@@ -107,10 +107,25 @@
     <div class="modal-head"><h3 id="passwordSettingsTitle">تغيير كلمة المرور</h3><button type="button" class="close" data-close="passwordSettingsOverlay" aria-label="إغلاق">×</button></div>
     <form id="changeMasterForm" autocomplete="off">
       <div class="field"><label for="currentMasterPassword">كلمة المرور الحالية</label><input id="currentMasterPassword" type="password" required autocomplete="current-password"></div>
-      <div class="field settings-field"><label for="newMasterPassword">كلمة المرور الجديدة (8 أحرف على الأقل)</label><input id="newMasterPassword" type="password" required minlength="8" autocomplete="new-password"></div>
-      <div class="field settings-field"><label for="confirmNewMasterPassword">تأكيد كلمة المرور الجديدة</label><input id="confirmNewMasterPassword" type="password" required minlength="8" autocomplete="new-password"></div>
+      <div class="field settings-field"><label for="newMasterPassword">كلمة المرور الجديدة (4 أحرف على الأقل)</label><input id="newMasterPassword" type="password" required minlength="4" autocomplete="new-password">
+      <div id="changePasswordStrength" class="strength-hint" aria-live="polite"></div></div>
+      <div class="field settings-field"><label for="confirmNewMasterPassword">تأكيد كلمة المرور الجديدة</label><input id="confirmNewMasterPassword" type="password" required minlength="4" autocomplete="new-password"></div>
       <div class="lock-error" id="passwordChangeError" role="alert"></div>
       <div class="modal-actions"><button class="primary-btn" type="submit" id="saveMasterPasswordBtn">حفظ كلمة المرور الجديدة</button><button class="secondary" type="button" data-close="passwordSettingsOverlay">إلغاء</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- تعيين رمز الاسترداد الذي يختاره المستخدم -->
+<div class="overlay" id="recoverySettingsOverlay" role="dialog" aria-modal="true" aria-labelledby="recoverySettingsTitle">
+  <div class="modal narrow">
+    <div class="modal-head"><h3 id="recoverySettingsTitle">تعيين رمز الاسترداد</h3><button type="button" class="close" data-close="recoverySettingsOverlay" aria-label="إغلاق">×</button></div>
+    <p class="hint" id="recoverySettingsHint">اختر رمزاً لا يقل عن 8 أحرف واحفظه في مكان آمن.</p>
+    <form id="recoverySettingsForm" autocomplete="off">
+      <div class="field"><label for="newRecoveryCode">رمز الاسترداد الجديد</label><input id="newRecoveryCode" type="password" required minlength="8" autocomplete="new-password"></div>
+      <div class="field settings-field"><label for="confirmNewRecoveryCode">تأكيد رمز الاسترداد</label><input id="confirmNewRecoveryCode" type="password" required minlength="8" autocomplete="new-password"></div>
+      <div class="lock-error" id="recoverySettingsError" role="alert"></div>
+      <div class="modal-actions"><button class="primary-btn" type="submit" id="saveRecoveryCodeBtn">حفظ رمز الاسترداد</button><button class="secondary" type="button" data-close="recoverySettingsOverlay">إلغاء</button></div>
     </form>
   </div>
 </div>
@@ -180,9 +195,16 @@
     <p id="lockText">أدخل كلمة المرور الرئيسية للمتابعة.<br>ستبقى بياناتك على هذا الجهاز.</p>
     <input id="unlockPassword" type="password" placeholder="كلمة المرور الرئيسية" aria-label="كلمة المرور الرئيسية" autocomplete="current-password">
     <input id="confirmPassword" type="password" placeholder="أعد كتابة كلمة المرور الرئيسية" aria-label="تأكيد كلمة المرور الرئيسية" autocomplete="new-password" hidden>
+    <div id="setupPasswordStrength" class="strength-hint" aria-live="polite"></div>
+    <div id="setupRecoveryFields" class="setup-recovery-fields" hidden>
+      <label for="setupRecoveryCode">اختر رمز الاسترداد بنفسك</label>
+      <input id="setupRecoveryCode" type="password" placeholder="رمز الاسترداد (8 أحرف على الأقل)" autocomplete="new-password">
+      <input id="confirmSetupRecoveryCode" type="password" placeholder="تأكيد رمز الاسترداد" autocomplete="new-password">
+      <small>أنت من يحدد الرمز. احفظه في مكان آمن؛ ستحتاج إليه فقط إذا نسيت كلمة المرور.</small>
+    </div>
     <div class="recovery-panel" id="recoveryPanel" hidden>
       <label for="recoveryInput">رمز الاسترداد</label>
-      <input id="recoveryInput" type="text" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" autocomplete="off" dir="ltr">
+      <input id="recoveryInput" type="password" placeholder="أدخل رمز الاسترداد الذي اخترته" autocomplete="off">
       <button type="button" class="primary-btn full-width" id="recoverSubmitBtn">استرداد الخزنة وتغيير كلمة المرور</button>
       <button type="button" class="lock-link" id="cancelRecoveryBtn">العودة لتسجيل الدخول</button>
     </div>

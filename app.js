@@ -11,7 +11,8 @@
   const VAULT_KEY = 'vaulty_vault_v2';      // الخزنة المشفّرة
   const LEGACY_KEY = 'vaulty_items_v1';     // بيانات النسخة القديمة (نص صريح) — تُرحَّل ثم تُحذف
   const PBKDF2_ITERATIONS = 250000;
-  const MIN_MASTER_LENGTH = 8;
+  const MIN_MASTER_LENGTH = 4;
+  const MIN_RECOVERY_LENGTH = 8;
   const AUTO_LOCK_MS = 5 * 60 * 1000;       // قفل تلقائي بعد 5 دقائق خمول
   const REVEAL_MS = 15 * 1000;              // إخفاء كلمة المرور المعروضة تلقائياً
   const CATEGORIES = ['شخصي', 'عمل', 'تواصل اجتماعي', 'تسوق', 'مالي', 'أخرى'];
@@ -107,7 +108,7 @@
     if (state.recoveryKey) {
       const recoveryIv = crypto.getRandomValues(new Uint8Array(12));
       const recoveryData = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: recoveryIv }, state.recoveryKey, plain);
-      Object.assign(record, { recoverySalt: state.meta.recoverySalt, recoveryIv: toB64(recoveryIv), recoveryData: toB64(recoveryData), recoveryCodeIssued: true, recoveryStale: false });
+      Object.assign(record, { recoverySalt: state.meta.recoverySalt, recoveryIv: toB64(recoveryIv), recoveryData: toB64(recoveryData), recoveryCodeIssued: true, recoveryUserSet: true, recoveryStale: false });
       state.needsRecoveryRefresh = false;
     } else {
       // احتفظ بنسخة الاسترداد السابقة ولا تحذفها عند الحفظ بكلمة المرور الرئيسية فقط.
@@ -115,7 +116,7 @@
       try {
         const previous = readRecord();
         if (previous && previous.recoverySalt && previous.recoveryIv && previous.recoveryData) {
-          Object.assign(record, { recoverySalt: previous.recoverySalt, recoveryIv: previous.recoveryIv, recoveryData: previous.recoveryData, recoveryCodeIssued: !!previous.recoveryCodeIssued, recoveryStale: true });
+          Object.assign(record, { recoverySalt: previous.recoverySalt, recoveryIv: previous.recoveryIv, recoveryData: previous.recoveryData, recoveryCodeIssued: !!previous.recoveryCodeIssued, recoveryUserSet: !!previous.recoveryUserSet, recoveryStale: true });
         }
       } catch {}
     }
@@ -186,6 +187,17 @@
     if (/\d/.test(p)) n++;
     if (/[^a-zA-Z0-9]/.test(p)) n++;
     return n;
+  }
+
+  function updateStrengthHint(value, target) {
+    if (!target) return;
+    if (!value) { target.textContent = ''; return; }
+    const score = strength(value);
+    target.textContent = value.length < 8 || score <= 1
+      ? 'تنبيه: كلمة المرور ضعيفة. يمكنك المتابعة، لكن يُنصح باستخدام 8 أحرف أو أكثر مع أرقام ورموز.'
+      : score === 2 ? 'قوة كلمة المرور: متوسطة. يمكنك تقويتها بمزيد من التنوع والطول.'
+      : 'قوة كلمة المرور: جيدة.';
+    target.className = 'strength-hint ' + (value.length < 8 || score <= 1 ? 'weak' : score === 2 ? 'medium' : 'good');
   }
 
   /* ---------- مولّد كلمات المرور ---------- */
@@ -427,7 +439,7 @@
       $('#lockText').innerHTML = 'أدخل كلمة المرور الرئيسية للمتابعة.<br>ستبقى بياناتك على هذا الجهاز.';
     } else {
       $('#lockTitle').textContent = 'إنشاء خزنتك';
-      $('#lockText').innerHTML = 'اختر كلمة مرور رئيسية قوية (8 أحرف على الأقل). ستُشفَّر بها كل بياناتك، وستحصل على رمز استرداد يحميك من فقدانها.' +
+      $('#lockText').innerHTML = 'اختر كلمة مرور رئيسية (4 أحرف على الأقل)، واكتب رمز الاسترداد بنفسك. ستُشفَّر به نسخة استرداد منفصلة من بياناتك.' +
         (legacyCount ? `<br>تم العثور على ${legacyCount} عنصر محفوظ سابقاً وسيتم تشفيرها ونقلها تلقائياً.` : '');
     }
     setBusy(false);
@@ -475,13 +487,12 @@
     resetIdle();
   }
 
-  async function createVault(password) {
+  async function createVault(password, recoveryCode) {
     const salt = crypto.getRandomValues(new Uint8Array(16));
     state.cryptoKey = await deriveKey(password, salt, PBKDF2_ITERATIONS);
     state.meta = { iter: PBKDF2_ITERATIONS, salt: toB64(salt) };
-    const recoveryCode = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('').toUpperCase().match(/.{1,4}/g).join('-');
     const recoverySalt = crypto.getRandomValues(new Uint8Array(16));
-    state.recoveryKey = await deriveKey(recoveryCode.replace(/-/g, ''), recoverySalt, 600000);
+    state.recoveryKey = await deriveKey(normalizeRecoveryCode(recoveryCode), recoverySalt, 600000);
     state.meta.recoverySalt = toB64(recoverySalt);
     state.items = readLegacyItems();                 // ترحيل البيانات القديمة إن وُجدت
     await persist();
@@ -505,7 +516,7 @@
     // الإصدارات السابقة لم تسجل تأكيد عرض الرمز؛ لذلك نولّد رمزاً جديداً مرة واحدة
     // بعد أول فتح ناجح، ثم نحدّث نسخة الاسترداد عند الحاجة بعد تعديل البيانات.
     state.recoveryKey = null;
-    state.needsRecoveryRefresh = !rec.recoveryCodeIssued || !!rec.recoveryStale || !rec.recoveryData;
+    state.needsRecoveryRefresh = !rec.recoveryUserSet || !rec.recoveryCodeIssued || !!rec.recoveryStale || !rec.recoveryData;
   }
 
   async function onLockSubmit(e) {
@@ -515,14 +526,18 @@
     setLockError('');
 
     if (state.mode === 'setup') {
+      const recoveryCode = $('#setupRecoveryCode').value;
       if (pw.length < MIN_MASTER_LENGTH) { setLockError(`كلمة المرور الرئيسية يجب ألا تقل عن ${MIN_MASTER_LENGTH} أحرف.`); return; }
       if (pw !== $('#confirmPassword').value) { setLockError('كلمتا المرور غير متطابقتين.'); return; }
+      if (normalizeRecoveryCode(recoveryCode).length < MIN_RECOVERY_LENGTH) { setLockError(`رمز الاسترداد الذي تختاره يجب أن يكون ${MIN_RECOVERY_LENGTH} أحرف على الأقل.`); return; }
+      if (recoveryCode !== $('#confirmSetupRecoveryCode').value) { setLockError('رمزا الاسترداد غير متطابقين.'); return; }
       setBusy(true);
       try {
-        const recoveryCode = await createVault(pw);
+        await createVault(pw, recoveryCode);
         enterApp();
-        showRecoveryCode(recoveryCode);
-        toast('تم إنشاء الخزنة وتشفيرها');
+        $('#setupRecoveryCode').value = '';
+        $('#confirmSetupRecoveryCode').value = '';
+        toast('تم إنشاء الخزنة وتشفيرها. احتفظ برمز الاسترداد الذي اخترته.');
       } catch {
         state.cryptoKey = null; state.items = [];
         setLockError('تعذر إنشاء الخزنة. تأكد من أن التخزين المحلي متاح في المتصفح.');
@@ -535,13 +550,13 @@
     setBusy(true);
     try {
       await openVault(pw);
-      let recoveryCode = null;
-      if (state.needsRecoveryRefresh) {
-        recoveryCode = await enableRecovery();
-      }
+      const needsRecoverySetup = state.needsRecoveryRefresh;
       enterApp();
-      if (recoveryCode) showRecoveryCode(recoveryCode);
       toast('تم فتح الخزنة');
+      if (needsRecoverySetup) {
+        openOverlay('recoverySettingsOverlay');
+        $('#recoverySettingsHint').textContent = 'هذه الخزنة لا تملك رمز استرداد مؤكداً. أنشئ رمزاً من اختيارك الآن حتى تتمكن من استعادتها لاحقاً.';
+      }
     } catch (err) {
       state.failedAttempts++;
       await sleep(Math.min(state.failedAttempts * 400, 4000));   // إبطاء المحاولات المتكررة
@@ -561,16 +576,49 @@
     openOverlay('recoveryCodeOverlay');
   }
 
-  async function enableRecovery() {
-    const code = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('').toUpperCase().match(/.{1,4}/g).join('-');
+  function normalizeRecoveryCode(code) { return String(code || '').normalize('NFC').trim(); }
+
+  async function enableRecovery(code) {
+    const normalized = normalizeRecoveryCode(code);
+    if (normalized.length < MIN_RECOVERY_LENGTH) throw new Error('recovery-short');
     const salt = crypto.getRandomValues(new Uint8Array(16));
-    state.recoveryKey = await deriveKey(code.replace(/-/g, ''), salt, 600000);
+    const nextKey = await deriveKey(normalized, salt, 600000);
+    const oldKey = state.recoveryKey;
+    const oldMeta = { ...state.meta };
+    state.recoveryKey = nextKey;
     state.meta.recoverySalt = toB64(salt);
-    await state.saveQueue.catch(() => {});
-    await persist();
-    state.saveQueue = Promise.resolve();
-    state.needsRecoveryRefresh = false;
-    return code;
+    try {
+      await state.saveQueue.catch(() => {});
+      await persist();
+      state.saveQueue = Promise.resolve();
+      state.needsRecoveryRefresh = false;
+    } catch (err) {
+      state.recoveryKey = oldKey;
+      state.meta = oldMeta;
+      throw err;
+    }
+  }
+
+  async function saveRecoverySettings(e) {
+    if (e) e.preventDefault();
+    const code = $('#newRecoveryCode').value;
+    const confirm = $('#confirmNewRecoveryCode').value;
+    const error = $('#recoverySettingsError');
+    error.textContent = '';
+    if (normalizeRecoveryCode(code).length < MIN_RECOVERY_LENGTH) {
+      error.textContent = `رمز الاسترداد يجب أن يحتوي على ${MIN_RECOVERY_LENGTH} أحرف على الأقل.`; return;
+    }
+    if (code !== confirm) { error.textContent = 'رمزا الاسترداد غير متطابقين.'; return; }
+    const btn = $('#saveRecoveryCodeBtn');
+    btn.disabled = true; btn.textContent = 'جارٍ حفظ الرمز…';
+    try {
+      await enableRecovery(code);
+      $('#recoverySettingsForm').reset();
+      closeOverlay('recoverySettingsOverlay');
+      toast('تم حفظ رمز الاسترداد الجديد. الرمز السابق لم يعد صالحاً.');
+    } catch {
+      error.textContent = 'تعذر حفظ رمز الاسترداد. لم يتم تأكيد أي تغيير.';
+    } finally { btn.disabled = false; btn.textContent = 'حفظ رمز الاسترداد'; }
   }
 
   async function changeMasterPassword(e) {
@@ -619,8 +667,8 @@
   }
 
   async function recoverVault() {
-    const code = $('#recoveryInput').value.trim().toUpperCase().replace(/[^A-F0-9]/g, '');
-    if (code.length !== 32) { setLockError('أدخل رمز الاسترداد المكوّن من 32 خانة.'); return; }
+    const code = normalizeRecoveryCode($('#recoveryInput').value);
+    if (code.length < MIN_RECOVERY_LENGTH) { setLockError(`أدخل رمز الاسترداد الذي اخترته (لا يقل عن ${MIN_RECOVERY_LENGTH} أحرف).`); return; }
     setBusy(true);
     try {
       const rec = readRecord();
@@ -628,7 +676,7 @@
       const key = await deriveKey(code, fromB64(rec.recoverySalt), 600000);
       const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.recoveryIv) }, key, fromB64(rec.recoveryData));
       state.items = sanitizeItems(JSON.parse(dec.decode(plain)));
-      const newPassword = prompt('تم التحقق من رمز الاسترداد. أدخل كلمة مرور رئيسية جديدة (8 أحرف على الأقل):');
+      const newPassword = prompt('تم التحقق من رمز الاسترداد. أدخل كلمة مرور رئيسية جديدة (4 أحرف على الأقل):');
       if (!newPassword || newPassword.length < MIN_MASTER_LENGTH) throw new Error('cancel');
       const confirm = prompt('أعد إدخال كلمة المرور الجديدة:');
       if (newPassword !== confirm) throw new Error('mismatch');
@@ -641,7 +689,7 @@
       enterApp();
       toast('تم استرداد الخزنة وتغيير كلمة المرور دون فقدان البيانات');
     } catch (err) {
-      setLockError(err.message === 'mismatch' ? 'كلمتا المرور الجديدتان غير متطابقتين.' : err.message === 'cancel' ? 'تم إلغاء الاسترداد أو كلمة المرور قصيرة.' : 'رمز الاسترداد غير صحيح أو لا توجد نسخة استرداد صالحة.');
+      setLockError(err.message === 'mismatch' ? 'كلمتا المرور الجديدتان غير متطابقتين.' : err.message === 'cancel' ? 'تم إلغاء الاسترداد أو كلمة المرور أقل من 4 أحرف.' : 'رمز الاسترداد غير صحيح أو لا توجد نسخة استرداد صالحة.');
       setBusy(false);
     }
   }
@@ -702,6 +750,8 @@
 
     $('#lockBtn').addEventListener('click', () => lockVault());
     $('#lockForm').addEventListener('submit', onLockSubmit);
+    $('#unlockPassword').addEventListener('input', () => updateStrengthHint($('#unlockPassword').value, $('#setupPasswordStrength')));
+    $('#newMasterPassword').addEventListener('input', () => updateStrengthHint($('#newMasterPassword').value, $('#changePasswordStrength')));
     $('#recoverVaultBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = false; setLockError(''); $('#recoveryInput').focus(); });
     $('#cancelRecoveryBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = true; $('#recoveryInput').value = ''; setLockError(''); });
     $('#recoverSubmitBtn').addEventListener('click', recoverVault);
@@ -717,18 +767,15 @@
       $('#currentMasterPassword').focus();
     });
     $('#changeMasterForm').addEventListener('submit', changeMasterPassword);
-    $('#newRecoveryBtn').addEventListener('click', async () => {
-      const button = $('#newRecoveryBtn');
-      button.disabled = true;
-      try {
-        const code = await enableRecovery();
-        closeOverlay('settingsOverlay');
-        showRecoveryCode(code);
-        toast('تم إنشاء رمز استرداد جديد؛ الرمز السابق لم يعد صالحاً');
-      } catch {
-        toast('تعذر إنشاء رمز استرداد جديد');
-      } finally { button.disabled = false; }
+    $('#newRecoveryBtn').addEventListener('click', () => {
+      $('#recoverySettingsForm').reset();
+      $('#recoverySettingsError').textContent = '';
+      $('#recoverySettingsHint').textContent = 'اختر رمزاً لا يقل عن 8 أحرف. تذكّر أن الرمز حساس لحالة الأحرف، ولا يمكن استعادته إذا نسيته.';
+      closeOverlay('settingsOverlay');
+      openOverlay('recoverySettingsOverlay');
+      $('#newRecoveryCode').focus();
     });
+    $('#recoverySettingsForm').addEventListener('submit', saveRecoverySettings);
 
     $('#exportBtn').addEventListener('click', exportBackup);
     $('#importBtn').addEventListener('click', () => $('#importFile').click());

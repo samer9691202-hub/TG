@@ -468,3 +468,15 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   .head-actions { gap: 6px; }
   .settings-modal { padding: 18px; }
 }
+
+
+/* تنبيهات قوة كلمة المرور ورمز الاسترداد المخصص */
+.strength-hint { min-height: 0; margin: -5px 0 10px; font-size: 11px; line-height: 1.7; text-align: right; }
+.strength-hint:empty { display: none; }
+.strength-hint.weak { color: #ff9b9b; }
+.strength-hint.medium { color: #f2c879; }
+.strength-hint.good { color: #8ed9ad; }
+.setup-recovery-fields { display: grid; gap: 4px; margin: 7px 0 12px; text-align: right; }
+.setup-recovery-fields label { color: var(--muted); font-size: 12px; }
+.setup-recovery-fields input { margin: 5px 0; }
+.setup-recovery-fields small { color: var(--muted); font-size: 10px; line-height: 1.7; }

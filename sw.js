@@ -1,5 +1,5 @@
 /* Vaulty — Service Worker: يتيح العمل بدون إنترنت */
-const CACHE = 'vaulty-1.0.4';
+const CACHE = 'vaulty-1.0.6';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png', './icons/icon.svg'];
 

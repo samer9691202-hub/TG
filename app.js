@@ -437,6 +437,9 @@
   function refreshLockMode() {
     const hasVault = !!localStorage.getItem(VAULT_KEY);
     state.mode = hasVault ? 'unlock' : 'setup';
+    // أظهر رابط استرداد الخزنة على شاشة القفل عند وجود خزنة محفوظة.
+    // كان الزر مخفياً في HTML ولم تتم إزالة hidden عند وضع فتح الخزنة.
+    $('#recoverVaultBtn').hidden = !hasVault;
     const legacyCount = hasVault ? 0 : readLegacyItems().length;
     $('#confirmPassword').hidden = hasVault;
     if (hasVault) { $('#setupPasswordStrength').textContent = ''; $('#setupPasswordStrength').className = 'strength-hint'; }
@@ -762,7 +765,16 @@
       else { $('#setupPasswordStrength').textContent = ''; $('#setupPasswordStrength').className = 'strength-hint'; }
     });
     $('#newMasterPassword').addEventListener('input', () => updateStrengthHint($('#newMasterPassword').value, $('#changePasswordStrength')));
-    $('#recoverVaultBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = false; setLockError(''); $('#recoveryInput').focus(); });
+    $('#recoverVaultBtn').addEventListener('click', () => {
+      const rec = readRecord();
+      if (!rec || rec.v !== 3 || !rec.recoverySalt || !rec.recoveryIv || !rec.recoveryData) {
+        setLockError('لا توجد نسخة استرداد صالحة لهذه الخزنة. افتحها بكلمة المرور ثم أنشئ رمز استرداد من الإعدادات.');
+        return;
+      }
+      $('#recoveryPanel').hidden = false;
+      setLockError('');
+      $('#recoveryInput').focus();
+    });
     $('#cancelRecoveryBtn').addEventListener('click', () => { $('#recoveryPanel').hidden = true; $('#recoveryInput').value = ''; setLockError(''); });
     $('#recoverSubmitBtn').addEventListener('click', recoverVault);
     $('#copyRecoveryCode').addEventListener('click', async () => toast(await copyText($('#recoveryCodeBox').textContent) ? 'تم نسخ رمز الاسترداد' : 'تعذر النسخ'));

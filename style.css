@@ -860,43 +860,27 @@ body.dark .note-sort-btn{color:#D5C6D2}
 body.dark .note-sort-btn.active{background:#98677F;border-color:#98677F;color:#fff}
 @media(max-width:650px){.note-tools{flex-direction:column}.note-sort-panel{min-width:0;width:100%}.note-sort-btn{font-size:10px;padding-inline:4px}.note-viewer-actions{align-items:stretch!important}.note-viewer-actions .note-viewer-edit{width:100%}}
 
-
-/* Fayrouz 1.2.22 — useful home highlights replace redundant counters */
-.dashboard-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0 18px}
-.highlight-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;min-height:148px;padding:18px 19px;text-align:right;border:1px solid var(--theme-border);border-radius:21px;background:color-mix(in srgb,var(--surface) 96%,var(--accent) 4%);color:var(--text);box-shadow:0 12px 30px rgba(76,57,101,.055);cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s}
-.highlight-card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 38%,var(--line));box-shadow:0 16px 34px rgba(76,57,101,.1)}
-.highlight-icon{display:grid;place-items:center;width:37px;height:37px;border-radius:13px;background:color-mix(in srgb,var(--accent) 13%,var(--surface2));color:var(--accent);font-size:20px}
-.highlight-label{font-size:12px;color:var(--muted)}
-.highlight-card strong{max-width:100%;font-size:15px;line-height:1.55;color:var(--text);overflow-wrap:anywhere}
-.highlight-card small{max-width:100%;font-size:11px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}
-.highlight-arrow{position:absolute;left:17px;top:20px;color:var(--accent);font-size:18px}
-body.dark .highlight-card{background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);border-color:color-mix(in srgb,var(--line) 72%,var(--accent) 28%);box-shadow:0 12px 30px rgba(0,0,0,.12)}
-@media(max-width:760px){.dashboard-highlights{gap:9px;margin:14px 0}.highlight-card{min-height:137px;padding:14px 12px;border-radius:17px;gap:7px}.highlight-card strong{font-size:13px}.highlight-card small{font-size:10px}.highlight-icon{width:33px;height:33px;font-size:18px}.highlight-arrow{left:11px;top:15px}}
-@media(max-width:390px){.dashboard-highlights{grid-template-columns:1fr}.highlight-card{min-height:unset;padding:13px 15px}.highlight-card small{font-size:11px}}
-
-
-/* Enhanced personal letter card and composer */
-.quick.future-letter-quick{grid-column:1/-1;position:relative;min-height:88px;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:13px;padding:14px 17px;text-align:right;overflow:hidden;border:1px solid color-mix(in srgb,var(--accent) 24%,var(--line));background:linear-gradient(115deg,color-mix(in srgb,var(--soft) 78%,var(--surface)),var(--surface));}
-.quick.future-letter-quick:before{content:"";position:absolute;width:116px;height:116px;border-radius:50%;left:-34px;top:-56px;background:color-mix(in srgb,var(--accent) 9%,transparent);pointer-events:none}
-.quick.future-letter-quick .future-letter-icon{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;border-radius:16px;background:color-mix(in srgb,var(--accent) 13%,var(--surface));color:var(--accent);font-size:25px}
-.quick.future-letter-quick .future-letter-copy{display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:3px;color:var(--text)}
-.future-letter-copy strong{font-size:14px;font-weight:800}.future-letter-copy small{font-size:11px;font-weight:500;color:var(--muted)}
-.quick.future-letter-quick .future-letter-arrow{font-size:20px;color:var(--accent);margin-inline-start:auto}
-.future-letter-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:18px;background:rgba(44,31,43,.48);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
-.future-letter-dialog-card{position:relative;width:min(520px,100%);max-height:min(88vh,760px);overflow:auto;padding:30px 28px 24px;border:1px solid color-mix(in srgb,var(--accent) 20%,var(--line));border-radius:28px;background:var(--surface);color:var(--text);box-shadow:0 28px 90px rgba(28,17,31,.25);text-align:center}
-.future-letter-close{position:absolute;top:15px;left:15px;width:35px;height:35px;border:0;border-radius:12px;background:var(--surface2);color:var(--muted);font-size:23px;cursor:pointer}
-.future-letter-seal{width:58px;height:58px;margin:0 auto 12px;display:grid;place-items:center;border-radius:20px;background:var(--soft);color:var(--accent);font-size:30px}
-.future-letter-kicker{margin:0 0 5px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.3px}
-.future-letter-dialog-card h2{margin:0 0 8px;font-size:24px;color:var(--text)}
-.future-letter-intro{margin:0 auto 18px;max-width:360px;color:var(--muted);font-size:13px;line-height:1.8}
-.future-letter-quote{margin:0 0 20px;padding:13px 16px;border-radius:15px;background:var(--soft);color:var(--accent);font-size:13px;line-height:1.9}
-.future-letter-label{display:block;margin:0 0 8px;text-align:right;font-size:13px;font-weight:800;color:var(--text)}
-.future-letter-dialog-card textarea{display:block;width:100%;min-height:170px;max-height:38vh;resize:vertical;padding:15px;border:1px solid var(--line);border-radius:16px;background:var(--surface2);color:var(--text);font:14px/2 'Tajawal',sans-serif;text-align:right}
-.future-letter-dialog-card textarea::placeholder{color:var(--muted);opacity:.8}
-.future-letter-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:17px}
-.future-letter-footer small{color:var(--muted);font-size:11px}
-.future-letter-footer .btn{min-width:130px}
-body.dark .quick.future-letter-quick{background:linear-gradient(115deg,color-mix(in srgb,var(--accent) 13%,var(--surface)),var(--surface));border-color:color-mix(in srgb,var(--accent) 28%,var(--line))}
-body.dark .quick.future-letter-quick .future-letter-icon{background:color-mix(in srgb,var(--accent) 19%,var(--surface2))}
-body.dark .future-letter-dialog-card{background:var(--surface);border-color:var(--line)}
-@media(max-width:650px){.quick.future-letter-quick{min-height:80px;padding:12px 13px;gap:10px}.quick.future-letter-quick .future-letter-icon{width:43px;height:43px;flex-basis:43px}.future-letter-dialog-card{padding:27px 18px 20px;border-radius:23px}.future-letter-dialog-card h2{font-size:21px}.future-letter-dialog-card textarea{min-height:145px}.future-letter-footer{align-items:stretch;flex-direction:column}.future-letter-footer .btn{width:100%}}
+/* تنظيم قسم وردي اليوم */
+.wird-hero{margin:0 0 18px;}
+.wird-overview{margin:0 0 24px;padding:14px;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--line));border-radius:22px;background:color-mix(in srgb,var(--surface) 96%,var(--accent) 4%)}
+.wird-overview .wird-stats{margin:0;gap:10px}
+.wird-overview .wird-stat{min-width:0;min-height:112px;align-content:center;border-radius:16px;box-shadow:none}
+.wird-section-title{margin:4px 2px 12px}
+.wird-section-title h3{margin:0;color:var(--text);font-size:18px}
+.wird-section-title p{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.7}
+.wird-grid{align-items:stretch;gap:14px}
+.wird-grid>.wird-panel{min-width:0;padding:18px;border-radius:20px;box-shadow:0 5px 18px #6742570a}
+.wird-panel .panel-head{align-items:center;flex-wrap:wrap;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.wird-panel .panel-head h3{margin:0;font-size:16px}
+.wird-panel .field{margin:14px 0;font-size:13px;line-height:1.6}
+.wird-panel input{box-sizing:border-box;min-width:0}
+.wird-quick-actions{margin:14px 0}
+.wird-panel>.btn{width:100%;justify-content:center}
+.wird-bookmark{min-height:54px;overflow-wrap:anywhere}
+.wird-week{margin-top:18px;padding:18px;border-radius:20px}
+.wird-week .panel-head{flex-wrap:wrap;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.wird-week-bars{padding-top:14px}
+.wird-dua{margin-top:18px;align-items:center;padding:20px;border-radius:20px}
+.wird-disclaimer{margin:10px 4px 0;text-align:center}
+body.dark .wird-overview{background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+@media(max-width:700px){.wird-overview{padding:10px}.wird-overview .wird-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.wird-overview .wird-stat{min-height:100px;padding:10px 4px}.wird-grid{grid-template-columns:1fr}.wird-grid>.wird-panel{padding:16px}.wird-week{padding:14px}.wird-week-bars{gap:5px}.wird-day>i{max-width:22px}}

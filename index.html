@@ -35,6 +35,7 @@
     </div>
     <div class="head-actions">
       <button type="button" class="ghost-btn" id="generatorBtn">✧ <span>مولّد كلمات المرور</span></button>
+      <button type="button" class="icon-btn" id="settingsBtn" title="إعدادات التطبيق" aria-label="إعدادات التطبيق">⚙</button>
       <button type="button" class="icon-btn" id="lockBtn" title="قفل الخزنة" aria-label="قفل الخزنة">⌑</button>
     </div>
   </header>
@@ -77,13 +78,41 @@
     <div class="vault-grid" id="vaultGrid"></div>
   </section>
 
-  <div class="footer-actions">
-    <button type="button" class="ghost-btn" id="exportBtn">⇩ <span>تصدير نسخة احتياطية</span></button>
-    <button type="button" class="ghost-btn" id="importBtn">⇧ <span>استيراد نسخة احتياطية</span></button>
-    <input type="file" id="importFile" accept=".json,application/json" hidden>
-  </div>
+  <input type="file" id="importFile" accept=".json,application/json" hidden>
 
   <p class="bottom-note">Vaulty · بياناتك مشفّرة وتبقى على هذا الجهاز · لا تشارك كلمة مرورك الرئيسية مع أي شخص</p>
+</div>
+
+<!-- إعدادات التطبيق -->
+<div class="overlay" id="settingsOverlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="modal settings-modal">
+    <div class="modal-head"><h3 id="settingsTitle">إعدادات التطبيق</h3><button type="button" class="close" data-close="settingsOverlay" aria-label="إغلاق">×</button></div>
+    <div class="settings-group">
+      <div class="settings-heading">أمان الخزنة</div>
+      <button type="button" class="settings-row" id="changeMasterBtn"><span><b>كلمة المرور الرئيسية</b><small>تغيير كلمة المرور مع الاحتفاظ بجميع بياناتك</small></span><i>›</i></button>
+      <button type="button" class="settings-row" id="newRecoveryBtn"><span><b>رمز الاسترداد</b><small>إنشاء رمز جديد وإظهاره لحفظه في مكان آمن</small></span><i>›</i></button>
+    </div>
+    <div class="settings-group">
+      <div class="settings-heading">النسخ الاحتياطي</div>
+      <button type="button" class="settings-row" id="exportBtn"><span><b>تصدير نسخة احتياطية</b><small>حفظ نسخة مشفّرة من الخزنة في ملف</small></span><i>⇩</i></button>
+      <button type="button" class="settings-row" id="importBtn"><span><b>استيراد نسخة احتياطية</b><small>استعادة خزنة من ملف Vaulty سابق</small></span><i>⇧</i></button>
+      <p class="settings-warning">ملف النسخة الاحتياطية مشفّر، ويحتاج إلى كلمة المرور الرئيسية المرتبطة به. الاستيراد يستبدل محتوى الخزنة الحالية بعد التأكيد.</p>
+    </div>
+  </div>
+</div>
+
+<!-- تغيير كلمة المرور الرئيسية -->
+<div class="overlay" id="passwordSettingsOverlay" role="dialog" aria-modal="true" aria-labelledby="passwordSettingsTitle">
+  <div class="modal narrow">
+    <div class="modal-head"><h3 id="passwordSettingsTitle">تغيير كلمة المرور</h3><button type="button" class="close" data-close="passwordSettingsOverlay" aria-label="إغلاق">×</button></div>
+    <form id="changeMasterForm" autocomplete="off">
+      <div class="field"><label for="currentMasterPassword">كلمة المرور الحالية</label><input id="currentMasterPassword" type="password" required autocomplete="current-password"></div>
+      <div class="field settings-field"><label for="newMasterPassword">كلمة المرور الجديدة (8 أحرف على الأقل)</label><input id="newMasterPassword" type="password" required minlength="8" autocomplete="new-password"></div>
+      <div class="field settings-field"><label for="confirmNewMasterPassword">تأكيد كلمة المرور الجديدة</label><input id="confirmNewMasterPassword" type="password" required minlength="8" autocomplete="new-password"></div>
+      <div class="lock-error" id="passwordChangeError" role="alert"></div>
+      <div class="modal-actions"><button class="primary-btn" type="submit" id="saveMasterPasswordBtn">حفظ كلمة المرور الجديدة</button><button class="secondary" type="button" data-close="passwordSettingsOverlay">إلغاء</button></div>
+    </form>
+  </div>
 </div>
 
 <!-- إضافة / تعديل عنصر -->

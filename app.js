@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Vaulty 1.0.0 — app.js
+   Vaulty 1.0.3 — app.js
    - تشفير الخزنة بالكامل: PBKDF2-SHA256 + AES-256-GCM (Web Crypto API)
    - كلمة المرور الرئيسية لا تُخزَّن إطلاقاً؛ صحتها تُتحقق بفك التشفير
    - لا توجد أي اتصالات شبكية؛ كل شيء يعمل محلياً
@@ -558,7 +558,6 @@
   function showRecoveryCode(code) {
     const box = $('#recoveryCodeBox');
     box.textContent = code;
-    $('#recoveryNotice').hidden = false;
     openOverlay('recoveryCodeOverlay');
   }
 
@@ -567,9 +566,56 @@
     const salt = crypto.getRandomValues(new Uint8Array(16));
     state.recoveryKey = await deriveKey(code.replace(/-/g, ''), salt, 600000);
     state.meta.recoverySalt = toB64(salt);
-    await queueSave();
+    await state.saveQueue.catch(() => {});
+    await persist();
+    state.saveQueue = Promise.resolve();
     state.needsRecoveryRefresh = false;
     return code;
+  }
+
+  async function changeMasterPassword(e) {
+    e.preventDefault();
+    const current = $('#currentMasterPassword').value;
+    const next = $('#newMasterPassword').value;
+    const confirm = $('#confirmNewMasterPassword').value;
+    const error = $('#passwordChangeError');
+    error.textContent = '';
+    if (next.length < MIN_MASTER_LENGTH) { error.textContent = `كلمة المرور الجديدة يجب ألا تقل عن ${MIN_MASTER_LENGTH} أحرف.`; return; }
+    if (next !== confirm) { error.textContent = 'كلمتا المرور الجديدتان غير متطابقتين.'; return; }
+    const button = $('#saveMasterPasswordBtn');
+    button.disabled = true;
+    button.textContent = 'جارٍ التحديث…';
+    try {
+      const rec = readRecord();
+      const checkKey = await deriveKey(current, fromB64(state.meta.salt), state.meta.iter);
+      // تحقق من كلمة المرور الحالية بفك تشفير السجل قبل تغيير أي شيء.
+      await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.iv) }, checkKey, fromB64(rec.data));
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const nextKey = await deriveKey(next, salt, PBKDF2_ITERATIONS);
+      const oldKey = state.cryptoKey;
+      const oldMeta = { ...state.meta };
+      state.cryptoKey = nextKey;
+      state.meta.iter = PBKDF2_ITERATIONS;
+      state.meta.salt = toB64(salt);
+      // لا نعلن نجاح التغيير إلا بعد كتابة السجل المشفّر فعلياً.
+      try {
+        await state.saveQueue.catch(() => {});
+        await persist();
+        state.saveQueue = Promise.resolve();
+      } catch (saveError) {
+        state.cryptoKey = oldKey;
+        state.meta = oldMeta;
+        throw saveError;
+      }
+      $('#changeMasterForm').reset();
+      closeOverlay('passwordSettingsOverlay');
+      toast('تم تغيير كلمة المرور مع الحفاظ على بيانات الخزنة');
+    } catch {
+      error.textContent = 'كلمة المرور الحالية غير صحيحة، لم يتم إجراء أي تغيير.';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'حفظ كلمة المرور الجديدة';
+    }
   }
 
   async function recoverVault() {
@@ -661,6 +707,28 @@
     $('#recoverSubmitBtn').addEventListener('click', recoverVault);
     $('#copyRecoveryCode').addEventListener('click', async () => toast(await copyText($('#recoveryCodeBox').textContent) ? 'تم نسخ رمز الاسترداد' : 'تعذر النسخ'));
     $('#closeRecoveryCode').addEventListener('click', () => closeOverlay('recoveryCodeOverlay'));
+
+    $('#settingsBtn').addEventListener('click', () => openOverlay('settingsOverlay'));
+    $('#changeMasterBtn').addEventListener('click', () => {
+      $('#changeMasterForm').reset();
+      $('#passwordChangeError').textContent = '';
+      closeOverlay('settingsOverlay');
+      openOverlay('passwordSettingsOverlay');
+      $('#currentMasterPassword').focus();
+    });
+    $('#changeMasterForm').addEventListener('submit', changeMasterPassword);
+    $('#newRecoveryBtn').addEventListener('click', async () => {
+      const button = $('#newRecoveryBtn');
+      button.disabled = true;
+      try {
+        const code = await enableRecovery();
+        closeOverlay('settingsOverlay');
+        showRecoveryCode(code);
+        toast('تم إنشاء رمز استرداد جديد؛ الرمز السابق لم يعد صالحاً');
+      } catch {
+        toast('تعذر إنشاء رمز استرداد جديد');
+      } finally { button.disabled = false; }
+    });
 
     $('#exportBtn').addEventListener('click', exportBackup);
     $('#importBtn').addEventListener('click', () => $('#importFile').click());

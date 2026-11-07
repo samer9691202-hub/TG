@@ -1,3 +1,10 @@
+Fayrouz 1.2.37 — Simplified daily wird cards
+
+- Reduced visual density, nested panels, shadows, padding, and gaps in the daily wird and reading-position cards.
+- Simplified the progress area and compacted page controls while preserving all labels, actions, and saved values.
+- Kept the reading-position page number prominent and centered.
+- Preserved encrypted storage, existing data, responsive layout, and light/dark themes.
+
 Fayrouz 1.2.33 — Editable daily Quran goal
 
 - Made the daily page target visibly editable and open by default in the “وردي اليوم” card.

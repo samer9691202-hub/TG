@@ -994,3 +994,39 @@ body.dark .wird-today-main,body.dark .wird-goal-settings{background:color-mix(in
 .wird-today-card{gap:16px!important}
 .wird-today-controls{margin-top:2px}
 @media(max-width:480px){.wird-goal-settings-inside{padding:9px 11px}.wird-save-progress{margin-top:15px!important}}
+
+/* Fayrouz 1.2.36 — center the page number inside its input field */
+.wird-position-card .wird-position-field input[type=number]{direction:ltr;text-align:center;font-weight:800;font-size:17px}
+
+/* Fayrouz 1.2.37 — calmer, less crowded wird cards */
+.wird-cards-redesigned{gap:14px!important}
+.wird-cards-redesigned>.wird-panel{padding:17px!important;gap:13px!important;border-radius:19px!important;box-shadow:0 4px 16px color-mix(in srgb,var(--accent) 6%,transparent)!important}
+.wird-card-top{gap:8px!important;align-items:center}
+.wird-card-heading{gap:9px!important}
+.wird-card-symbol{width:38px!important;height:38px!important;flex-basis:38px!important;border-radius:12px!important;font-size:21px!important}
+.wird-card-heading h3{font-size:16px!important}
+.wird-card-heading small{font-size:10px!important;margin-top:2px!important}
+.wird-goal-pill,.wird-position-status{padding:6px 9px!important;font-size:10px!important}
+.wird-goal-settings-inside{padding:8px 11px!important;border-radius:11px!important;background:transparent!important}
+.wird-today-main{gap:13px!important;padding:12px 4px!important;border:0!important;border-radius:0!important;background:transparent!important}
+.wird-progress-ring{width:88px!important;height:88px!important;flex-basis:88px!important}
+.wird-progress-ring:before{inset:6px!important}
+.wird-progress-ring strong{font-size:24px!important}
+.wird-today-copy>b{font-size:13px!important}
+.wird-today-copy>p{margin:3px 0 8px!important;font-size:11px!important}
+.wird-today-copy .progress{height:6px!important}
+.wird-today-controls{gap:7px!important}
+.wird-today-controls>.btn{min-height:40px!important;padding-inline:9px!important;font-size:11px!important}
+.wird-count-field{font-size:10px!important;gap:3px!important}
+.wird-count-field input{min-height:40px!important}
+.wird-save-progress{min-height:43px!important;margin-top:4px!important;padding-block:9px!important}
+.wird-position-showcase{grid-template-columns:88px minmax(0,1fr)!important;gap:11px!important;padding:9px!important;border:0!important;border-radius:13px!important;background:color-mix(in srgb,var(--accent) 4%,var(--surface))!important}
+.wird-position-page{min-height:94px!important;border-radius:12px!important;box-shadow:none!important}
+.wird-position-page strong{font-size:34px!important}
+.wird-position-details{gap:5px!important}
+.wird-position-details>strong{font-size:14px!important;line-height:1.6!important}
+.wird-position-details>small{font-size:10px!important}
+.wird-position-form-title{font-size:12px!important;padding-top:0!important}
+.wird-position-card .wird-position-field input{min-height:42px!important}
+.wird-position-save{min-height:43px!important}
+@media(max-width:380px){.wird-cards-redesigned>.wird-panel{padding:14px!important}.wird-today-main{gap:9px!important}.wird-progress-ring{width:78px!important;height:78px!important;flex-basis:78px!important}.wird-today-controls>.btn{font-size:10px!important;padding-inline:5px!important}.wird-position-showcase{grid-template-columns:78px minmax(0,1fr)!important}}

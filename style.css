@@ -911,3 +911,57 @@ body.dark .wird-position-status.is-saved{background:#284638;color:#a8dfc0}
 .wird-page-number b{display:inline-flex;align-items:center;justify-content:center;min-width:48px;height:48px;padding:0 10px;border-radius:12px;background:var(--primary,#98677F);color:#fff;font-size:1.45em;font-weight:800}
 .wird-page-number small{color:var(--muted);font-size:.82em}
 .wird-position-field input[type=number]{direction:ltr;text-align:right}
+
+/* Fayrouz 1.2.32 — redesigned daily wird and reading position cards */
+.wird-cards-redesigned{gap:18px;align-items:stretch}
+.wird-cards-redesigned>.wird-panel{padding:20px;border-radius:23px;box-shadow:0 9px 28px color-mix(in srgb,var(--accent) 9%,transparent);gap:18px}
+.wird-today-card{background:linear-gradient(155deg,color-mix(in srgb,var(--surface) 94%,var(--accent) 6%),var(--surface))!important;border-color:color-mix(in srgb,var(--accent) 25%,var(--line))!important}
+.wird-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.wird-card-heading{display:flex;align-items:center;gap:11px;min-width:0}
+.wird-card-symbol{width:45px;height:45px;flex:0 0 45px;display:grid;place-items:center;border-radius:16px;background:color-mix(in srgb,var(--accent) 13%,var(--surface));color:var(--accent);font-size:25px}
+.wird-card-heading h3{margin:0;color:var(--text);font-size:17px}
+.wird-card-heading small{display:block;margin-top:4px;color:var(--muted);font-size:11px;line-height:1.5}
+.wird-goal-pill{flex:0 0 auto;padding:7px 11px;border-radius:30px;background:color-mix(in srgb,var(--accent) 10%,var(--surface));color:var(--accent);font-size:11px;font-weight:800}
+.wird-today-main{display:flex;align-items:center;gap:18px;padding:17px 14px;border:1px solid color-mix(in srgb,var(--accent) 17%,var(--line));border-radius:19px;background:color-mix(in srgb,var(--surface) 78%,var(--accent) 5%)}
+.wird-progress-ring{width:112px;height:112px;flex:0 0 112px;display:grid;place-items:center;border-radius:50%;background:conic-gradient(var(--accent) var(--wird-pct),color-mix(in srgb,var(--accent) 13%,var(--surface)) 0);position:relative}
+.wird-progress-ring:before{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--surface)}
+.wird-progress-ring>div{position:relative;z-index:1;display:grid;justify-items:center;gap:0}
+.wird-progress-ring strong{color:var(--accent);font-size:29px;line-height:1.2;font-weight:850}
+.wird-progress-ring small{color:var(--muted);font-size:11px}
+.wird-today-copy{flex:1;min-width:0}
+.wird-today-copy>b{display:block;color:var(--text);font-size:14px;line-height:1.6}
+.wird-today-copy>p{margin:5px 0 13px;color:var(--muted);font-size:12px;line-height:1.7}
+.wird-progress-meta{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;color:var(--muted);font-size:11px}
+.wird-progress-meta strong{color:var(--accent)}
+.wird-today-copy .wird-progress{margin:0}
+.wird-today-copy .progress{height:8px;border-radius:20px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));overflow:hidden}
+.wird-today-copy .progress i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .25s}
+.wird-today-controls{display:grid;grid-template-columns:auto minmax(90px,1fr) auto;align-items:end;gap:9px}
+.wird-today-controls>.btn{min-height:44px;padding-inline:12px;white-space:nowrap}
+.wird-count-field{display:grid;gap:5px;min-width:0;color:var(--muted);font-size:11px;font-weight:700;text-align:center}
+.wird-count-field input{width:100%;min-width:0;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);font:inherit;font-size:16px;font-weight:800;text-align:center}
+.wird-goal-settings{padding:11px 13px;border:1px solid var(--line);border-radius:13px;background:color-mix(in srgb,var(--surface) 90%,var(--accent) 4%)}
+.wird-goal-settings summary{color:var(--accent);font-size:12px;font-weight:800;cursor:pointer;list-style:none}
+.wird-goal-settings summary:after{content:"＋";float:left}
+.wird-goal-settings[open] summary:after{content:"−"}
+.wird-goal-settings .field{margin:12px 0 2px!important}
+.wird-save-progress{width:100%;min-height:47px;justify-content:center}
+.wird-position-card{background:linear-gradient(155deg,color-mix(in srgb,var(--surface) 94%,var(--accent) 6%),var(--surface))!important}
+.wird-position-showcase{display:grid;grid-template-columns:116px minmax(0,1fr);gap:14px;align-items:stretch;padding:14px;border:1px solid color-mix(in srgb,var(--accent) 20%,var(--line));border-radius:19px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.wird-position-page{min-height:132px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:15px;background:linear-gradient(155deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#5b3448));color:#fff;text-align:center;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 18%,transparent)}
+.wird-position-page span{font-size:11px;opacity:.9}
+.wird-position-page strong{font-size:43px;line-height:1.25;font-weight:900;letter-spacing:-1px}
+.wird-position-page small{font-size:10px;opacity:.85}
+.wird-position-details{display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0}
+.wird-position-details .wird-position-label{font-size:11px}
+.wird-position-details>strong{color:var(--text);font-size:16px;line-height:1.8;overflow-wrap:anywhere}
+.wird-position-details>small{color:var(--muted);font-size:10px;line-height:1.6}
+.wird-position-form-title{padding-top:2px;color:var(--text);font-size:13px;font-weight:850}
+.wird-position-card .wird-position-field{margin:0!important}
+.wird-position-card .wird-position-field input{min-height:47px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);font:inherit;padding:10px 13px}
+.wird-position-save{min-height:48px;border-radius:13px}
+.wird-position-save span{font-size:18px}
+body.dark .wird-today-card,body.dark .wird-position-card{background:linear-gradient(155deg,color-mix(in srgb,var(--surface) 90%,var(--accent) 10%),var(--surface))!important}
+body.dark .wird-today-main,body.dark .wird-goal-settings{background:color-mix(in srgb,var(--surface) 90%,var(--accent) 10%)}
+@media(max-width:700px){.wird-cards-redesigned{gap:13px}.wird-cards-redesigned>.wird-panel{padding:16px;border-radius:19px}.wird-today-main{gap:13px;padding:13px 11px}.wird-progress-ring{width:94px;height:94px;flex-basis:94px}.wird-progress-ring strong{font-size:25px}.wird-position-showcase{grid-template-columns:102px minmax(0,1fr);gap:11px;padding:11px}.wird-position-page{min-height:120px}.wird-position-page strong{font-size:38px}}
+@media(max-width:380px){.wird-card-symbol{width:39px;height:39px;flex-basis:39px}.wird-card-heading h3{font-size:15px}.wird-goal-pill{padding:6px 8px;font-size:10px}.wird-today-main{align-items:flex-start;gap:9px}.wird-progress-ring{width:82px;height:82px;flex-basis:82px}.wird-progress-ring:before{inset:6px}.wird-progress-ring strong{font-size:22px}.wird-today-controls{grid-template-columns:1fr 1.2fr 1fr;gap:6px}.wird-today-controls>.btn{padding-inline:5px;font-size:11px}.wird-position-showcase{grid-template-columns:88px minmax(0,1fr)}.wird-position-page{min-height:110px}.wird-position-page strong{font-size:33px}}

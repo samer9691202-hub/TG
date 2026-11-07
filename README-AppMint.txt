@@ -1,3 +1,10 @@
+Fayrouz 1.2.32 — Redesigned daily wird and reading-position cards
+
+- Rebuilt the “وردي اليوم” card with a visual progress ring, clearer daily count, quick page controls, collapsible goal setting, and a dedicated save action.
+- Rebuilt the reading-position card around a prominent Quran page-number display, saved-position details, and a clearer edit form.
+- Preserved the existing encrypted data model, saved page counts, goals, reading position, history, and light/dark theme support.
+- Kept the existing element IDs and save handlers so existing data and interactions remain compatible.
+
 Fayrouz 1.2.31 — Reading position page number
 
 - Added a dedicated Quran page-number field (1–604) to the reading-position card.
